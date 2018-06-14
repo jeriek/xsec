@@ -34,7 +34,7 @@
 
 ##### 2. Optimising the GP code
 
-* For Abel runs, ensure the Intel-compiled math libraries LAPACK and BLAS are picked up rather than any that might be in the user directories. See [Abel FAQ](http://www.uio.no/english/services/it/research/hpc/abel/help/faq/#toc30) and [Intel compiler details](http://www.uio.no/english/services/it/research/hpc/abel/help/software/intel-compiler.html).
+* Ingrid's code has now been extended to all strong production processes.
 
 * Storage of large matrices: use [Joblib](https://pythonhosted.org/joblib/) Persistence and Memory class. Also, what type is stored in the matrices? Currently `float64`. We don't need too high precision, so maybe rounding and saving smaller floats would help. Note we're working on 64-bit architecture. SciPy supports more [numerical types](https://docs.scipy.org/doc/numpy-1.13.0/user/basics.types.html) than standard Python. Their numerical value [limits](https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.finfo.html) depend on the machine: 
 
@@ -47,6 +47,8 @@
   Question: why do we want the stored files to be small? Is it just a (longer-term) storage problem or should we prevent scikit-learn from creating large `float64` matrices in the first place? Answer: for now, just limiting the (longer-term) storage space should be enough, so scikit-learn can internally create the `float64` arrays as long as we can round, compress and store them in smaller files.  
 
 * Evaluation speed: investigate possibilities to optimise scikit-learn's [GP prediction function](https://github.com/scikit-learn/scikit-learn/blob/a24c8b46/sklearn/gaussian_process/gpr.py#L258), making use of the persistence functions provided by Joblib. In particular, `L_inv` and `K_inv` shouldn't be recomputed for every new prediction point. Try to use `GaussianProcessRegressor` as base class and override the `predict` method. Object persistence between points (particularly for the evaluation function) should be alright, as the Python interpreter doesn't get restarted between points in GAMBIT scans. 
+
+* For Abel runs, ensure the Intel-compiled math libraries LAPACK and BLAS are picked up rather than any that might be in the user directories. See [Abel FAQ](http://www.uio.no/english/services/it/research/hpc/abel/help/faq/#toc30) and [Intel compiler details](http://www.uio.no/english/services/it/research/hpc/abel/help/software/intel-compiler.html).
 
 ##### 3. Parallellisation and interfacing with GAMBIT
 
