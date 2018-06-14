@@ -96,14 +96,14 @@ Important issues include:
 * Easier to trim file sizes
 * Tested on $\tilde g \tilde g$ production
 
-######*(Distributed) Gaussian Processes (Ingrid)*
+###### *(Distributed) Gaussian Processes (Ingrid)*
 
 * Slow: evaluation time scales as $N^2$
 * Not a lot of training data required
 * Large files, harder to trim
 * Tested on $\tilde q \tilde q$ production (expectation: $\tilde g \tilde g$ more involved for DGPs since more parameters)
 
-######*Latest developments*
+###### *Latest developments*
 
 * Set-up for semi-automated MSSM-24 sample generation with Prospino 2.1 (Jon Vegard)
   * On Abel: `/work/projects/nn9284k/xsec`
