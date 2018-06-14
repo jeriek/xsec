@@ -4,16 +4,21 @@
 
 #### Topics for next meeting
 
-* Deciding the language for the evaluation program/interface
-
 #### To do
 
 - [ ] Check what is the minimal amount of storage required to recreate the GPs (Jeriek)
+
 - [ ] Optimise the GP prediction function in scikit-learn (Jeriek)
+
 - [x] Create working example of parallelisable DGP code (Ingrid)
+
 - [ ] Try connecting GAMBIT to the DGP example (Anders)
+
 - [ ] Look into including PDF uncertainties (Are)
-- [ ] 
+
+- [ ] ...
+
+  
 
 ---
 
@@ -21,9 +26,9 @@
 
 ##### 1. Overall program structure
 
-* The code is split over two separate repositories: one for the training part ([jonvegards/prospino-PointSampler](https://github.com/jonvegards/prospino-PointSampler)), one for the evaluation part ([jeriek/xsec](https://github.com/jeriek/xsec)). 
-* Future *integration with GAMBIT* is central, as our tool will function as an external library. GAMBIT has an internal C++ representation of SLHA files, as reading/writing many of these is surprisingly costly. ColliderBit has an internal way of passing parameters from the SLHA, which we will have to take this as input. But our tool should also work as a *stand-alone application*, with SLHA files passed by the user and for example processed with PySLHA. GAMBIT has a functioning Python interface and its thread-safety should be fine, as fine as possible with Python (and as long as no multiple instances of Python are run on the same kernel). 
-* We need some user interface around Ingrid's code (currently Python). Need to think what possibilities we want to offer users. 
+* The code is split over two separate repositories: one for the training part ([jonvegards/prospino-PointSampler](https://github.com/jonvegards/prospino-PointSampler)), one for the evaluation part ([jeriek/xsec](https://github.com/jeriek/xsec)). We need some user interface around Ingrid's code. Need to think what possibilities we want to offer users. 
+* Future *integration with GAMBIT* is central, as our tool will function as an external library. GAMBIT has an internal C++ representation of SLHA files, as reading/writing many of these is surprisingly costly. ColliderBit has an internal way of passing parameters from the SLHA, which we will have to take this as input. But our tool should also work as a *stand-alone application*, with SLHA files passed by the user and for example processed with PySLHA. 
+* GAMBIT has a functioning Python interface and its thread-safety should be fine, as fine as possible with Python (and as long as no multiple instances of Python are run on the same kernel). In the interest of reducing development time and easy integration with Ingrid's code and scikit-learn, we will try to write the tool in Python.
 * Requiring external libraries should be avoided, but for now, there seems no way around scikit-learn. This should be fine. Joblib automatically follows with scikit-learn, which requires NumPy and SciPy by default. 
 * The program will be heavy on memory, but if the initial requirements are kept below ~1 GB by reducing file sizes, it should be acceptable.
 
@@ -43,11 +48,11 @@
 
 * Evaluation speed: investigate possibilities to optimise scikit-learn's [GP prediction function](https://github.com/scikit-learn/scikit-learn/blob/a24c8b46/sklearn/gaussian_process/gpr.py#L258), making use of the persistence functions provided by Joblib. In particular, `L_inv` and `K_inv` shouldn't be recomputed for every new prediction point. Try to use `GaussianProcessRegressor` as base class and override the `predict` method. Object persistence between points (particularly for the evaluation function) should be alright, as the Python interpreter doesn't get restarted between points in GAMBIT scans. 
 
-* 
+##### 3. Parallellisation and interfacing with GAMBIT
 
+* Ingrid will send Anders some working DGP example, to try hooking this up to GAMBIT.  
 
-
-
+  
 
 ---
 
@@ -84,21 +89,21 @@ Important issues include:
 
 ##### 3. Current status
 
-***Boosted Decision Trees*** (Jon Vegard)
+###### *Boosted Decision Trees (Jon Vegard)*
 
 * Fast: due to the tree structure, not a lot of code is effectively executed
 * Lots of training data required
 * Easier to trim file sizes
 * Tested on $\tilde g \tilde g$ production
 
-***(Distributed) Gaussian Processes*** (Ingrid)
+######*(Distributed) Gaussian Processes (Ingrid)*
 
 * Slow: evaluation time scales as $N^2$
 * Not a lot of training data required
 * Large files, harder to trim
 * Tested on $\tilde q \tilde q$ production (expectation: $\tilde g \tilde g$ more involved for DGPs since more parameters)
 
-***Latest developments***
+######*Latest developments*
 
 * Set-up for semi-automated MSSM-24 sample generation with Prospino 2.1 (Jon Vegard)
   * On Abel: `/work/projects/nn9284k/xsec`
