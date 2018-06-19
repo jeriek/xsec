@@ -69,9 +69,8 @@ class nimbus:
     def __init__(self, configfile, datafile):
         """
         Initialize an instance with a datafile and configuration file.
-        """
-        
-        print 'This initializes the class NIMBUS. Welcome!'
+        """        
+        print 'NIMBUS: A class for training DGP models for \n cross section evaluation.'
         
         self.df_config = pd.read_table(configfile, sep='\t')        
         self.df_data = pd.read_csv(datafile, sep=' ', skipinitialspace=True)
@@ -105,7 +104,11 @@ class nimbus:
 
         # Turn lists of features and targets into arrays
         self.features = np.asarray(self.features)
-        self.target = np.asarray(self.features)
+        self.target = np.asarray(self.target)
+
+        print 'Models are trained for the production of:'
+        for process_index in self.df_config.index:
+            print self.df_config.loc[process_index]['Parton1'], ' and ', self.df_config.loc[process_index]['Parton2'] 
 
             
     def run(self):
@@ -140,9 +143,9 @@ class nimbus:
         instance of self.
         """
 
-        # Decide whether outliers should be removed
+        # Whether outliers should be removed
         target_outliers = self.df_config.loc[process_index]['Outliers']
-        # Set lower boundary on included cross sections
+        # Lower boundary on included cross sections
         target_cut = self.df_config.loc[process_index]['Cut']
 
         # Get the partons in the process
@@ -151,6 +154,7 @@ class nimbus:
 
         # Decide the process
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
+
         parton1_mass = 'm'+str(parton1)
         parton2_mass = 'm'+str(parton2)
         
@@ -165,8 +169,10 @@ class nimbus:
         if target_cut > 0:
             mask_cut = self.df_data[process_name] > target_cut
             self.df_data_inuse = self.df_data_inuse[mask_cut]
-            
-        
+        else: 
+            mask_cut = self.df_data[process_name] > 0
+            self.df_data_inuse = self.df_data_inuse[mask_cut]
+
         # Build the feature and target arrays
         inside_features = self.build_features(process_index)
         inside_target = self.build_target(process_index)
@@ -194,15 +200,11 @@ class nimbus:
         
         if transformation:
             if transformation == 'mult mg':
-                #print 'The cross sections are multiplied by the gluino mass squared'
                 target = target*mgluino**2
                 
             elif transformation == 'div mg':
-                #print 'The cross sections are divided by the gluino mass squared'
                 target = target/mgluino**2
             #elif: something else you might want to do
-            #else:
-                #print 'Leave target as is'
 
         return target
 
@@ -253,18 +255,12 @@ class nimbus:
         elif production_type == 'gq':
             feature_list = ['m'+str(parton1), 'm'+str(parton2)]
 
-        #print 'The feature list for %s is %s' % (process_index, feature_list)
-
         # Get array of features
         features_nomean = self.df_data_inuse[feature_list].values
-
         # Add mean squark mass to features
-        features = np.concatenate((features_nomean, m_mean.reshape(-1, 1)), axis=1)
+        features = np.concatenate( ( features_nomean, m_mean.reshape(-1, 1) ) , axis=1 )
         
         return features
-
-
-    
 
     def DGP(self, process_index):
         """
@@ -282,12 +278,9 @@ class nimbus:
         >>         nimbus2000.DGP(process_index)
         """
 
-        # Get features and target from dataframe
+        # Get features and target from array
         features_inside = self.features[process_index]
-        #target_inside = self.target[process_index].values.ravel()
         target_inside = self.target[process_index]
-
-        print 'Dimensions ', target_inside.shape, features_inside.shape
 
         # Get number of experts and points per expert from config file
         n_experts = self.df_config.loc[process_index]['Experts']
@@ -296,14 +289,11 @@ class nimbus:
         # Split into training and test set
         X_train, X_test, y_train, y_test = train_test_split(features_inside, target_inside, random_state=42, train_size=n_points*n_experts)
 
-        print len(X_train), ' punkter'
-
         X_train_subsets = range(n_experts)
         y_train_subsets = range(n_experts)
         
         # Divide features and target into subsets
         for i in range(n_experts):
-            print i
             X_train_subsets[i] = X_train[i*n_points:(i+1)*n_points]
             y_train_subsets[i] = y_train[i*n_points:(i+1)*n_points]
 
@@ -314,41 +304,50 @@ class nimbus:
         kernel_name = self.df_config.loc[process_index]['Kernel']
 
         # Set model name
-        folder = 'somefolder/'
+        # Use time to create unique folder names
+        import time
+        
+        folder = str(process_index)+'_'+str(time.time())+'/' 
+        #folder = 'somefolder2/'
         model_name = folder + str(self.df_config.loc[process_index]['Parton1'])+'_'+str(self.df_config.loc[process_index]['Parton2'])
         
         print 'I do distributed Gaussian processes for', self.df_config.loc[process_index]['Parton1'], self.df_config.loc[process_index]['Parton2']
         print 'using %.f experts with %.f points each' % (n_experts, n_points)
         
-
-        for i in range(n_experts):
-            print 'Expert number ', i+1
-
         # Change n_jobs to n_experts
-        out = Parallel(n_jobs=4)(delayed(GP)(i, X_train_subsets[i], y_train_subsets[i], kernel_name, model_name) for i in range(n_experts))
+        out = Parallel(n_jobs=n_experts, verbose=4)(delayed(GP)(i, X_train_subsets[i], y_train_subsets[i], kernel_name, model_name) for i in range(n_experts))
+
         print 'NIMBUS: Checking out'
 
 
 # To use joblib.Parallel the function must be defined outside the class
 def GP(i, features, target, kernel_name, model_name):
 
+    ###############################################
+    # Kernel                                      #
+    ###############################################
+
     # One length scale per feature
-    char_len = np.zeros(len(features))+1000
+    char_len = np.zeros(len(features[0]))+1000
     # Set kernel for GP from config file
+
     if kernel_name == 'M':
         kernel = C(10, (10, 1000))*Matern(char_len,(10, 1e6), nu=1.5) + WhiteKernel(1e-3, (1e-7, 1e-2))
     
+    ###############################################
+    # Gaussian process                            #
+    ###############################################
+        
     my_gp = GaussianProcessRegressor(kernel=kernel, random_state=42)
 
-    print 'Dimensions 2', features.shape, target.shape
-    #my_gp.fit(features, target)
+    # Fit GP to training data
+    my_gp.fit(features, target)
 
 
     ################################################
     # Save model                                   #
     ################################################
-    
-    # Save the model using joblib here, this can be changed
+    # Expert number
     j = i+1
     filepath = model_name+'_'+str(len(features))+'_'+str(j)
     
@@ -358,8 +357,9 @@ def GP(i, features, target, kernel_name, model_name):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+
+    # Save the model using joblib here, this can be changed
     joblib.dump(my_gp, filepath, compress=True)
 
-    mybool = True # True hvis dette funket
-    
+    mybool = True
     return mybool

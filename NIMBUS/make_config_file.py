@@ -43,8 +43,8 @@ A = {}
 for i in range(len(squarks)):
     for j in range(i, len(squarks)):
         A.update({(squarks[i], squarks[j]) : {'Type' : 'qq',
-                          'Experts' : 10 ,
-                          'Points' : 200,
+                          'Experts' : 4 ,
+                          'Points' : 1000,
                           'Kernel' : 'M',
                           'Target' : 'div mg',
                           'Outliers' : 'Remove',
@@ -54,8 +54,8 @@ for i in range(len(squarks)):
 for i in range(len(squarks)):
     for j in range(i, len(squarks)):
         A.update({(squarks[i], str('-'+squarks[j])) : {'Type' : 'qqbar',
-                          'Experts' : 10 ,
-                          'Points' : 200,
+                          'Experts' : 4 ,
+                          'Points' : 1000,
                           'Kernel' : 'M',
                           'Target' : 0,
                           'Outliers' : 'Remove',
@@ -63,8 +63,8 @@ for i in range(len(squarks)):
                           'Noise' : 'WK'}})    
 for i in range(len(squarks)):
     A.update({(1000021, squarks[i]) : {'Type' : 'gq',
-                      'Experts' : 10 ,
-                      'Points' : 200,
+                      'Experts' : 4 ,
+                      'Points' : 1000,
                       'Kernel' : 'M',
                       'Target' : 0,
                       'Outliers' : 'Remove',
@@ -72,54 +72,16 @@ for i in range(len(squarks)):
                       'Noise' : 'WK'}})
 
 A.update({(1000021, 1000021) : {'Type' : 'gg',
-                                    'Experts' : 10 ,
-                                    'Points' : 200,
+                                    'Experts' : 4 ,
+                                    'Points' : 1000,
                                     'Kernel': 'M',
                                     'Target' : 'mult mg',
                                     'Outliers' : 'Remove',
                                     'Cut' : 0,
                                     'Noise' : 'WK'}})
-print len(A)
-                 
-# Try with a normal dictionary
-"""
-A = {'gg' :    {'Experts' : 10 ,
-                'Points p' : 2000,
-                'Features' : {'m1': 0, 'm2' : 0, 'mg' : 1, 'all' : 1, 'mean' : 1},
-                'Kernel': 'M',
-                'Target' : 'mult mg',
-                'Outliers' : 'Remove',
-                'Cut' : None,
-                'Noise' : 'WK'},
-     'gq' :    {'Experts' : 10 ,
-                'Points p' : 2000,
-                'Features' : {'m1': 1, 'm2' : 0, 'mg' : 1, 'all' : 0, 'mean' : 1},
-                'Kernel' : 'M',
-                'Target' : None,
-                'Outliers' : 'Remove',
-                'Cut' : None,
-                'Noise' : 'WK'},
-     'qq' :    {'Experts' : 10 ,
-                'Points p' : 2000,
-                'Features' : {'m1': 1, 'm2' : 1, 'mg' : 1, 'all' : 0, 'mean' : 1},
-                'Kernel' : 'M',
-                'Target' : 'div mg',
-                'Outliers' : 'Remove',
-                'Cut' : 1e-16,
-                'Noise' : 'WK'},
-     'qqbar' : {'Experts' : 10 ,
-                'Points p' : 3000,
-                'Features' : {'m1': 1, 'm2' : 1, 'mg' : 1, 'all' : 0, 'mean' : 1},
-                'Kernel' : 'M',
-                'Target' : None,
-                'Outliers' : 'Remove',
-                'Cut' : 1e-16,
-                'Noise' : 'WK'}}
-
-
-"""
 
 df = pd.DataFrame.from_dict(A, orient='index')
 #print 'I want the kernel to be', df.loc['gg']['Features']
 
 df.to_csv('configfile.dat', orient='index', sep='\t')
+print 'Created configuration file "configfile.dat"'
