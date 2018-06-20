@@ -206,6 +206,9 @@ class nimbus:
                 target = target/mgluino**2
             #elif: something else you might want to do
 
+        # Use logarithm
+        target = np.log10(target)
+        
         return target
 
 
