@@ -31,6 +31,19 @@ gluino = 1000021
 
 
 
+def load_models(xsections):
+    # Jeriek
+
+    # Load models, Ls, kernels; Xtrain, ytrain
+    # Make persistent, so you can load in GP function
+
+
+    # path_dict = {'gluino_gluino' : 'path to L', 'gluino_squark' : 'path to L',}
+    #L[xsection] = ...
+    
+    return 0
+
+
 def get_type(xsections):
     process_type = {}
 
@@ -249,6 +262,8 @@ def GP(model, xsection, features):
     prior variance = kernel( x_test, x_test)
 
     """
+    #Linv = Linv[xsection]
+    
     print 'Do GP regression using', model
     return [1,1,1]
 
