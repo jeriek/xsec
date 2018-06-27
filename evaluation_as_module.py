@@ -18,7 +18,7 @@ for package in pkgs:
 
 # Import packages
 import numpy as np
-import pandas as pd
+import pandas as pd # Not pandas?
 import sys
 
 ###############################################
@@ -30,8 +30,6 @@ squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 200000
 gluino = 1000021
 
 
-
-# assert : check that tuple has length 2
 
 def get_type(xsections):
     process_type = {}
@@ -63,9 +61,15 @@ def get_type(xsections):
 def get_features(masses, xsections, types):
 
     all_features = range(len(xsections))
+    # As dict
+    all_features_dict = {}
+
     print all_features
     mean_index = ['m1000004', 'm1000003','m1000001','m1000002',
                   'm2000002', 'm2000001','m2000003','m2000004']
+
+    # No pandas
+    mean_mass = sum([masses[key] for key in mean_index])/float(len(mean_index))
     
     for i in range(len(xsections)):
 
@@ -83,24 +87,36 @@ def get_features(masses, xsections, types):
             
             # Largest index first, so convention
             # mcR, msR, muR, mdR, mcL, msL, muL, mdL
-            
-            features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(min(xsection)) ]
+            if xsection[0] == xsection[1]:
+                # Only use one mass if the partons are identical 
+                features_index = ['m1000021', 'm'+str(max(xsection)) ]
+            else:
+                features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(min(xsection)) ]
 
         elif types[xsection] == 'qqbar':
             
             # Particle before antiparticle
-            
-            features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(abs(min(xsection)))]
+            if abs(xsection[0]) == abs(xsection[1]):
+                features_index = features_index = ['m1000021', 'm'+str(max(xsection))]
+            else:
+                features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(abs(min(xsection)))]
 
-        # Create mass features
-        features_nomean = masses[features_index].values
-        m_mean = masses[mean_index].mean(axis=1).values.ravel()
 
-        features = np.concatenate( ( features_nomean, m_mean.reshape(-1, 1) ), axis=1 )
+        # Make a feature dictionary
+        features_dict = {key : masses[key] for key in features_index}
 
-        all_features[i] = features
+        # Add mean squark mass to mass dict
+        features_dict.update({'mean' : mean_mass})
+        features = features_dict.values()
         
-    return np.asarray(all_features)
+        # Add features to feature array
+        all_features[i] = features
+        all_features_dict.update({xsection : features})
+
+    # Return feature array for all processes
+    #return np.asarray(all_features)
+    return all_features_dict
+
         
 
 
@@ -153,8 +169,6 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
                   'm1000002' : m1000002, 'm2000002' : m2000002,
                   'm2000001' : m2000001, 'm2000003' : m2000003, 'm2000004' : m2000004}
 
-        # Make mass DataFrame
-        df_masses = pd.DataFrame(masses, index=[0])
 
         ##################################################
         # Build feature vector                           #
@@ -168,8 +182,8 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             print 'The production type of ', xsection, 'is ', types[xsection]
         
         # Build feature vectors, depending on production channel type
-        features = get_features(df_masses, xsections, types)
-        print 'The features are ', features[0], features[1]
+        features = get_features(masses, xsections, types)
+        print 'The features are ', features
 
 
         ###################################################
@@ -177,6 +191,9 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         ###################################################
         
 
+        for xsection in xsections:
+            a = DGP(xsection, features[xsection])
+        
         return 0
 
         # [sigma] = fb
@@ -186,3 +203,75 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
 
         # Return a 4 dim- array for every production channel,
         # including sigma, sigma_1/2, sigma_2 and sigma_n
+
+
+def DGP(xsection, features):
+    # Get name of production channel, and name
+    # of model folder
+    
+    process_name = get_process_name(xsection)
+    
+    # List all trained experts in the chosen directory
+
+    import os
+    models = os.listdir(process_name)
+    n_experts = len(models)
+
+    # Empty arrays where all predicted numbers are stored
+    mus = np.zeros(n_experts)
+    sigmas = np.zeros(n_experts)
+    sigma_priors = np.zeros(n_experts)
+
+    
+    # Loop over GP models/experts
+    for i in range(len(models)):
+        model = models[i]
+        print model
+        mu, sigma, sigma_prior = GP(model, process_name, features)
+        mus[i] = mu
+        sigmas[i] = sigma
+        sigma_priors[i] = sigma_prior
+
+
+# Jerieks part
+        
+def GP(model, xsection, features):
+    """
+    The function that does Gaussian process regression
+    for the individual experts.
+
+    Takes as input arguments the produced partons, and
+    a feature array. 
+
+    Returns a mean value (the predicted cross section), 
+    the GP standard deviation and the prior variance: 
+
+    prior variance = kernel( x_test, x_test)
+
+    """
+    print 'Do GP regression using', model
+    return [1,1,1]
+
+
+
+
+def get_process_name(process_index):
+    # Get the partons of the process
+    parton1 = process_index[0]
+    parton2 = process_index[1]
+
+    # Decide process name
+
+    # Check if one of the partons is a gluino
+    if parton1 == 1000021:
+        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
+    elif parton2 == 1000021:
+        process_name = str(parton2)+'_'+str(parton1)+'_NLO'
+
+    # Otherwise name starts with the largest parton PID
+    elif parton1 > parton2:
+        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
+    elif parton2 < parton1:
+        proess_name =  str(parton2)+'_'+str(parton1)+'_NLO'
+
+    return process_name
