@@ -68,9 +68,6 @@ def get_type(xsections):
 
 
 
-
-
-
 def get_features(masses, xsections, types):
 
     all_features = range(len(xsections))
@@ -205,24 +202,21 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         
 
         for xsection in xsections:
-            a = DGP(xsection, features[xsection])
-        
+            mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
+            scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
+            scale_2_dgp, sigma_2_dgp = DGP_2(xsection, features[xsection], scale=2.0)
+            
         return 0
 
-        # [sigma] = fb
-        # (double, double, -1, -1)
-        # return x,y,z,w # tuple? list? array?
-        #print 'sigma, sigma_1/2, sigma_2, sigma_n'
 
-        # Return a 4 dim- array for every production channel,
-        # including sigma, sigma_1/2, sigma_2 and sigma_n
+    
 
-
-def DGP(xsection, features):
+def DGP(xsection, features, scale):
     # Get name of production channel, and name
     # of model folder
     
     process_name = get_process_name(xsection)
+    # Decide which GP to use depending on 'scale'
     
     # List all trained experts in the chosen directory
 
@@ -244,6 +238,44 @@ def DGP(xsection, features):
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
+
+
+    ########################################
+    # Assume here that mus, sigmas and
+    # sigma_priors are full arrays
+
+    N = len(mus)
+    
+    # Find weight (beta) for each expert
+    betas = 0.5*( 0.5*( np.log(sigma_priors) - np.log(sigmas) ) )
+
+    # Final mean and variance
+    mu_DGP = 0
+    sigma_DGP_neg = 0 # (sigma^2)^-1
+
+    # Combine sigmas
+    for i in range(N):
+        sigma_DGP_neg += betas[i] * sigmas[i]**(-1)+(1./n_experts - betas[i]) * sigma_priors[i]**(-1)
+
+    # Combine mus
+    for i in range(N):
+        mu_DGP +=  sigma_DGP_neg**(-1) * ( betas[i] * sigmas[i]**(-1) * mus[i] )
+
+
+    # Transform back to cross section
+    production_type = get_type([xsection])
+    
+
+        
+    # Return mean and variance, maybe change this to std
+    return mu_DGP, sigma_DGP_neg**(-1) 
+
+
+        
+
+        
+
+    
 
 
 # Jerieks part
