@@ -7,22 +7,29 @@ using DGP models trained by NIMBUS.
 
 # Check that joblib and pyslha are installed
 # OBS: This does not work with pip 10.0.1 ! 
-import pip
-
-pkgs = ['joblib', 'pyslha', 'pandas']
-for package in pkgs:
-    try:
-        import package
-    except ImportError, e:
-        pip.main(['install', package])
+# import pip
+# pkgs = ['joblib', 'pyslha']
+# for package in pkgs:
+#     try:
+#         import package
+#     except ImportError, e:
+#         # pip.main(['install', package])
 
 # Import packages
 import numpy as np
-import pandas as pd # Not pandas?
-import sys
+import os, sys
+from sklearn.externals import joblib
+from tempfile import mkdtemp
+
+# TO DO:
+# - remove sklearn dependency
+# - pyslha input 
+# - change asserts
+# - remove sklearn kernels dependency 
+# - check return_cov in GP_predict
 
 ###############################################
-# Module begins here                          #
+# Global variables                            #
 ###############################################
 
 xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input now
@@ -30,19 +37,56 @@ squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 200000
 gluino = 1000021
 
 
+# Temporary directory to store loaded GP models for use in predictive functions
+cachedir = mkdtemp()
+memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
 
-def load_models(xsections):
-    # Jeriek
-
-    # Load models, Ls, kernels; Xtrain, ytrain
-    # Make persistent, so you can load in GP function
+# For each selected process, store a reference to a cached list of trained GP model dictionaries 
+process_dict = {} 
 
 
-    # path_dict = {'gluino_gluino' : 'path to L', 'gluino_squark' : 'path to L',}
-    #L[xsection] = ...
-    
+###############################################
+# Loading functions                           #
+###############################################
+
+@memory.cache
+def load_single_process(xsection):
+    """
+    Given a single process, load the relevant trained GP models (saved as dictionaries)
+    and return them in a list 
+    """
+    assert len(xsection) == 2
+    process_name = get_process_name(xsection) # gives directory name
+    model_files = [f for f in os.listdir(process_name) if os.path.isfile(os.path.join(process_name, f))]
+    model_list = [] # list of GP model dictionaries 
+
+    for model_file in model_files:
+        with file(os.path.join(dir, model_file),"rb") as fo:
+            gp_model = joblib.load(fo)
+            # Reconvert float32 arrays to float64 for higher-precision computations
+            gp_model['X_train'] = gp_model['X_train'].astype('float64') 
+            gp_model['y_train'] = gp_model['y_train'].astype('float64') 
+            gp_model['L_inv'] = gp_model['L_inv'].astype('float64') 
+            gp_model['alpha'] = gp_model['alpha'].astype('float64')
+            gp_model['K_inv'] = gp_model['L_inv'].dot(gp_model['L_inv'].T)
+            model_list.append(gp_model)
+    return model_list
+
+
+def load_processes(xsections):
+    """
+    Given a list of processes, load all relevant trained GP models 
+    into a cache folder on disk
+    """
+    for xsection in xsections:
+        process_dict[xsection] = load_single_process.call_and_shelve(xsection)
+
     return 0
 
+
+###############################################
+# Helper functions                            #
+###############################################
 
 def get_type(xsections):
     process_type = {}
@@ -65,7 +109,6 @@ def get_type(xsections):
             process_type.update({xsection : 'gg'})
             
     return process_type
-
 
 
 def get_features(masses, xsections, types):
@@ -127,14 +170,33 @@ def get_features(masses, xsections, types):
     #return np.asarray(all_features)
     return all_features_dict
 
-        
+
+def get_process_name(process_index):
+    # Get the partons of the process
+    assert len(process_index) == 2
+    parton1 = process_index[0]
+    parton2 = process_index[1]
+
+    # Decide process name
+
+    # Check if one of the partons is a gluino
+    if parton1 == 1000021:
+        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
+    elif parton2 == 1000021:
+        process_name = str(parton2)+'_'+str(parton1)+'_NLO'
+
+    # Otherwise name starts with the largest parton PID
+    elif parton1 > parton2:
+        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
+    elif parton2 < parton1:
+        process_name =  str(parton2)+'_'+str(parton1)+'_NLO'
+
+    return process_name
 
 
-
-
-
-
-# Main function
+###############################################
+# Main functions                              #
+###############################################
             
 def eval_xsection(m1000021, m1000004, m1000003=None,
                   m1000001=None, m1000002=None, m2000002=None,
@@ -220,7 +282,6 @@ def DGP(xsection, features, scale):
     
     # List all trained experts in the chosen directory
 
-    import os
     models = os.listdir(process_name)
     n_experts = len(models)
 
@@ -234,7 +295,7 @@ def DGP(xsection, features, scale):
     for i in range(len(models)):
         model = models[i]
         print model
-        mu, sigma, sigma_prior = GP(model, process_name, features)
+        mu, sigma, sigma_prior = GP_predict(xsection, features, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
@@ -265,60 +326,71 @@ def DGP(xsection, features, scale):
     # Transform back to cross section
     production_type = get_type([xsection])
     
-
         
     # Return mean and variance, maybe change this to std
     return mu_DGP, sigma_DGP_neg**(-1) 
 
-
         
 
-        
-
-    
-
-
-# Jerieks part
-        
-def GP(model, xsection, features):
+def GP_predict(xsection, features, return_std=True, return_cov=False):
     """
-    The function that does Gaussian process regression
-    for the individual experts.
+    Gaussian process regression for the individual experts.
+    Takes as input arguments the produced partons, and an array of new
+    test features. Requires running load_processes(...) first, maybe this
+    can be incorporated later with a static counter.
 
-    Takes as input arguments the produced partons, and
-    a feature array. 
+    Returns a list of numpy arrays containing the mean value (the predicted 
+    cross-section), the GP standard deviation (or full covariance matrix), 
+    and the prior variance on the test features.
 
-    Returns a mean value (the predicted cross section), 
-    the GP standard deviation and the prior variance: 
-
-    prior variance = kernel( x_test, x_test)
+    Based on GaussianProcessRegressor.predict(...) from scikit-learn and 
+    algorithm 2.1 of Gaussian Processes for Machine Learning by Rasmussen
+    and Williams.
 
     """
-    #Linv = Linv[xsection]
-    
-    print 'Do GP regression using', model
-    return [1,1,1]
+    if return_std and return_cov:
+        raise RuntimeError("Cannot return both standard deviation " 
+                           "and full covariance.")
+
+    try:
+        gp_model = process_dict[xsection].get()[0]
+        kernel = gp_model['kernel']
+        X_train = gp_model['X_train']
+        alpha = gp_model['alpha']
+        # y_train = gp_model['y_train']
+        L_inv = gp_model['L_inv']
+        K_inv = gp_model['K_inv']
+        print ("Do GP regression for: " + get_process_name(xsection))
+    except KeyError:
+        print("No trained GP models loaded for: " + xsection)
+        return -1
+
+    X = features
+
+    K_trans = kernel(X, X_train) # transpose of K*
+    y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
+    # y_mean = y_train_mean + y_mean # Only use if normalisation performed
+
+    prior_variance = kernel(X)
+
+    if return_cov:
+        v = L_inv.dot(K_trans.T) # Line 5
+        y_cov = prior_variance - K_trans.dot(v)  # Line 6 -- CHECK THIS! NOT SAME IN GPML BOOK!
+        return [y_mean, y_cov, prior_variance]
+    elif return_std:
+        # Compute variance of predictive distribution
+        y_var = kernel.diag(X)
+        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
+
+        # Check if any of the variances is negative because of
+        # numerical issues. If yes: set the variance to 0.
+        y_var_negative = y_var < 0
+        if np.any(y_var_negative):
+            warnings.warn("Predicted variances smaller than 0. "
+                          "Setting those variances to 0.")
+            y_var[y_var_negative] = 0.0
+        return [y_mean, np.sqrt(y_var), prior_variance]
+    else:
+        return y_mean
 
 
-
-
-def get_process_name(process_index):
-    # Get the partons of the process
-    parton1 = process_index[0]
-    parton2 = process_index[1]
-
-    # Decide process name
-
-    # Check if one of the partons is a gluino
-    if parton1 == 1000021:
-        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif parton2 == 1000021:
-        process_name = str(parton2)+'_'+str(parton1)+'_NLO'
-
-    # Otherwise name starts with the largest parton PID
-    elif parton1 > parton2:
-        process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif parton2 < parton1:
-        proess_name =  str(parton2)+'_'+str(parton1)+'_NLO'
-
-    return process_name
