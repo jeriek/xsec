@@ -18,11 +18,12 @@ using DGP models trained by NIMBUS.
 # Import packages
 import numpy as np
 import os, sys
-from sklearn.externals import joblib
+import joblib
 from tempfile import mkdtemp
 
+import kernels
+
 # TO DO:
-# - remove sklearn dependency
 # - pyslha input 
 # - change asserts
 # - remove sklearn kernels dependency 
@@ -41,6 +42,11 @@ gluino = 1000021
 cachedir = mkdtemp()
 memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
 
+# cachedir parameter deprecated in joblib 0.12, check new examples on GitHub
+# location = './cachedir'
+# memory = joblib.Memory(location, mmap_mode='r')
+
+
 # For each selected process, store a reference to a cached list of trained GP model dictionaries 
 process_dict = {} 
 
@@ -53,7 +59,7 @@ process_dict = {}
 def load_single_process(xsection):
     """
     Given a single process, load the relevant trained GP models (saved as dictionaries)
-    and return them in a list 
+    and return them in a list.
     """
     assert len(xsection) == 2
     process_name = get_process_name(xsection) # gives directory name
@@ -69,6 +75,8 @@ def load_single_process(xsection):
             gp_model['L_inv'] = gp_model['L_inv'].astype('float64') 
             gp_model['alpha'] = gp_model['alpha'].astype('float64')
             gp_model['K_inv'] = gp_model['L_inv'].dot(gp_model['L_inv'].T)
+            # Change kernel parameter dictionary to Matern+WhiteKernel function
+            gp_model['kernel'] = set_kernel(gp_model['kernel'])
             model_list.append(gp_model)
     return model_list
 
@@ -76,12 +84,36 @@ def load_single_process(xsection):
 def load_processes(xsections):
     """
     Given a list of processes, load all relevant trained GP models 
-    into a cache folder on disk
+    into a cache folder on disk.
     """
     for xsection in xsections:
         process_dict[xsection] = load_single_process.call_and_shelve(xsection)
 
     return 0
+
+def set_kernel(params):
+    """
+    Given a parameter dictionary with keys {'matern_prefactor', 'matern_lengthscale', 
+    'matern_nu', 'whitekernel_noiselevel'}, return the corresponding (curried) Matern+WhiteKernel 
+    function of X and Y (default Y=None).
+    """
+
+    def kernel_function(X, Y=None):
+        """
+        Return the kernel function k(X, Y). Not using a kernel class object in this version.
+        """
+
+        noise_level = params['whitekernel_noiselevel']
+        prefactor = params['matern_prefactor']
+        nu = params['matern_nu']
+        length_scale = params['matern_lengthscale']
+
+        sum = kernels.WhiteKernel(X, Y, noise_level) + prefactor*kernels.MaternKernel(X, Y, length_scale, nu)
+
+        return sum
+    
+    return kernel_function
+
 
 
 ###############################################
@@ -357,6 +389,7 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
         alpha = gp_model['alpha']
+        kernel = gp_model['kernel']
         # y_train = gp_model['y_train']
         L_inv = gp_model['L_inv']
         K_inv = gp_model['K_inv']
@@ -365,7 +398,7 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
         print("No trained GP models loaded for: " + xsection)
         return -1
 
-    X = features
+    X = np.atleast_2d(features) # needed?
 
     K_trans = kernel(X, X_train) # transpose of K*
     y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
@@ -379,7 +412,7 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
         return [y_mean, y_cov, prior_variance]
     elif return_std:
         # Compute variance of predictive distribution
-        y_var = kernel.diag(X)
+        y_var = np.diag(kernel(X)) # can be optimised in class object with kernel.diag(X)!
         y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
 
         # Check if any of the variances is negative because of
