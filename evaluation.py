@@ -67,7 +67,7 @@ def load_single_process(xsection):
     model_list = [] # list of GP model dictionaries 
 
     for model_file in model_files:
-        with file(os.path.join(dir, model_file),"rb") as fo:
+        with open(os.path.join(process_name, model_file),"rb") as fo:
             gp_model = joblib.load(fo)
             # Reconvert float32 arrays to float64 for higher-precision computations
             gp_model['X_train'] = gp_model['X_train'].astype('float64') 
