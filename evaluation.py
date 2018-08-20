@@ -61,8 +61,15 @@ def load_single_process(xsection):
     Given a single process, load the relevant trained GP models (saved as dictionaries)
     and return them in a list.
     """
+
+    # Xsection is a list containing a single tuple
+    xsection =  xsection[0]
+    
     assert len(xsection) == 2
     process_name = get_process_name(xsection) # gives directory name
+
+    print 'The name is', process_name
+    
     model_files = [f for f in os.listdir(process_name) if os.path.isfile(os.path.join(process_name, f))]
     model_list = [] # list of GP model dictionaries 
 
@@ -218,9 +225,9 @@ def get_process_name(process_index):
         process_name = str(parton2)+'_'+str(parton1)+'_NLO'
 
     # Otherwise name starts with the largest parton PID
-    elif parton1 > parton2:
+    elif abs(parton1) > abs(parton2):
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif parton2 < parton1:
+    elif abs(parton2) < abs(parton1):
         process_name =  str(parton2)+'_'+str(parton1)+'_NLO'
 
     return process_name
@@ -380,6 +387,9 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
     and Williams.
 
     """
+
+    print "I'm in"
+    
     if return_std and return_cov:
         raise RuntimeError("Cannot return both standard deviation " 
                            "and full covariance.")
@@ -395,9 +405,11 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
         K_inv = gp_model['K_inv']
         print ("Do GP regression for: " + get_process_name(xsection))
     except KeyError:
-        print("No trained GP models loaded for: " + xsection)
+        print('No trained GP models loaded for: ' + str(xsection))
         return -1
 
+    print "Made it this far"
+    
     X = np.atleast_2d(features) # needed?
 
     K_trans = kernel(X, X_train) # transpose of K*
