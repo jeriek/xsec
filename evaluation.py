@@ -77,11 +77,13 @@ def load_single_process(xsection):
     Given a single process, load the relevant trained GP models (saved as dictionaries)
     and return them in a list.
     """
+
     assert len(xsection) == 2
     process_dir = os.path.join(DATA_DIR, get_process_name(xsection)) # gives directory name
     model_files = [os.path.join(process_dir, f) for f in os.listdir(process_dir) 
                     if os.path.isfile(os.path.join(process_dir, f))]
     # print(model_files)
+
     model_list = [] # list of GP model dictionaries 
 
     for model_file in model_files:
@@ -106,6 +108,7 @@ def load_processes(xsections):
     Given a list of processes, load all relevant trained GP models 
     into a cache folder on disk.
     """
+
     for xsection in xsections:
         process_dict[xsection] = load_single_process.call_and_shelve(xsection)
 
@@ -241,9 +244,9 @@ def get_process_name(process_index):
         process_name = str(parton2)+'_'+str(parton1)+'_NLO'
 
     # Otherwise name starts with the largest parton PID
-    elif parton1 > parton2:
+    elif abs(parton1) > abs(parton2):
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif parton2 < parton1:
+    elif abs(parton2) < abs(parton1):
         process_name =  str(parton2)+'_'+str(parton1)+'_NLO'
 
     return process_name
@@ -406,6 +409,7 @@ def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
     and Williams.
 
     """
+   
     if return_std and return_cov:
         raise RuntimeError("Cannot return both standard deviation " 
                            "and full covariance.")
@@ -427,7 +431,7 @@ def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
         print(KeyError, e)
         print("No trained GP models loaded for: " + str(xsection)) 
         return None
-
+    
     X = np.atleast_2d(features) # needed?
 
     K_trans = kernel(X, X_train) # transpose of K*
