@@ -16,18 +16,32 @@ using DGP models trained by NIMBUS.
 #         # pip.main(['install', package])
 
 # Import packages
-import numpy as np
 import os, sys
+import socket
+import numpy as np
 import joblib
 from tempfile import mkdtemp
 
 import kernels
 
+print('Numpy version ' + np.__version__)
+print('Joblib version ' + joblib.__version__)
+
+
+HOSTNAME = socket.gethostname()
+
+if HOSTNAME == 'Lorien':
+    DATA_DIR = '/home/jeriek/Documents/prospino-PointSampler/NIMBUS/GPdata'
+elif HOSTNAME == 'yourhostname123':
+    DATA_DIR = '/your/GP/model/data/directory/'
+else:
+    print("Error: unknown hostname -- specify your data directory first")
+    sys.exit()
+
+
 # TO DO:
 # - pyslha input 
 # - change asserts
-# - remove sklearn kernels dependency 
-# - check return_cov in GP_predict
 
 ###############################################
 # Global variables                            #
@@ -40,7 +54,9 @@ gluino = 1000021
 
 # Temporary directory to store loaded GP models for use in predictive functions
 cachedir = mkdtemp()
-memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
+# memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
+memory = joblib.Memory(cachedir=cachedir, mmap_mode='c')
+print("Cache folder: "+str(cachedir))
 
 # cachedir parameter deprecated in joblib 0.12, check new examples on GitHub
 # location = './cachedir'
@@ -62,24 +78,28 @@ def load_single_process(xsection):
     and return them in a list.
     """
     assert len(xsection) == 2
-    process_name = get_process_name(xsection) # gives directory name
-    model_files = [f for f in os.listdir(process_name) if os.path.isfile(os.path.join(process_name, f))]
+    process_dir = os.path.join(DATA_DIR, get_process_name(xsection)) # gives directory name
+    model_files = [os.path.join(process_dir, f) for f in os.listdir(process_dir) 
+                    if os.path.isfile(os.path.join(process_dir, f))]
+    # print(model_files)
     model_list = [] # list of GP model dictionaries 
 
     for model_file in model_files:
-        with open(os.path.join(process_name, model_file),"rb") as fo:
+        with open(model_file,"rb") as fo:
             gp_model = joblib.load(fo)
             # Reconvert float32 arrays to float64 for higher-precision computations
-            gp_model['X_train'] = gp_model['X_train'].astype('float64') 
-            gp_model['y_train'] = gp_model['y_train'].astype('float64') 
-            gp_model['L_inv'] = gp_model['L_inv'].astype('float64') 
-            gp_model['alpha'] = gp_model['alpha'].astype('float64')
-            gp_model['K_inv'] = gp_model['L_inv'].dot(gp_model['L_inv'].T)
+            gp_reco = {}
+            gp_reco['X_train'] = gp_model['X_train'].astype('float64')
+            gp_reco['y_train'] = gp_model['y_train'].astype('float64')
+            gp_reco['L_inv'] = gp_model['L_inv'].astype('float64') 
+            gp_reco['alpha'] = gp_model['alpha'].astype('float64')
+            gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
             # Change kernel parameter dictionary to Matern+WhiteKernel function
-            gp_model['kernel'] = set_kernel(gp_model['kernel'])
-            model_list.append(gp_model)
-    return model_list
+            # gp_reco['kernel'] = set_kernel(gp_model['kernel']) # NOTE: not working since joblib won't memmap complex callable objects
+            gp_reco['kernel'] = gp_model['kernel'] # for now, initialise kernel functions in GP_predict()
+            model_list.append(gp_reco)
 
+    return model_list
 
 def load_processes(xsections):
     """
@@ -108,10 +128,13 @@ def set_kernel(params):
         nu = params['matern_nu']
         length_scale = params['matern_lengthscale']
 
-        sum = kernels.WhiteKernel(X, Y, noise_level) + prefactor*kernels.MaternKernel(X, Y, length_scale, nu)
+        if Y is None:
+            sum = kernels.WhiteKernel(X, noise_level=noise_level) + prefactor*kernels.MaternKernel(X, length_scale=length_scale, nu=nu)
+        else:
+            sum = kernels.WhiteKernel(X, Y, noise_level=noise_level) + prefactor*kernels.MaternKernel(X, Y, length_scale=length_scale, nu=nu)
 
         return sum
-    
+
     return kernel_function
 
 
@@ -298,7 +321,7 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         for xsection in xsections:
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
-            scale_2_dgp, sigma_2_dgp = DGP_2(xsection, features[xsection], scale=2.0)
+            scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
             
         return 0
 
@@ -314,7 +337,7 @@ def DGP(xsection, features, scale):
     
     # List all trained experts in the chosen directory
 
-    models = os.listdir(process_name)
+    models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
 
     # Empty arrays where all predicted numbers are stored
@@ -327,10 +350,12 @@ def DGP(xsection, features, scale):
     for i in range(len(models)):
         model = models[i]
         print model
-        mu, sigma, sigma_prior = GP_predict(xsection, features, return_std=True)
+        mu, sigma, sigma_prior = GP_predict(xsection, features, index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
+
+        print mu, sigma, sigma_prior 
 
 
     ########################################
@@ -364,11 +389,12 @@ def DGP(xsection, features, scale):
 
         
 
-def GP_predict(xsection, features, return_std=True, return_cov=False):
+def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
     """
     Gaussian process regression for the individual experts.
-    Takes as input arguments the produced partons, and an array of new
-    test features. Requires running load_processes(...) first, maybe this
+    Takes as input arguments the produced partons, an array of new
+    test features, and the index number of the expert. 
+    Requires running load_processes(...) first, maybe this
     can be incorporated later with a static counter.
 
     Returns a list of numpy arrays containing the mean value (the predicted 
@@ -385,18 +411,22 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
                            "and full covariance.")
 
     try:
-        gp_model = process_dict[xsection].get()[0]
+        # model_list = process_dict[xsection].get() # list of loaded models for the specified process 
+        gp_model = process_dict[xsection].get()[index]
+
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
         alpha = gp_model['alpha']
-        kernel = gp_model['kernel']
-        # y_train = gp_model['y_train']
+        # y_train = gp_model['y_train'] # not needed if we don't normalise?
         L_inv = gp_model['L_inv']
         K_inv = gp_model['K_inv']
+        # kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
+        kernel = set_kernel(gp_model['kernel'])
         print ("Do GP regression for: " + get_process_name(xsection))
-    except KeyError:
-        print("No trained GP models loaded for: " + xsection)
-        return -1
+    except KeyError, e:
+        print(KeyError, e)
+        print("No trained GP models loaded for: " + str(xsection)) 
+        return None
 
     X = np.atleast_2d(features) # needed?
 
@@ -408,11 +438,12 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
 
     if return_cov:
         v = L_inv.dot(K_trans.T) # Line 5
-        y_cov = prior_variance - K_trans.dot(v)  # Line 6 -- CHECK THIS! NOT SAME IN GPML BOOK!
+        y_cov = prior_variance - K_trans.dot(v)  # Line 6
         return [y_mean, y_cov, prior_variance]
     elif return_std:
         # Compute variance of predictive distribution
-        y_var = np.diag(kernel(X)) # can be optimised in class object with kernel.diag(X)!
+        y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
+        y_var.setflags(write=True) # somehow this array is set to read-only
         y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
 
         # Check if any of the variances is negative because of
@@ -422,7 +453,7 @@ def GP_predict(xsection, features, return_std=True, return_cov=False):
             warnings.warn("Predicted variances smaller than 0. "
                           "Setting those variances to 0.")
             y_var[y_var_negative] = 0.0
-        return [y_mean, np.sqrt(y_var), prior_variance]
+        return y_mean, np.sqrt(y_var), prior_variance.flatten()
     else:
         return y_mean
 
