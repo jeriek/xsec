@@ -3,18 +3,6 @@ This program evaluates cross sections
 using DGP models trained by NIMBUS.
 """
 
-# Return exp(mu)*exp(0.5*log(10)*sigma**2)
-
-# Check that joblib and pyslha are installed
-# OBS: This does not work with pip 10.0.1 ! 
-# import pip
-# pkgs = ['joblib', 'pyslha']
-# for package in pkgs:
-#     try:
-#         import package
-#     except ImportError, e:
-#         # pip.main(['install', package])
-
 # Import packages
 import os, sys
 import socket
@@ -32,6 +20,8 @@ HOSTNAME = socket.gethostname()
 
 if HOSTNAME == 'Lorien':
     DATA_DIR = '/home/jeriek/Documents/prospino-PointSampler/NIMBUS/GPdata'
+elif HOSTNAME == 'audrey3':
+    DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
 elif HOSTNAME == 'yourhostname123':
     DATA_DIR = '/your/GP/model/data/directory/'
 else:
@@ -248,7 +238,7 @@ def get_process_name(process_index):
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
     elif abs(parton2) < abs(parton1):
         process_name =  str(parton2)+'_'+str(parton1)+'_NLO'
-
+        
     return process_name
 
 
@@ -325,6 +315,7 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
+            # Here we put in PDF and alpha variations
             
         return 0
 
@@ -336,12 +327,19 @@ def DGP(xsection, features, scale):
     # of model folder
     
     process_name = get_process_name(xsection)
+    if scale==0.5:
+        process_name = process_name+'_05'
+    elif scale==2.0:
+        process_name = process_name+'_2'
     # Decide which GP to use depending on 'scale'
+    print process_name
     
     # List all trained experts in the chosen directory
 
     models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
+
+    print 'Models', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
@@ -352,13 +350,11 @@ def DGP(xsection, features, scale):
     # Loop over GP models/experts
     for i in range(len(models)):
         model = models[i]
-        print model
         mu, sigma, sigma_prior = GP_predict(xsection, features, index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
-
-        print mu, sigma, sigma_prior 
+        print mu, sigma
 
 
     ########################################
@@ -409,7 +405,7 @@ def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
     and Williams.
 
     """
-   
+    
     if return_std and return_cov:
         raise RuntimeError("Cannot return both standard deviation " 
                            "and full covariance.")
