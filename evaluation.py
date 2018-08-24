@@ -416,12 +416,11 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
     Gaussian process regression for the individual experts.
     Takes as input arguments the produced partons, an array of new
     test features, and the index number of the expert. 
-    Requires running load_processes(...) first, maybe this
-    can be incorporated later with a static counter.
+    Requires running load_processes(...) first.
 
     Returns a list of numpy arrays containing the mean value (the predicted 
     cross-section), the GP standard deviation (or full covariance matrix), 
-    and the prior variance on the test features.
+    and the square of the prior variance on the test features.
 
     Based on GaussianProcessRegressor.predict(...) from scikit-learn and 
     algorithm 2.1 of Gaussian Processes for Machine Learning by Rasmussen
@@ -480,7 +479,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
             warnings.warn("Predicted variances smaller than 0. "
                           "Setting those variances to 0.")
             y_var[y_var_negative] = 0.0
-        return y_mean, np.sqrt(y_var), prior_variance.flatten()
+        return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
     else:
         return y_mean
 
