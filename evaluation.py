@@ -9,15 +9,15 @@ import socket
 import numpy as np
 import joblib
 from tempfile import mkdtemp
-
+import warnings
 import kernels
 
 print('Numpy version ' + np.__version__)
 print('Joblib version ' + joblib.__version__)
 
 
+# Specify GP model data directory
 HOSTNAME = socket.gethostname()
-
 if HOSTNAME == 'Lorien':
     DATA_DIR = '/home/jeriek/Documents/prospino-PointSampler/NIMBUS/GPdata'
 elif HOSTNAME == 'audrey3':
@@ -27,6 +27,9 @@ elif HOSTNAME == 'yourhostname123':
 else:
     print("Error: unknown hostname -- specify your data directory first")
     sys.exit()
+
+# Specify available variation parameters (the exact GP model directory suffixes)
+VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
 
 
 # TO DO:
@@ -38,6 +41,7 @@ else:
 ###############################################
 
 xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input now
+
 squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 2000004]
 gluino = 1000021
 
@@ -45,7 +49,7 @@ gluino = 1000021
 # Temporary directory to store loaded GP models for use in predictive functions
 cachedir = mkdtemp()
 # memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
-memory = joblib.Memory(cachedir=cachedir, mmap_mode='c')
+memory = joblib.Memory(cachedir=cachedir, mmap_mode='c',verbose=0) # memmap mode: copy on write
 print("Cache folder: "+str(cachedir))
 
 # cachedir parameter deprecated in joblib 0.12, check new examples on GitHub
@@ -62,14 +66,17 @@ process_dict = {}
 ###############################################
 
 @memory.cache
-def load_single_process(xsection):
+def load_single_process(xsection_var):
     """
     Given a single process, load the relevant trained GP models (saved as dictionaries)
-    and return them in a list.
+    and return them in a list. The input argumen xsection_var is a 3-tuple (xsection[0],xsection[1],var)
+    where the first two numbers represent the process and the last component is a string ('','05','2',...)
+    from VARIATION_PAR, the list of 
     """
 
-    assert len(xsection) == 2
-    process_dir = os.path.join(DATA_DIR, get_process_name(xsection)) # gives directory name
+    assert len(xsection_var) == 3
+    process_dir = os.path.join(DATA_DIR, get_process_name(xsection_var))
+
     model_files = [os.path.join(process_dir, f) for f in os.listdir(process_dir) 
                     if os.path.isfile(os.path.join(process_dir, f))]
     # print(model_files)
@@ -82,7 +89,7 @@ def load_single_process(xsection):
             # Reconvert float32 arrays to float64 for higher-precision computations
             gp_reco = {}
             gp_reco['X_train'] = gp_model['X_train'].astype('float64')
-            gp_reco['y_train'] = gp_model['y_train'].astype('float64')
+            # gp_reco['y_train'] = gp_model['y_train'].astype('float64')
             gp_reco['L_inv'] = gp_model['L_inv'].astype('float64') 
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
@@ -100,8 +107,10 @@ def load_processes(xsections):
     """
 
     for xsection in xsections:
-        process_dict[xsection] = load_single_process.call_and_shelve(xsection)
-
+        # Search for all directories with same process, but cross-section calculated at varied parameters
+        for var in VARIATION_PAR:
+            xsection_var = (xsection[0],xsection[1],var)
+            process_dict[xsection_var] = load_single_process.call_and_shelve(xsection_var)
     return 0
 
 def set_kernel(params):
@@ -140,8 +149,7 @@ def get_type(xsections):
     process_type = {}
 
     # Calculate alpha for wanted production channels
-    for i in range(len(xsections)):
-        xsection = xsections[i]
+    for xsection in xsections:
         
         if xsection[0] in squarks and xsection[1] in squarks:
             process_type.update({xsection : 'qq'})
@@ -161,11 +169,11 @@ def get_type(xsections):
 
 def get_features(masses, xsections, types):
 
-    all_features = range(len(xsections))
+    all_features = range(len(xsections)) # initialise dummy list
     # As dict
     all_features_dict = {}
 
-    print all_features
+    # print all_features
     mean_index = ['m1000004', 'm1000003','m1000001','m1000002',
                   'm2000002', 'm2000001','m2000003','m2000004']
 
@@ -219,14 +227,14 @@ def get_features(masses, xsections, types):
     return all_features_dict
 
 
-def get_process_name(process_index):
+def get_process_name(xsection_var):
     # Get the partons of the process
-    assert len(process_index) == 2
-    parton1 = process_index[0]
-    parton2 = process_index[1]
+    assert len(xsection_var) == 3
+    parton1 = xsection_var[0]
+    parton2 = xsection_var[1]
+    param = xsection_var[2]
 
     # Decide process name
-
     # Check if one of the partons is a gluino
     if parton1 == 1000021:
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
@@ -234,11 +242,15 @@ def get_process_name(process_index):
         process_name = str(parton2)+'_'+str(parton1)+'_NLO'
 
     # Otherwise name starts with the largest parton PID
-    elif abs(parton1) > abs(parton2):
+    elif abs(parton1) >= abs(parton2):
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif abs(parton2) < abs(parton1):
+    elif abs(parton1) < abs(parton2):
         process_name =  str(parton2)+'_'+str(parton1)+'_NLO'
-        
+    
+    # Add scale like '05','2' or other variation parameter like 'aup', 'adn'
+    if param in VARIATION_PAR and param is not '': # '' is also in VARIATION_PAR 
+        process_name += '_'+param
+
     return process_name
 
 
@@ -310,13 +322,20 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         # Do DGP regression                               #
         ###################################################
         
+        load_processes(xsections)
 
-        for xsection in xsections:
+        for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
+            print "DGP, scale 1:", mu_dgp, sigma_dgp
+            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
+            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
-            
+
+        # Flush the cache completely  
+        memory.clear(warn=True)
+
         return 0
 
 
@@ -326,12 +345,17 @@ def DGP(xsection, features, scale):
     # Get name of production channel, and name
     # of model folder
     
-    process_name = get_process_name(xsection)
     if scale==0.5:
-        process_name = process_name+'_05'
+        # process_name = process_name+'_05'
+        xsection_var = (xsection[0],xsection[1],'05')
     elif scale==2.0:
-        process_name = process_name+'_2'
+        # process_name = process_name+'_2'
+        xsection_var = (xsection[0],xsection[1],'2')
+    else:
+        xsection_var = (xsection[0],xsection[1],'')
+
     # Decide which GP to use depending on 'scale'
+    process_name = get_process_name(xsection_var)
     print process_name
     
     # List all trained experts in the chosen directory
@@ -339,7 +363,7 @@ def DGP(xsection, features, scale):
     models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
 
-    print 'Models', models
+    print 'Models:', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
@@ -349,13 +373,12 @@ def DGP(xsection, features, scale):
     
     # Loop over GP models/experts
     for i in range(len(models)):
-        model = models[i]
-        mu, sigma, sigma_prior = GP_predict(xsection, features, index=i, return_std=True)
+        # model = models[i]
+        mu, sigma, sigma_prior = GP_predict(xsection_var, features, index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
-        print mu, sigma
-
+        print "-- Resulting mu, sigma:", mu, sigma
 
     ########################################
     # Assume here that mus, sigmas and
@@ -388,7 +411,7 @@ def DGP(xsection, features, scale):
 
         
 
-def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
+def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=False):
     """
     Gaussian process regression for the individual experts.
     Takes as input arguments the produced partons, an array of new
@@ -411,8 +434,8 @@ def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
                            "and full covariance.")
 
     try:
-        # model_list = process_dict[xsection].get() # list of loaded models for the specified process 
-        gp_model = process_dict[xsection].get()[index]
+        # model_list = process_dict[xsection_var].get() # list of loaded models for the specified process 
+        gp_model = process_dict[xsection_var].get()[index]
 
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
@@ -422,13 +445,17 @@ def GP_predict(xsection, features, index=0, return_std=True, return_cov=False):
         K_inv = gp_model['K_inv']
         # kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
         kernel = set_kernel(gp_model['kernel'])
-        print ("Do GP regression for: " + get_process_name(xsection))
+
+        if xsection_var[2] == '':
+            print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
+        else:
+            print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
     except KeyError, e:
         print(KeyError, e)
-        print("No trained GP models loaded for: " + str(xsection)) 
+        print("No trained GP models loaded for: " + str(xsection_var)) 
         return None
     
-    X = np.atleast_2d(features) # needed?
+    X = np.atleast_2d(features) # not needed if just 1 new test point!
 
     K_trans = kernel(X, X_train) # transpose of K*
     y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
