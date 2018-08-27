@@ -387,7 +387,7 @@ def DGP(xsection, features, scale):
     N = len(mus)
     
     # Find weight (beta) for each expert
-    betas = 0.5*( 0.5*( np.log(sigma_priors) - np.log(sigmas) ) )
+    betas = 0.5*(  2*np.log(sigma_priors) - 2*np.log(sigmas) )
 
     # Final mean and variance
     mu_DGP = 0
@@ -395,11 +395,11 @@ def DGP(xsection, features, scale):
 
     # Combine sigmas
     for i in range(N):
-        sigma_DGP_neg += betas[i] * sigmas[i]**(-1)+(1./n_experts - betas[i]) * sigma_priors[i]**(-1)
+        sigma_DGP_neg += betas[i] * sigmas[i]**(-2)+(1./n_experts - betas[i]) * sigma_priors[i]**(-2)
 
     # Combine mus
     for i in range(N):
-        mu_DGP +=  sigma_DGP_neg**(-1) * ( betas[i] * sigmas[i]**(-1) * mus[i] )
+        mu_DGP +=  sigma_DGP_neg**(-2) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
 
 
     # Transform back to cross section
