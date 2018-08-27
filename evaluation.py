@@ -32,9 +32,6 @@ else:
 VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
 
 
-# TO DO:
-# - pyslha input 
-# - change asserts
 
 ###############################################
 # Global variables                            #
@@ -48,13 +45,8 @@ gluino = 1000021
 
 # Temporary directory to store loaded GP models for use in predictive functions
 cachedir = mkdtemp()
-# memory = joblib.Memory(cachedir=cachedir, mmap_mode='r')
-memory = joblib.Memory(cachedir=cachedir, mmap_mode='c',verbose=0) # memmap mode: copy on write
+memory = joblib.Memory(location=cachedir, mmap_mode='c',verbose=0) # memmap mode: copy on write
 print("Cache folder: "+str(cachedir))
-
-# cachedir parameter deprecated in joblib 0.12, check new examples on GitHub
-# location = './cachedir'
-# memory = joblib.Memory(location, mmap_mode='r')
 
 
 # For each selected process, store a reference to a cached list of trained GP model dictionaries 
@@ -69,9 +61,9 @@ process_dict = {}
 def load_single_process(xsection_var):
     """
     Given a single process, load the relevant trained GP models (saved as dictionaries)
-    and return them in a list. The input argumen xsection_var is a 3-tuple (xsection[0],xsection[1],var)
+    and return them in a list. The input argument xsection_var is a 3-tuple (xsection[0],xsection[1],var)
     where the first two numbers represent the process and the last component is a string ('','05','2',...)
-    from VARIATION_PAR, the list of 
+    from VARIATION_PAR.
     """
 
     assert len(xsection_var) == 3
@@ -391,23 +383,23 @@ def DGP(xsection, features, scale):
 
     # Final mean and variance
     mu_DGP = 0
-    sigma_DGP_neg = 0 # (sigma^2)^-1
+    var_DGP_neg = 0 # (sigma^2)^-1
 
     # Combine sigmas
     for i in range(N):
-        sigma_DGP_neg += betas[i] * sigmas[i]**(-2)+(1./n_experts - betas[i]) * sigma_priors[i]**(-2)
+        var_DGP_neg += betas[i] * sigmas[i]**(-2)+(1./n_experts - betas[i]) * sigma_priors[i]**(-2)
 
     # Combine mus
     for i in range(N):
-        mu_DGP +=  sigma_DGP_neg**(-2) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
+        mu_DGP +=  var_DGP_neg**(-1) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
 
 
     # Transform back to cross section
     production_type = get_type([xsection])
     
         
-    # Return mean and variance, maybe change this to std
-    return mu_DGP, sigma_DGP_neg**(-1) 
+    # Return mean and std
+    return mu_DGP, np.sqrt(var_DGP_neg**(-1)) 
 
         
 
