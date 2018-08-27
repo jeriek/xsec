@@ -8,7 +8,6 @@ import os, sys
 import socket
 import numpy as np
 import joblib
-from tempfile import mkdtemp
 import warnings
 import kernels
 
@@ -28,8 +27,29 @@ else:
     print("Error: unknown hostname -- specify your data directory first")
     sys.exit()
 
+# Specify whether to cache data on disk (default: False)
+USE_CACHE = False
+# USE_CACHE = True
+
+# Specify whether to flush disk cache after each eval_xsection() call (default: True)
+# Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
+FLUSH_CACHE = True
+# FLUSH_CACHE = False 
+
+# Specify cache directory on disk; if empty string, tempfile.mkdtemp() will set it automatically
+CACHE_DIR = ""
+# CACHE_DIR = "$HOME/xsec_cache"
+
+# Specify whether using memory mapping when loading arrays into cache (default: False)
+USE_MEMMAP = False
+# USE_MEMMAP = True
+
+# Fastest settings (for small GP files!): USE_CACHE = False, FLUSH_CACHE = False, USE_MEMMAP = False
+
 # Specify available variation parameters (the exact GP model directory suffixes)
 VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
+
+
 
 
 
@@ -44,9 +64,19 @@ gluino = 1000021
 
 
 # Temporary directory to store loaded GP models for use in predictive functions
-cachedir = mkdtemp()
-memory = joblib.Memory(location=cachedir, mmap_mode='c',verbose=0) # memmap mode: copy on write
-print("Cache folder: "+str(cachedir))
+if USE_CACHE:
+    if CACHE_DIR and os.path.isdir(os.path.expandvars(CACHE_DIR)): # expand environment variables
+        cachedir = os.path.expandvars(CACHE_DIR)    
+    else:
+        from tempfile import mkdtemp
+        cachedir = mkdtemp(prefix='xsec_')
+    if USE_MEMMAP:
+        memmap_mode = 'c' # memmap mode: copy on write
+    else:
+        memmap_mode = None
+
+    memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
+    print("Cache folder: "+str(cachedir))
 
 
 # For each selected process, store a reference to a cached list of trained GP model dictionaries 
@@ -57,7 +87,6 @@ process_dict = {}
 # Loading functions                           #
 ###############################################
 
-@memory.cache
 def load_single_process(xsection_var):
     """
     Given a single process, load the relevant trained GP models (saved as dictionaries)
@@ -70,7 +99,7 @@ def load_single_process(xsection_var):
     process_dir = os.path.join(DATA_DIR, get_process_name(xsection_var))
 
     model_files = [os.path.join(process_dir, f) for f in os.listdir(process_dir) 
-                    if os.path.isfile(os.path.join(process_dir, f))]
+                    if os.path.isfile(os.path.join(process_dir, f))] # Can remove this check for speed-up!
     # print(model_files)
 
     model_list = [] # list of GP model dictionaries 
@@ -98,11 +127,17 @@ def load_processes(xsections):
     into a cache folder on disk.
     """
 
+    if USE_CACHE: 
+        load_single_process_cache = memory.cache(load_single_process)
+
     for xsection in xsections:
         # Search for all directories with same process, but cross-section calculated at varied parameters
         for var in VARIATION_PAR:
             xsection_var = (xsection[0],xsection[1],var)
-            process_dict[xsection_var] = load_single_process.call_and_shelve(xsection_var)
+            if USE_CACHE:
+                process_dict[xsection_var] = load_single_process_cache.call_and_shelve(xsection_var)
+            else:
+                process_dict[xsection_var] = load_single_process(xsection_var)
     return 0
 
 def set_kernel(params):
@@ -325,8 +360,9 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
 
-        # Flush the cache completely  
-        memory.clear(warn=True)
+        if USE_CACHE and FLUSH_CACHE:
+            # Flush the cache completely  
+            memory.clear(warn=True)
 
         return 0
 
@@ -425,8 +461,11 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
                            "and full covariance.")
 
     try:
-        # model_list = process_dict[xsection_var].get() # list of loaded models for the specified process 
-        gp_model = process_dict[xsection_var].get()[index]
+        if USE_CACHE:
+            # model_list = process_dict[xsection_var].get() # list of loaded models for the specified process 
+            gp_model = process_dict[xsection_var].get()[index]
+        else:
+            gp_model = process_dict[xsection_var][index]
 
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
