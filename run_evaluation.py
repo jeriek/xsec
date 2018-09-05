@@ -8,8 +8,8 @@ with slha-file as input
 import evaluation as eval
 
 # eval.xsections = [(1000021, 1000001), (1000021, 1000003)]
-eval.xsections = [(1000001, -1000001), (1000001, 1000002)]
-# eval.xsections = [(1000021, 1000021)]
+#eval.xsections = [(1000001, -1000001), (1000001, 1000002)]
+eval.xsections = [(1000021, 1000021)]
 a = eval.get_type(eval.xsections)
 print 'See here', a
 

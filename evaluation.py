@@ -314,6 +314,7 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             # are degenerate, and set to m1000004
             
             print 'This is the common mass'
+            m1000003 = m1000004
             m1000001 = m1000004
             m1000002 = m1000004
             m2000002 = m1000004
