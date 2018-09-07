@@ -11,21 +11,28 @@ import joblib
 import warnings
 import kernels
 
+import time
+
+
 print('Numpy version ' + np.__version__)
 print('Joblib version ' + joblib.__version__)
 
 
 # Specify GP model data directory
-HOSTNAME = socket.gethostname()
-if HOSTNAME == 'Lorien':
-    DATA_DIR = '/home/jeriek/Documents/prospino-PointSampler/NIMBUS/GPdata'
-elif HOSTNAME == 'audrey3':
-    DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
-elif HOSTNAME == 'yourhostname123':
-    DATA_DIR = '/your/GP/model/data/directory/'
-else:
-    print("Error: unknown hostname -- specify your data directory first")
-    sys.exit()
+# HOSTNAME = socket.gethostname()
+# if HOSTNAME == 'Lorien':
+#     # DATA_DIR = '/home/jeriek/Documents/xsec/xsec/data'
+#     # DATA_DIR = '/home/jeriek/Documents/NIMBUS/Nimbus/NIMBUS/gpdata/datafile_lin_1_13TeV_altij'
+#     DATA_DIR = '/home/jeriek/Documents/Nimbus/NIMBUS/gps'
+# elif HOSTNAME == 'audrey3':
+#     DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
+# elif HOSTNAME == 'yourhostname123':
+#     DATA_DIR = '/your/GP/model/data/directory/'
+# else:
+#     print("Error: unknown hostname -- specify your data directory first")
+#     sys.exit()
+
+DATA_DIR = './data/5000pts/'
 
 # Specify whether to cache data on disk (default: False)
 USE_CACHE = False
@@ -52,7 +59,6 @@ VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
 
 
 
-
 ###############################################
 # Global variables                            #
 ###############################################
@@ -62,6 +68,10 @@ xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input
 squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 2000004]
 gluino = 1000021
 
+TOTAL_K_LOAD_TIME = 0.
+TOTAL_LOAD_TIME = 0.
+TOTAL_COMPUTATION_TIME = 0.
+TOTAL_GP_COMPUTATION_TIME = 0.
 
 # Temporary directory to store loaded GP models for use in predictive functions
 if USE_CACHE:
@@ -111,13 +121,17 @@ def load_single_process(xsection_var):
             gp_reco = {}
             gp_reco['X_train'] = gp_model['X_train'].astype('float64')
             # gp_reco['y_train'] = gp_model['y_train'].astype('float64')
-            gp_reco['L_inv'] = gp_model['L_inv'].astype('float64') 
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
+            gp_reco['L_inv'] = gp_model['L_inv'].astype('float64')
+            t1 = time.clock()
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
+            t2 = time.clock()
             # Change kernel parameter dictionary to Matern+WhiteKernel function
             # gp_reco['kernel'] = set_kernel(gp_model['kernel']) # NOTE: not working since joblib won't memmap complex callable objects
             gp_reco['kernel'] = gp_model['kernel'] # for now, initialise kernel functions in GP_predict()
             model_list.append(gp_reco)
+            global TOTAL_K_LOAD_TIME 
+            TOTAL_K_LOAD_TIME += t2-t1
 
     return model_list
 
@@ -349,9 +363,14 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         ###################################################
         # Do DGP regression                               #
         ###################################################
-        
+        global  TOTAL_LOAD_TIME
+        t1 = time.clock()
         load_processes(xsections)
+        t2 = time.clock()
+        TOTAL_LOAD_TIME += t2-t1
 
+        global TOTAL_COMPUTATION_TIME
+        t3 = time.clock()
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
@@ -360,6 +379,14 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
             print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
+        t4 = time.clock()
+        TOTAL_COMPUTATION_TIME += t4-t3
+
+        print 'TOTAL_K_LOAD_TIME (CPU seconds) : ', TOTAL_K_LOAD_TIME
+        print 'TOTAL_LOAD_TIME (CPU seconds) : ', TOTAL_LOAD_TIME
+        print 'TOTAL_GP_COMPUTATION_TIME (CPU seconds) : ', TOTAL_GP_COMPUTATION_TIME
+        print 'TOTAL_COMPUTATION_TIME (CPU seconds) : ', TOTAL_COMPUTATION_TIME
+
 
         if USE_CACHE and FLUSH_CACHE:
             # Flush the cache completely  
@@ -399,11 +426,18 @@ def DGP(xsection, features, scale):
     sigmas = np.zeros(n_experts)
     sigma_priors = np.zeros(n_experts)
 
+    global  TOTAL_GP_COMPUTATION_TIME
     
     # Loop over GP models/experts
     for i in range(len(models)):
         # model = models[i]
+        
+        t1 = time.clock()
         mu, sigma, sigma_prior = GP_predict(xsection_var, features, index=i, return_std=True)
+        t2 = time.clock()
+        # print "Completed one GP_predict() call in time (seconds): ", t2-t1
+        TOTAL_GP_COMPUTATION_TIME += t2-t1
+
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
@@ -503,14 +537,13 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
         y_var.setflags(write=True) # somehow this array is set to read-only
         y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
-
         # Check if any of the variances is negative because of
         # numerical issues. If yes: set the variance to 0.
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
             warnings.warn("Predicted variances smaller than 0. "
                           "Setting those variances to 0.")
-            y_var[y_var_negative] = 0.0
+            y_var[y_var_negative] = 1e-99
         return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
     else:
         return y_mean
