@@ -19,10 +19,10 @@ def main():
 def timing(f, n, a):
     # print f.__name__,
     r = range(n)
-    t1 = time.clock()
+    t1 = time.time()
     for i in r:
         f(*a); f(*a); f(*a); f(*a); f(*a); f(*a); f(*a); f(*a); f(*a); f(*a)
-    t2 = time.clock()
+    t2 = time.time()
     print "Total time: ", t2-t1
     # print "Time for one eval_xsection: ", round((t2-t1)/(1.*n),8), "seconds"
     print "Time for one eval_xsection: ", round((t2-t1)/(10.*n),8), "seconds"
