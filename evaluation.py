@@ -8,10 +8,10 @@ import os
 # os.environ["MKL_NUM_THREADS"] = "16"
 # os.environ["OMP_NUM_THREADS"] = "16"
 # os.environ["NUMEXPR_NUM_THREADS"] = "16"
-os.system("echo 'MKL_NUM_THREADS = ' $MKL_NUM_THREADS '\n \
-    echo 'OPENBLAS_NUM_THREADS = ' $OPENBLAS_NUM_THREADS '\n \
-    'OMP_NUM_THREADS = ' $OMP_NUM_THREADS '\n \
-    'NUMEXPR_NUM_THREADS = ' $NUMEXPR_NUM_THREADS '")
+os.system("echo '\n MKL_NUM_THREADS = ' $MKL_NUM_THREADS \
+    '\n OPENBLAS_NUM_THREADS = ' $OPENBLAS_NUM_THREADS \
+    '\n OMP_NUM_THREADS = ' $OMP_NUM_THREADS \
+    '\n NUMEXPR_NUM_THREADS = ' $NUMEXPR_NUM_THREADS ")
 
 # import ctypes
 # mkl_rt = ctypes.CDLL('libmkl_rt.so')
