@@ -9,12 +9,13 @@ import os
 # os.environ["OMP_NUM_THREADS"] = "16"
 # os.environ["NUMEXPR_NUM_THREADS"] = "16"
 os.system("echo 'MKL_NUM_THREADS = ' $MKL_NUM_THREADS '\n \
+    echo 'OPENBLAS_NUM_THREADS = ' $OPENBLAS_NUM_THREADS '\n \
     'OMP_NUM_THREADS = ' $OMP_NUM_THREADS '\n \
     'NUMEXPR_NUM_THREADS = ' $NUMEXPR_NUM_THREADS '")
 
-import ctypes
-mkl_rt = ctypes.CDLL('libmkl_rt.so')
-print(mkl_rt.mkl_get_max_threads())
+# import ctypes
+# mkl_rt = ctypes.CDLL('libmkl_rt.so')
+# print(mkl_rt.mkl_get_max_threads())
 
 
 # Import packages
@@ -396,10 +397,10 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         t4 = time.time()
         TOTAL_COMPUTATION_TIME += t4-t3
 
-        print 'TOTAL_K_LOAD_TIME (CPU seconds) : ', TOTAL_K_LOAD_TIME
-        print 'TOTAL_LOAD_TIME (CPU seconds) : ', TOTAL_LOAD_TIME
-        print 'TOTAL_GP_COMPUTATION_TIME (CPU seconds) : ', TOTAL_GP_COMPUTATION_TIME
-        print 'TOTAL_COMPUTATION_TIME (CPU seconds) : ', TOTAL_COMPUTATION_TIME
+        print 'TOTAL_K_LOAD_TIME (seconds) : ', TOTAL_K_LOAD_TIME
+        print 'TOTAL_LOAD_TIME (seconds) : ', TOTAL_LOAD_TIME
+        print 'TOTAL_GP_COMPUTATION_TIME (seconds) : ', TOTAL_GP_COMPUTATION_TIME
+        print 'TOTAL_COMPUTATION_TIME (seconds) : ', TOTAL_COMPUTATION_TIME
         TOTAL_K_LOAD_TIME = 0.
         TOTAL_LOAD_TIME = 0.
         TOTAL_COMPUTATION_TIME = 0.
