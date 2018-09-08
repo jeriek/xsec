@@ -3,8 +3,23 @@ This program evaluates cross sections
 using DGP models trained by NIMBUS.
 """
 
+import os
+# Needs to be set before loading Numpy!
+# os.environ["MKL_NUM_THREADS"] = "16"
+# os.environ["OMP_NUM_THREADS"] = "16"
+# os.environ["NUMEXPR_NUM_THREADS"] = "16"
+os.system("echo 'MKL_NUM_THREADS = ' $MKL_NUM_THREADS '\n \
+    'OMP_NUM_THREADS = ' $OMP_NUM_THREADS '\n \
+    'NUMEXPR_NUM_THREADS = ' $NUMEXPR_NUM_THREADS '")
+
+import ctypes
+mkl_rt = ctypes.CDLL('libmkl_rt.so')
+print(mkl_rt.mkl_get_max_threads())
+
+
 # Import packages
-import os, sys
+# import os
+import sys
 import socket
 import numpy as np
 import joblib
@@ -123,9 +138,9 @@ def load_single_process(xsection_var):
             # gp_reco['y_train'] = gp_model['y_train'].astype('float64')
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
             gp_reco['L_inv'] = gp_model['L_inv'].astype('float64')
-            t1 = time.clock()
+            t1 = time.time()
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
-            t2 = time.clock()
+            t2 = time.time()
             # Change kernel parameter dictionary to Matern+WhiteKernel function
             # gp_reco['kernel'] = set_kernel(gp_model['kernel']) # NOTE: not working since joblib won't memmap complex callable objects
             gp_reco['kernel'] = gp_model['kernel'] # for now, initialise kernel functions in GP_predict()
@@ -353,40 +368,42 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         
         for xsection in xsections:
             assert len(xsection) == 2
-            print 'The production type of ', xsection, 'is ', types[xsection]
+            # print 'The production type of ', xsection, 'is ', types[xsection]
         
         # Build feature vectors, depending on production channel type
         features = get_features(masses, xsections, types)
-        print 'The features are ', features
+        # print 'The features are ', features
 
 
         ###################################################
         # Do DGP regression                               #
         ###################################################
-        global  TOTAL_LOAD_TIME
-        t1 = time.clock()
+        global  TOTAL_LOAD_TIME, TOTAL_COMPUTATION_TIME, TOTAL_K_LOAD_TIME, TOTAL_GP_COMPUTATION_TIME
+        t1 = time.time()
         load_processes(xsections)
-        t2 = time.clock()
+        t2 = time.time()
         TOTAL_LOAD_TIME += t2-t1
 
-        global TOTAL_COMPUTATION_TIME
-        t3 = time.clock()
+        t3 = time.time()
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
-            print "DGP, scale 1:", mu_dgp, sigma_dgp
-            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
-            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
+            # print "DGP, scale 1:", mu_dgp, sigma_dgp
+            # print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
+            # print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
-        t4 = time.clock()
+        t4 = time.time()
         TOTAL_COMPUTATION_TIME += t4-t3
 
         print 'TOTAL_K_LOAD_TIME (CPU seconds) : ', TOTAL_K_LOAD_TIME
         print 'TOTAL_LOAD_TIME (CPU seconds) : ', TOTAL_LOAD_TIME
         print 'TOTAL_GP_COMPUTATION_TIME (CPU seconds) : ', TOTAL_GP_COMPUTATION_TIME
         print 'TOTAL_COMPUTATION_TIME (CPU seconds) : ', TOTAL_COMPUTATION_TIME
-
+        TOTAL_K_LOAD_TIME = 0.
+        TOTAL_LOAD_TIME = 0.
+        TOTAL_COMPUTATION_TIME = 0.
+        TOTAL_GP_COMPUTATION_TIME = 0.
 
         if USE_CACHE and FLUSH_CACHE:
             # Flush the cache completely  
@@ -412,14 +429,14 @@ def DGP(xsection, features, scale):
 
     # Decide which GP to use depending on 'scale'
     process_name = get_process_name(xsection_var)
-    print process_name
+    # print process_name
     
     # List all trained experts in the chosen directory
 
     models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
 
-    print 'Models:', models
+    # print 'Models:', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
@@ -432,16 +449,16 @@ def DGP(xsection, features, scale):
     for i in range(len(models)):
         # model = models[i]
         
-        t1 = time.clock()
+        t1 = time.time()
         mu, sigma, sigma_prior = GP_predict(xsection_var, features, index=i, return_std=True)
-        t2 = time.clock()
+        t2 = time.time()
         # print "Completed one GP_predict() call in time (seconds): ", t2-t1
         TOTAL_GP_COMPUTATION_TIME += t2-t1
 
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
-        print "-- Resulting mu, sigma:", mu, sigma
+        # print "-- Resulting mu, sigma:", mu, sigma
 
     ########################################
     # Assume here that mus, sigmas and
