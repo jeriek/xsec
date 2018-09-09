@@ -18,38 +18,16 @@ print('Joblib version ' + joblib.__version__)
 # Specify GP model data directory
 HOSTNAME = socket.gethostname()
 if HOSTNAME == 'Lorien':
-    DATA_DIR = '/home/jeriek/Documents/prospino-PointSampler/NIMBUS/GPdata'
+    DATA_DIR = '/home/jeriek/Documents/Nimbus/NIMBUS/gps/1000pts'
 elif HOSTNAME == 'audrey3':
     DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
-elif HOSTNAME == 'yourhostname123':
-    DATA_DIR = '/your/GP/model/data/directory/'
 else:
     print("Error: unknown hostname -- specify your data directory first")
     sys.exit()
 
-# Specify whether to cache data on disk (default: False)
-USE_CACHE = False
-# USE_CACHE = True
-
-# Specify whether to flush disk cache after each eval_xsection() call (default: True)
-# Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
-FLUSH_CACHE = True
-# FLUSH_CACHE = False 
-
-# Specify cache directory on disk; if empty string, tempfile.mkdtemp() will set it automatically
-CACHE_DIR = ""
-# CACHE_DIR = "$HOME/xsec_cache"
-
-# Specify whether using memory mapping when loading arrays into cache (default: False)
-USE_MEMMAP = False
-# USE_MEMMAP = True
-
-# Fastest settings (for small GP files!): USE_CACHE = False, FLUSH_CACHE = False, USE_MEMMAP = False
 
 # Specify available variation parameters (the exact GP model directory suffixes)
 VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
-
-
 
 
 
@@ -62,25 +40,40 @@ xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input
 squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 2000004]
 gluino = 1000021
 
-
-# Temporary directory to store loaded GP models for use in predictive functions
-if USE_CACHE:
-    if CACHE_DIR and os.path.isdir(os.path.expandvars(CACHE_DIR)): # expand environment variables
-        cachedir = os.path.expandvars(CACHE_DIR)    
-    else:
-        from tempfile import mkdtemp
-        cachedir = mkdtemp(prefix='xsec_')
-    if USE_MEMMAP:
-        memmap_mode = 'c' # memmap mode: copy on write
-    else:
-        memmap_mode = None
-
-    memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
-    print("Cache folder: "+str(cachedir))
-
-
-# For each selected process, store a reference to a cached list of trained GP model dictionaries 
+# For each selected process, store trained GP model dictionaries here (or a list of cache locations): 
 process_dict = {} 
+
+
+def init(use_cache=False, cache_dir="", flush_cache=True, use_memmap=False):
+    # Cache: temporary disk directory to store loaded GP models for use in predictive functions
+    # use_cache - Specify whether to cache data on disk (default: False)
+    # cache_dir - Specify a disk directory for the cache, random directory created by default (default: "")
+    # flush_cache - Specify whether to flush disk cache after each eval_xsection() call (default: True)
+    #   Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
+    # use_memmap - Specify whether using memory mapping when loading Numpy arrays into cache (default: False)
+    
+    global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
+    USE_CACHE = use_cache
+    CACHE_DIR = cache_dir
+    FLUSH_CACHE = flush_cache
+    USE_MEMMAP = use_memmap
+
+    if USE_CACHE:
+        if CACHE_DIR: 
+            cachedir = os.path.expandvars(CACHE_DIR) # expand environment variables
+        else: # create directory with random name
+            from tempfile import mkdtemp
+            cachedir = mkdtemp(prefix='xsec_')
+        if USE_MEMMAP:
+            memmap_mode = 'c' # memmap mode: copy on write
+        else:
+            memmap_mode = None
+
+        global memory
+        memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
+        print("Cache folder: "+str(cachedir))
+        
+    return 0
 
 
 ###############################################
@@ -350,8 +343,6 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         # Do DGP regression                               #
         ###################################################
         
-        load_processes(xsections)
-
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
@@ -361,9 +352,6 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
 
-        if USE_CACHE and FLUSH_CACHE:
-            # Flush the cache completely  
-            memory.clear(warn=True)
 
         return 0
 
@@ -510,9 +498,15 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         if np.any(y_var_negative):
             warnings.warn("Predicted variances smaller than 0. "
                           "Setting those variances to 0.")
-            y_var[y_var_negative] = 0.0
+            y_var[y_var_negative] = 1e-99
         return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
     else:
         return y_mean
 
+
+def clear_cache():
+    if USE_CACHE and FLUSH_CACHE:
+        # Flush the cache completely  
+        memory.clear(warn=True)
+    return 0
 
