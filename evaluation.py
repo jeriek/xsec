@@ -48,7 +48,7 @@ print('Joblib version ' + joblib.__version__)
 #     print("Error: unknown hostname -- specify your data directory first")
 #     sys.exit()
 
-DATA_DIR = './data/5000pts/'
+DATA_DIR = './data/1000pts/'
 
 # Specify whether to cache data on disk (default: False)
 USE_CACHE = False
@@ -60,8 +60,8 @@ FLUSH_CACHE = True
 # FLUSH_CACHE = False 
 
 # Specify cache directory on disk; if empty string, tempfile.mkdtemp() will set it automatically
-CACHE_DIR = ""
-# CACHE_DIR = "$HOME/xsec_cache"
+# CACHE_DIR = ""
+CACHE_DIR = "$SCRATCH/xsec_cache"
 
 # Specify whether using memory mapping when loading arrays into cache (default: False)
 USE_MEMMAP = False
@@ -554,7 +554,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         # Compute variance of predictive distribution
         y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
         y_var.setflags(write=True) # somehow this array is set to read-only
-        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
+        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True)
         # Check if any of the variances is negative because of
         # numerical issues. If yes: set the variance to 0.
         y_var_negative = y_var < 0
