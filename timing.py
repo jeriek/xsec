@@ -4,16 +4,9 @@ import time, random
 import sys, os
 import evaluation as eval
 
-# Disable printing
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-# Restore printing
-def enablePrint():
-    sys.stdout = sys.__stdout__
 
 def main(): 
-	ntimes = 100
+	ntimes = 1000
 
 	# eval.xsections = [(1000021, 1000001), (1000021, 1000003)]
 	# eval.xsections = [(1000001, -1000001), (1000001, 1000002)]
@@ -81,5 +74,14 @@ def timing(f, n, arg):
 	return avg_TOTAL_EVAL_SETUP_TIME, avg_TOTAL_EVAL_COMP_TIME, \
 		avg_TOTAL_GP_COMP_TIME, avg_TOTAL_EVAL_TIME
 
+# Disable printing
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore printing
+def enablePrint():
+    sys.stdout = sys.__stdout__
+
 if __name__ == '__main__':
 	main()
+
