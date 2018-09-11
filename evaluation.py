@@ -532,11 +532,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 
     prior_variance = kernel(X)
 
-    if return_cov:
-        v = L_inv.dot(K_trans.T) # Line 5
-        y_cov = prior_variance - K_trans.dot(v)  # Line 6
-        return [y_mean, y_cov, prior_variance]
-    elif return_std:
+    if return_std:
         # Compute variance of predictive distribution
         y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
         y_var.setflags(write=True) # somehow this array is set to read-only
@@ -549,6 +545,12 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
                           "Setting those variances to 0.")
             y_var[y_var_negative] = 1e-99
         return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
+
+    elif return_cov:
+        v = L_inv.dot(K_trans.T) # Line 5
+        y_cov = prior_variance - K_trans.dot(v)  # Line 6
+        return [y_mean, y_cov, prior_variance] 
+        
     else:
         return y_mean
 

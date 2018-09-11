@@ -14,7 +14,7 @@ def main():
 	# eval.xsections = [(1000001, -1000001), (1000001, 1000002)]
 	eval.xsections = [(1000021, 1000021)]
 	start_parameters = (1000, 500, 600, 500, 600, 500, 500, 500, 500)
-	eval.init(use_cache=False, cache_dir="$HOME/xsec_cache", flush_cache=False,\
+	eval.init(use_cache=False, cache_dir="$SCRATCH/xsec_cache", flush_cache=False,\
 		 use_memmap=False)
 
 	# Start occupying all requested cores 
