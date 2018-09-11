@@ -35,44 +35,10 @@ print('Joblib version ' + joblib.__version__)
 
 
 # Specify GP model data directory
-# HOSTNAME = socket.gethostname()
-# if HOSTNAME == 'Lorien':
-#     # DATA_DIR = '/home/jeriek/Documents/xsec/xsec/data'
-#     # DATA_DIR = '/home/jeriek/Documents/NIMBUS/Nimbus/NIMBUS/gpdata/datafile_lin_1_13TeV_altij'
-#     DATA_DIR = '/home/jeriek/Documents/Nimbus/NIMBUS/gps'
-# elif HOSTNAME == 'audrey3':
-#     DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
-# elif HOSTNAME == 'yourhostname123':
-#     DATA_DIR = '/your/GP/model/data/directory/'
-# else:
-#     print("Error: unknown hostname -- specify your data directory first")
-#     sys.exit()
-
-DATA_DIR = './data/1000pts/'
-
-# Specify whether to cache data on disk (default: False)
-USE_CACHE = False
-# USE_CACHE = True
-
-# Specify whether to flush disk cache after each eval_xsection() call (default: True)
-# Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
-FLUSH_CACHE = True
-# FLUSH_CACHE = False 
-
-# Specify cache directory on disk; if empty string, tempfile.mkdtemp() will set it automatically
-# CACHE_DIR = ""
-CACHE_DIR = "$SCRATCH/xsec_cache"
-
-# Specify whether using memory mapping when loading arrays into cache (default: False)
-USE_MEMMAP = False
-# USE_MEMMAP = True
-
-# Fastest settings (for small GP files!): USE_CACHE = False, FLUSH_CACHE = False, USE_MEMMAP = False
+DATA_DIR = './data/5000pts/'
 
 # Specify available variation parameters (the exact GP model directory suffixes)
 VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
-
-
 
 
 ###############################################
@@ -84,29 +50,47 @@ xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input
 squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 2000004]
 gluino = 1000021
 
+TOTAL_UNPICKLE_TIME = 0.
 TOTAL_K_LOAD_TIME = 0.
 TOTAL_LOAD_TIME = 0.
-TOTAL_COMPUTATION_TIME = 0.
-TOTAL_GP_COMPUTATION_TIME = 0.
+TOTAL_EVAL_SETUP_TIME = 0.
+TOTAL_EVAL_COMP_TIME = 0.
+TOTAL_GP_COMP_TIME = 0.
 
-# Temporary directory to store loaded GP models for use in predictive functions
-if USE_CACHE:
-    if CACHE_DIR and os.path.isdir(os.path.expandvars(CACHE_DIR)): # expand environment variables
-        cachedir = os.path.expandvars(CACHE_DIR)    
-    else:
-        from tempfile import mkdtemp
-        cachedir = mkdtemp(prefix='xsec_')
-    if USE_MEMMAP:
-        memmap_mode = 'c' # memmap mode: copy on write
-    else:
-        memmap_mode = None
-
-    memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
-    print("Cache folder: "+str(cachedir))
-
-
-# For each selected process, store a reference to a cached list of trained GP model dictionaries 
+# For each selected process, store trained GP model dictionaries here (or a list of cache locations): 
 process_dict = {} 
+
+
+def init(use_cache=False, cache_dir="", flush_cache=True, use_memmap=False):
+    # Cache: temporary disk directory to store loaded GP models for use in predictive functions
+    # use_cache - Specify whether to cache data on disk (default: False)
+    # cache_dir - Specify a disk directory for the cache, random directory created by default (default: "")
+    # flush_cache - Specify whether to flush disk cache after each eval_xsection() call (default: True)
+    #   Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
+    # use_memmap - Specify whether using memory mapping when loading Numpy arrays into cache (default: False)
+    
+    global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
+    USE_CACHE = use_cache
+    CACHE_DIR = cache_dir
+    FLUSH_CACHE = flush_cache
+    USE_MEMMAP = use_memmap
+
+    if USE_CACHE:
+        if CACHE_DIR: 
+            cachedir = os.path.expandvars(CACHE_DIR) # expand environment variables
+        else: # create directory with random name
+            from tempfile import mkdtemp
+            cachedir = mkdtemp(prefix='xsec_')
+        if USE_MEMMAP:
+            memmap_mode = 'c' # memmap mode: copy on write
+        else:
+            memmap_mode = None
+
+        global memory
+        memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
+        print("Cache folder: "+str(cachedir))
+        
+    return 0
 
 
 ###############################################
@@ -132,22 +116,25 @@ def load_single_process(xsection_var):
 
     for model_file in model_files:
         with open(model_file,"rb") as fo:
+            t1 = time.time()
             gp_model = joblib.load(fo)
+            t2 = time.time()
             # Reconvert float32 arrays to float64 for higher-precision computations
             gp_reco = {}
             gp_reco['X_train'] = gp_model['X_train'].astype('float64')
             # gp_reco['y_train'] = gp_model['y_train'].astype('float64')
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
             gp_reco['L_inv'] = gp_model['L_inv'].astype('float64')
-            t1 = time.time()
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
-            t2 = time.time()
+            t3 = time.time()
             # Change kernel parameter dictionary to Matern+WhiteKernel function
             # gp_reco['kernel'] = set_kernel(gp_model['kernel']) # NOTE: not working since joblib won't memmap complex callable objects
             gp_reco['kernel'] = gp_model['kernel'] # for now, initialise kernel functions in GP_predict()
             model_list.append(gp_reco)
-            global TOTAL_K_LOAD_TIME 
-            TOTAL_K_LOAD_TIME += t2-t1
+            
+            global TOTAL_UNPICKLE_TIME, TOTAL_K_LOAD_TIME 
+            TOTAL_UNPICKLE_TIME += t2-t1
+            TOTAL_K_LOAD_TIME += t3-t2
 
     return model_list
 
@@ -156,7 +143,12 @@ def load_processes(xsections):
     Given a list of processes, load all relevant trained GP models 
     into a cache folder on disk.
     """
+    global TOTAL_UNPICKLE_TIME, TOTAL_K_LOAD_TIME, TOTAL_LOAD_TIME
+    TOTAL_UNPICKLE_TIME = 0.
+    TOTAL_K_LOAD_TIME = 0.
+    TOTAL_LOAD_TIME = 0.
 
+    t1 = time.time()
     if USE_CACHE: 
         load_single_process_cache = memory.cache(load_single_process)
 
@@ -168,7 +160,11 @@ def load_processes(xsections):
                 process_dict[xsection_var] = load_single_process_cache.call_and_shelve(xsection_var)
             else:
                 process_dict[xsection_var] = load_single_process(xsection_var)
-    return 0
+    t2 = time.time()
+    TOTAL_LOAD_TIME += t2-t1
+
+    # return final TOTAL_UNPICKLE_TIME, TOTAL_K_LOAD_TIME after all the loading
+    return TOTAL_UNPICKLE_TIME, TOTAL_K_LOAD_TIME, TOTAL_LOAD_TIME
 
 def set_kernel(params):
     """
@@ -322,11 +318,16 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         Read masses and parameters from slha-file and evaluate 
         cross sections
         """
+        global  TOTAL_EVAL_SETUP_TIME, TOTAL_EVAL_COMP_TIME, TOTAL_GP_COMP_TIME
+        TOTAL_EVAL_SETUP_TIME = 0.
+        TOTAL_EVAL_COMP_TIME = 0.
+        TOTAL_GP_COMP_TIME = 0.
 
         ##################################################
         # Check masses                                   #
         ##################################################
 
+        t1 = time.time()
         if m1000003 is not None:
 
             # If more than two two first masses are provided, then
@@ -336,7 +337,7 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
                 m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
             except TypeError:
                 print 'Error! Masses must either be given as two masses (mg, mq),\n or as all nine masses (mg, mcL, msL, mdL, muL, muR, mdR, msR, mcR)'
-                sys.exit()
+                sys.exit() # error handling???
             
         else:
 
@@ -374,16 +375,12 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         # Build feature vectors, depending on production channel type
         features = get_features(masses, xsections, types)
         # print 'The features are ', features
-
+        t2 = time.time()
+        TOTAL_EVAL_SETUP_TIME += t2-t1
 
         ###################################################
         # Do DGP regression                               #
         ###################################################
-        global  TOTAL_LOAD_TIME, TOTAL_COMPUTATION_TIME, TOTAL_K_LOAD_TIME, TOTAL_GP_COMPUTATION_TIME
-        t1 = time.time()
-        load_processes(xsections)
-        t2 = time.time()
-        TOTAL_LOAD_TIME += t2-t1
 
         t3 = time.time()
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
@@ -395,22 +392,9 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             # print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
             # Here we put in PDF and alpha variations
         t4 = time.time()
-        TOTAL_COMPUTATION_TIME += t4-t3
+        TOTAL_EVAL_COMP_TIME += t4-t3
 
-        print 'TOTAL_K_LOAD_TIME (seconds) : ', TOTAL_K_LOAD_TIME
-        print 'TOTAL_LOAD_TIME (seconds) : ', TOTAL_LOAD_TIME
-        print 'TOTAL_GP_COMPUTATION_TIME (seconds) : ', TOTAL_GP_COMPUTATION_TIME
-        print 'TOTAL_COMPUTATION_TIME (seconds) : ', TOTAL_COMPUTATION_TIME
-        TOTAL_K_LOAD_TIME = 0.
-        TOTAL_LOAD_TIME = 0.
-        TOTAL_COMPUTATION_TIME = 0.
-        TOTAL_GP_COMPUTATION_TIME = 0.
-
-        if USE_CACHE and FLUSH_CACHE:
-            # Flush the cache completely  
-            memory.clear(warn=True)
-
-        return 0
+        return TOTAL_EVAL_SETUP_TIME, TOTAL_EVAL_COMP_TIME, TOTAL_GP_COMP_TIME
 
 
     
@@ -444,7 +428,7 @@ def DGP(xsection, features, scale):
     sigmas = np.zeros(n_experts)
     sigma_priors = np.zeros(n_experts)
 
-    global  TOTAL_GP_COMPUTATION_TIME
+    global  TOTAL_GP_COMP_TIME
     
     # Loop over GP models/experts
     for i in range(len(models)):
@@ -454,7 +438,7 @@ def DGP(xsection, features, scale):
         mu, sigma, sigma_prior = GP_predict(xsection_var, features, index=i, return_std=True)
         t2 = time.time()
         # print "Completed one GP_predict() call in time (seconds): ", t2-t1
-        TOTAL_GP_COMPUTATION_TIME += t2-t1
+        TOTAL_GP_COMP_TIME += t2-t1
 
         mus[i] = mu
         sigmas[i] = sigma
@@ -530,9 +514,11 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         kernel = set_kernel(gp_model['kernel'])
 
         if xsection_var[2] == '':
-            print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
+            print("- Do GP regression for: " + get_process_name(xsection_var) + 
+                " at scale 1.0, expert " + str(index))
         else:
-            print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
+            print ("- Do GP regression for: " + get_process_name(xsection_var) +
+             " with variation parameter " + xsection_var[2] + ", expert " + str(index))
     except KeyError, e:
         print(KeyError, e)
         print("No trained GP models loaded for: " + str(xsection_var)) 
@@ -566,4 +552,10 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
     else:
         return y_mean
 
+
+def clear_cache():
+    if USE_CACHE and FLUSH_CACHE:
+        # Flush the cache completely  
+        memory.clear(warn=True)
+    return 0
 
