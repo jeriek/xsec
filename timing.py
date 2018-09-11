@@ -2,7 +2,9 @@
 
 import time, random
 import sys, os
+import numpy as np
 import evaluation as eval
+
 
 
 def main(): 
@@ -15,14 +17,33 @@ def main():
 	blockPrint()
 	eval.init(use_cache=False, cache_dir="$HOME/xsec_cache", flush_cache=False,\
 		 use_memmap=False)
+
+	# Start occupying all requested cores 
+	# ---------------------------
+	size = 5000
+	A, B = np.random.random((size, size)), np.random.random((size, size))
+	# Matrix multiplication
+	N = 10
+	t_wall = time.time()
+	t_CPU = time.clock()
+	for i in range(N):
+	    np.dot(A, B)
+	delta_wall = time.time() - t_wall
+	delta_CPU = time.clock() - t_CPU
+	print('Dotted two %dx%d matrices in %0.2f s. (wall time)' % (size, size, delta_wall / N))
+	print('Dotted two %dx%d matrices in %0.2f s. (CPU time)' % (size, size, delta_CPU / N))
+	del A, B
+	# ---------------------------
 	
+	# Run actual cross-section evaluation code
+	# ---------------------------
 	TOTAL_UNPICKLE_TIME, TOTAL_K_LOAD_TIME, TOTAL_LOAD_TIME = \
 		eval.load_processes(eval.xsections)
 
 	avg_TOTAL_EVAL_SETUP_TIME, avg_TOTAL_EVAL_COMP_TIME, \
 		avg_TOTAL_GP_COMP_TIME, avg_TOTAL_EVAL_TIME = \
 		timing(eval.eval_xsection, ntimes, start_parameters)
-	
+	# ---------------------------	
 
 	ndec = 5
 	enablePrint()
