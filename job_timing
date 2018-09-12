@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Job name:
+#SBATCH --job-name=xsec_timing
+#
+# Project:
+#SBATCH --account=nn9284k
+#
+# Wall clock limit:
+#SBATCH --time=00:05:00
+#
+# Max memory usage:
+#SBATCH --mem-per-cpu=3936M
+
+# Number of nodes:
+#SBATCH --nodes=1
+
+# Number of cores on each node:
+#SBATCH --cpus-per-task=8
+
+
+##
+## Set up job environment
+##
+source /cluster/bin/jobsetup
+set -o errexit # exit on errors
+
+
+## Load required modules
+module purge
+module load python2/2.7.10.gnu
+# List loaded modules 
+module list
+
+# pip install --user numpy # need v1.14 or later! --upgrade if necessary
+# pip install --user joblib # need v0.12.2 or later!
+
+
+export PATH="$HOME/.local/bin/:$PATH"
+export PYTHONPATH="$HOME/.local/lib/python2.7/site-packages:$PYTHONPATH"
+# export MKL_NUM_THREADS=1
+# export OMP_NUM_THREADS=1
+
+echo  'Number of OMP threads used:' $OMP_NUM_THREADS
+echo  'Number of MKL threads used:' $MKL_NUM_THREADS
+
+
+##
+## Do some work:
+##
+cp -R $HOME/xsec/ $SCRATCH
+/usr/bin/time --verbose python timing.py
+
