@@ -507,34 +507,33 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
         alpha = gp_model['alpha']
-        # y_train = gp_model['y_train'] # not needed if we don't normalise?
         L_inv = gp_model['L_inv']
         K_inv = gp_model['K_inv']
-        # kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
+
         kernel = set_kernel(gp_model['kernel'])
 
-        if xsection_var[2] == '':
-            print("- Do GP regression for: " + get_process_name(xsection_var) + 
-                " at scale 1.0, expert " + str(index))
-        else:
-            print ("- Do GP regression for: " + get_process_name(xsection_var) +
-             " with variation parameter " + xsection_var[2] + ", expert " + str(index))
+        # if xsection_var[2] == '':
+        #     print("- Do GP regression for: " + get_process_name(xsection_var) + 
+        #         " at scale 1.0, expert " + str(index))
+        # else:
+        #     print ("- Do GP regression for: " + get_process_name(xsection_var) +
+        #      " with variation parameter " + xsection_var[2] + ", expert " + str(index))
     except KeyError, e:
         print(KeyError, e)
         print("No trained GP models loaded for: " + str(xsection_var)) 
         return None
     
-    X = np.atleast_2d(features) # not needed if just 1 new test point!
+    X = np.atleast_2d(features) # NOTE: not needed if just 1 new test point! (list to 2d array)
 
     K_trans = kernel(X, X_train) # transpose of K*
-    y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
-    # y_mean = y_train_mean + y_mean # Only use if normalisation performed
 
-    prior_variance = kernel(X)
+    y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
+
+    prior_variance = kernel(X) # NOTE: 1x1 if just 1 new test point!
 
     if return_std:
         # Compute variance of predictive distribution
-        y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
+        y_var = np.diag(prior_variance) # NOTE: = prior_variance if 1x1 
         y_var.setflags(write=True) # somehow this array is set to read-only
         y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True)
         # Check if any of the variances is negative because of
@@ -550,7 +549,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         v = L_inv.dot(K_trans.T) # Line 5
         y_cov = prior_variance - K_trans.dot(v)  # Line 6
         return [y_mean, y_cov, prior_variance] 
-        
+
     else:
         return y_mean
 
