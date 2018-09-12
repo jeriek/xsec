@@ -5,25 +5,18 @@ using DGP models trained by NIMBUS.
 
 # Import packages
 import os, sys
-import socket
-import numpy as np
-import joblib
+import numpy as np # v1.14 or later
+import joblib  # v0.12.2 or later
 import warnings
+
 import kernels
 
 print('Numpy version ' + np.__version__)
 print('Joblib version ' + joblib.__version__)
 
 
-# Specify GP model data directory
-HOSTNAME = socket.gethostname()
-if HOSTNAME == 'Lorien':
-    DATA_DIR = '/home/jeriek/Documents/Nimbus/NIMBUS/gps/1000pts'
-elif HOSTNAME == 'audrey3':
-    DATA_DIR = '/home/ingrid/Documents/VitAs/xsec'
-else:
-    print("Error: unknown hostname -- specify your data directory first")
-    sys.exit()
+# Specify GP model data directory (can be reset in the run script)
+DATA_DIR = './data/'
 
 
 # Specify available variation parameters (the exact GP model directory suffixes)
@@ -103,7 +96,6 @@ def load_single_process(xsection_var):
             # Reconvert float32 arrays to float64 for higher-precision computations
             gp_reco = {}
             gp_reco['X_train'] = gp_model['X_train'].astype('float64')
-            # gp_reco['y_train'] = gp_model['y_train'].astype('float64')
             gp_reco['L_inv'] = gp_model['L_inv'].astype('float64') 
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
@@ -131,6 +123,7 @@ def load_processes(xsections):
                 process_dict[xsection_var] = load_single_process_cache.call_and_shelve(xsection_var)
             else:
                 process_dict[xsection_var] = load_single_process(xsection_var)
+    
     return 0
 
 def set_kernel(params):
@@ -151,9 +144,11 @@ def set_kernel(params):
         length_scale = params['matern_lengthscale']
 
         if Y is None:
-            sum = kernels.WhiteKernel(X, noise_level=noise_level) + prefactor*kernels.MaternKernel(X, length_scale=length_scale, nu=nu)
+            sum = kernels.WhiteKernel(X, noise_level=noise_level) \
+            	  + prefactor*kernels.MaternKernel(X, length_scale=length_scale, nu=nu)
         else:
-            sum = kernels.WhiteKernel(X, Y, noise_level=noise_level) + prefactor*kernels.MaternKernel(X, Y, length_scale=length_scale, nu=nu)
+            sum = kernels.WhiteKernel(X, Y, noise_level=noise_level) \
+            	  + prefactor*kernels.MaternKernel(X, Y, length_scale=length_scale, nu=nu)
 
         return sum
 
@@ -459,7 +454,6 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
         alpha = gp_model['alpha']
-        # y_train = gp_model['y_train'] # not needed if we don't normalise?
         L_inv = gp_model['L_inv']
         K_inv = gp_model['K_inv']
         # kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
@@ -474,23 +468,18 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         print("No trained GP models loaded for: " + str(xsection_var)) 
         return None
     
-    X = np.atleast_2d(features) # not needed if just 1 new test point!
+    X = np.atleast_2d(features)
 
     K_trans = kernel(X, X_train) # transpose of K*
     y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
-    # y_mean = y_train_mean + y_mean # Only use if normalisation performed
 
-    prior_variance = kernel(X)
+    prior_variance = kernel(X) # Note: 1x1 if just 1 new test point!
 
-    if return_cov:
-        v = L_inv.dot(K_trans.T) # Line 5
-        y_cov = prior_variance - K_trans.dot(v)  # Line 6
-        return [y_mean, y_cov, prior_variance]
-    elif return_std:
+    if return_std:
         # Compute variance of predictive distribution
-        y_var = np.diag(kernel(X)) # NOTE: can be optimised in class object with kernel.diag(X)!
-        y_var.setflags(write=True) # somehow this array is set to read-only
-        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
+        y_var = np.diag(prior_variance) # Note: = prior_variance if 1x1 
+        y_var.setflags(write=True) # else this array is read-only
+        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True)
 
         # Check if any of the variances is negative because of
         # numerical issues. If yes: set the variance to 0.
@@ -498,8 +487,14 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         if np.any(y_var_negative):
             warnings.warn("Predicted variances smaller than 0. "
                           "Setting those variances to 0.")
-            y_var[y_var_negative] = 1e-99
+            y_var[y_var_negative] = 1e-99 # 0 causes DivideByZero error
         return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
+ 
+    elif return_cov:
+        v = L_inv.dot(K_trans.T) # Line 5
+        y_cov = prior_variance - K_trans.dot(v)  # Line 6
+        return [y_mean, y_cov, prior_variance]
+
     else:
         return y_mean
 
