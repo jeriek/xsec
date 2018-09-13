@@ -533,7 +533,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 
     if return_std:
         # Compute variance of predictive distribution
-        y_var = np.diag(prior_variance) # NOTE: = prior_variance if 1x1 
+        y_var = np.diag(prior_variance.copy()) # NOTE: = prior_variance if 1x1 
         y_var.setflags(write=True) # somehow this array is set to read-only
         y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True)
         # Check if any of the variances is negative because of
