@@ -52,6 +52,8 @@ def main():
 	avg_TOTAL_EVAL_SETUP_TIME, avg_TOTAL_EVAL_COMP_TIME, \
 		avg_TOTAL_GP_COMP_TIME, avg_TOTAL_EVAL_TIME = \
 		timing(eval.eval_xsection, ntimes, start_parameters)
+		
+	eval.clear_cache()
 	# ---------------------------	
 
 	ndec = 5 # precision 1e-5
