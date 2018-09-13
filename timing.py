@@ -31,7 +31,7 @@ def main():
 		N = 10
 		t_wall = time.time()
 		t_CPU = time.clock()
-		for i in range(N):
+		for _ in range(N):
 		    np.dot(A, B)
 		delta_wall = time.time() - t_wall
 		delta_CPU = time.clock() - t_CPU
@@ -90,7 +90,7 @@ def timing(f, n, arg):
 
 		t1 = time.time()
 		TOTAL_EVAL_SETUP_TIME, TOTAL_EVAL_COMP_TIME, TOTAL_GP_COMP_TIME = \
-			f(*new_arg);
+			f(*new_arg)
 		t2 = time.time()
 		# print TOTAL_EVAL_SETUP_TIME, TOTAL_EVAL_COMP_TIME, TOTAL_GP_COMP_TIME
 		

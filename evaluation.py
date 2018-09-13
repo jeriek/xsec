@@ -468,7 +468,7 @@ def DGP(xsection, features, scale):
 
 
     # Transform back to cross section
-    production_type = get_type([xsection])
+    # production_type = get_type([xsection])
     
         
     # Return mean and std
@@ -541,8 +541,8 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
             warnings.warn("Predicted variances smaller than 0. "
-                          "Setting those variances to 0.")
-            y_var[y_var_negative] = 1e-99
+                          "Approximating those variances with their absolute value.")
+            y_var[y_var_negative] = np.abs(y_var[y_var_negative]) # 1e-99
         return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
 
     elif return_cov:
