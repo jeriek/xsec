@@ -8,6 +8,7 @@ import os, sys
 import numpy as np # v1.14 or later
 import joblib  # v0.12.2 or later
 import warnings
+import collections
 
 import kernels
 
@@ -16,11 +17,11 @@ print('Joblib version ' + joblib.__version__)
 
 
 # Specify GP model data directory (can be reset in the run script)
-DATA_DIR = './data/'
+DATA_DIR = './data'
 
 
 # Specify available variation parameters (the exact GP model directory suffixes)
-VARIATION_PAR = ['','05','2'] # 'aup','adn', ... ('' for scale 1.0)
+VARIATION_PAR = ['','05','2','3','4','5'] # 'aup','adn', ... ('' for scale 1.0)
 
 
 
@@ -200,9 +201,9 @@ def get_features(masses, xsections, types):
         xsection = xsections[i]
         
         if types[xsection] == 'gg':
-            features_index = ['m1000021', 'm1000004', 'm1000003',
-                              'm1000001','m1000002', 'm2000002',
-                              'm2000001','m2000003','m2000004']
+            features_index = ['m1000021', 'm2000004', 'm2000003',
+                              'm2000002','m2000001', 'm1000004',
+                              'm1000003','m1000002','m1000001']
 
         elif types[xsection] == 'gq':
             features_index = ['m1000021', 'm'+str(xsection[1])] # Given that gluino is first
@@ -213,7 +214,7 @@ def get_features(masses, xsections, types):
             # mcR, msR, muR, mdR, mcL, msL, muL, mdL
             if xsection[0] == xsection[1]:
                 # Only use one mass if the partons are identical 
-                features_index = ['m1000021', 'm'+str(max(xsection)) ]
+                features_index = ['m1000021', 'm'+str(max(xsection))]
             else:
                 features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(min(xsection)) ]
 
@@ -221,13 +222,16 @@ def get_features(masses, xsections, types):
             
             # Particle before antiparticle
             if abs(xsection[0]) == abs(xsection[1]):
-                features_index = features_index = ['m1000021', 'm'+str(max(xsection))]
+                features_index = ['m1000021', 'm'+str(max(xsection))]
             else:
                 features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(abs(min(xsection)))]
 
 
         # Make a feature dictionary
-        features_dict = {key : masses[key] for key in features_index}
+        # features_dict = {key : masses[key] for key in features_index}
+        features_dict = collections.OrderedDict()
+        for key in features_index:
+            features_dict[key] = masses[key]
 
         # Add mean squark mass to mass dict
         features_dict.update({'mean' : mean_mass})
@@ -264,7 +268,18 @@ def get_process_name(xsection_var):
     
     # Add scale like '05','2' or other variation parameter like 'aup', 'adn'
     if param in VARIATION_PAR and param is not '': # '' is also in VARIATION_PAR 
-        process_name += '_'+param
+        if param == '05':
+            process_name += '_05'
+        elif param == '2':
+            process_name += '_2'
+        elif param == '3':
+            process_name += '_pdf'
+        elif param == '4':
+            process_name += '_aup'
+        elif param == '5':
+            process_name += '_adn'
+        else:
+            print param, ' is not a valid variation parameter!'
 
     return process_name
 
@@ -273,9 +288,10 @@ def get_process_name(xsection_var):
 # Main functions                              #
 ###############################################
             
-def eval_xsection(m1000021, m1000004, m1000003=None,
-                  m1000001=None, m1000002=None, m2000002=None,
-                  m2000001=None, m2000003=None, m2000004=None):
+def eval_xsection(m1000021, m2000004, m2000003=None,
+                  m2000002=None, m2000001=None, m1000004=None,
+                  m1000003=None, m1000002=None, m1000001=None):
+
         """
         Read masses and parameters from slha-file and evaluate 
         cross sections
@@ -285,30 +301,30 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         # Check masses                                   #
         ##################################################
 
-        if m1000003 is not None:
+        if m2000003 is not None:
 
             # If more than two two first masses are provided, then
             # all squark masses must be provided. 
             
             try:
-                m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
+                m1000001+m1000002+m2000002+m2000001+m1000003+m2000004 # If you try to add a number and a None, you get False
             except TypeError:
-                print 'Error! Masses must either be given as two masses (mg, mq),\n or as all nine masses (mg, mcL, msL, mdL, muL, muR, mdR, msR, mcR)'
-                sys.exit()
+            	print 'Error! Masses must either be given as two masses (mg, mq), \n \
+            	 or as all nine masses (mg, mcR, msR, muR, mdR, mcL, msL, muL, mdL).'
+            	sys.exit()
             
         else:
 
             # If only the two first masses are given the squark masses
-            # are degenerate, and set to m1000004
-            
-            print 'This is the common mass'
-            m1000003 = m1000004
-            m1000001 = m1000004
-            m1000002 = m1000004
-            m2000002 = m1000004
-            m2000001 = m1000004
-            m2000003 = m1000004
-            m2000004 = m1000004
+            # are degenerate, and set to m2000004
+            m1000004 = m2000004
+            m1000003 = m2000004
+            m1000002 = m2000004
+            m1000001 = m2000004
+            m2000003 = m2000004
+            m2000002 = m2000004
+            m2000001 = m2000004
+
 
             
         # Put masses in dictionary
@@ -327,11 +343,11 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
         
         for xsection in xsections:
             assert len(xsection) == 2
-            print 'The production type of ', xsection, 'is ', types[xsection]
+            # print 'The production type of ', xsection, 'is ', types[xsection]
         
         # Build feature vectors, depending on production channel type
         features = get_features(masses, xsections, types)
-        print 'The features are ', features
+        # print 'The features are ', features
 
 
         ###################################################
@@ -342,14 +358,22 @@ def eval_xsection(m1000021, m1000004, m1000003=None,
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
+            scale_3_dgp, sigma_3_dgp = DGP(xsection, features[xsection], scale=3.0)
+            scale_4_dgp, sigma_4_dgp = DGP(xsection, features[xsection], scale=4.0)
+            scale_5_dgp, sigma_5_dgp = DGP(xsection, features[xsection], scale=5.0)
+
             print "DGP, scale 1:", mu_dgp, sigma_dgp
             print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
             print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
-            # Here we put in PDF and alpha variations
+            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
+            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
+            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
 
+        xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
+                                 scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
+                                 scale_4_dgp, sigma_4_dgp, scale_5_dgp, sigma_5_dgp]) 
 
-        return 0
-
+        return xsec_array
 
     
 
@@ -358,24 +382,28 @@ def DGP(xsection, features, scale):
     # of model folder
     
     if scale==0.5:
-        # process_name = process_name+'_05'
-        xsection_var = (xsection[0],xsection[1],'05')
+        xsection_var = (xsection[0], xsection[1], '05')
     elif scale==2.0:
-        # process_name = process_name+'_2'
-        xsection_var = (xsection[0],xsection[1],'2')
-    else:
-        xsection_var = (xsection[0],xsection[1],'')
+        xsection_var = (xsection[0], xsection[1], '2')
+    elif scale==3.0:
+        xsection_var = (xsection[0], xsection[1], '3')
+    elif scale==4.0:
+        xsection_var = (xsection[0], xsection[1], '4')
+    elif scale==5.0:
+        xsection_var = (xsection[0], xsection[1], '5')
+    else: # scale==1.0
+        xsection_var = (xsection[0], xsection[1], '')
 
     # Decide which GP to use depending on 'scale'
     process_name = get_process_name(xsection_var)
-    print process_name
+    # print process_name
     
     # List all trained experts in the chosen directory
 
     models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
 
-    print 'Models:', models
+    # print 'Models:', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
@@ -390,7 +418,7 @@ def DGP(xsection, features, scale):
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
-        print "-- Resulting mu, sigma:", mu, sigma
+        # print "-- Resulting mu, sigma:", mu, sigma
 
     ########################################
     # Assume here that mus, sigmas and
@@ -459,10 +487,10 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         # kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
         kernel = set_kernel(gp_model['kernel'])
 
-        if xsection_var[2] == '':
-            print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
-        else:
-            print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
+        # if xsection_var[2] == '':
+        #     print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
+        # else:
+        #     print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
     except KeyError, e:
         print(KeyError, e)
         print("No trained GP models loaded for: " + str(xsection_var)) 
