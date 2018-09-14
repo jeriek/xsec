@@ -1,14 +1,16 @@
 """
-This program evaluates cross sections
+This program evaluates cross-sections
 using DGP models trained by NIMBUS.
 """
 
 # Import packages
-import os, sys
-import numpy as np # v1.14 or later
-import joblib  # v0.12.2 or later
+import os
+import sys
 import warnings
 import collections
+
+import numpy as np # v1.14 or later
+import joblib  # v0.12.2 or later
 
 import kernels
 
@@ -20,7 +22,7 @@ print('Joblib version ' + joblib.__version__)
 DATA_DIR = './data'
 
 
-# Specify available variation parameters (the exact GP model directory suffixes)
+# Specify available variation parameters (NOTE: to be changed!)
 VARIATION_PAR = ['','05','2','3','4','5'] # 'aup','adn', ... ('' for scale 1.0)
 
 
@@ -29,22 +31,51 @@ VARIATION_PAR = ['','05','2','3','4','5'] # 'aup','adn', ... ('' for scale 1.0)
 # Global variables                            #
 ###############################################
 
-xsections = [(1000021,1000021), (1000021,1000002)] # This is the preferred input now
+# List of selected processes (2-tuples of sparticle ids), to be set by
+# the user
+xsections = [] # e.g. [(1000021,1000021), (1000021,1000002)] 
 
-squarks = [1000004, 1000003, 1000001, 1000002, 2000002, 2000001, 2000003, 2000004]
-gluino = 1000021
+# Definition of sparticle PDG ids
+squark_ids = [1000001, 1000002, 1000003, 1000004, 
+              2000001, 2000002, 2000003, 2000004]
+gluino_id = 1000021
 
-# For each selected process, store trained GP model dictionaries here (or a list of cache locations): 
+# For each selected process, store trained GP model dictionaries here
+# (or a list of their cache locations): 
 process_dict = {} 
 
+###############################################
+# Initialisation                              #
+###############################################
 
-def init(use_cache=False, cache_dir="", flush_cache=True, use_memmap=False):
-    # Cache: temporary disk directory to store loaded GP models for use in predictive functions
-    # use_cache - Specify whether to cache data on disk (default: False)
-    # cache_dir - Specify a disk directory for the cache, random directory created by default (default: "")
-    # flush_cache - Specify whether to flush disk cache after each eval_xsection() call (default: True)
-    #   Warning: if False, non-empty tmp directories will persist on disk if using cache (can be deleted manually)
-    # use_memmap - Specify whether using memory mapping when loading Numpy arrays into cache (default: False)
+def init(use_cache=False, cache_dir='', flush_cache=True, 
+         use_memmap=True):
+    """
+    Initialise run settings for the program. In particular, whether to
+    use a cache, i.e. a temporary disk directory to store loaded GP 
+    models for use in predictive functions. This could be useful if the
+    memory load needs to be decreased, when loading many large models.
+
+    Parameters
+    ----------
+    use_cache : bool, optional
+        Specify whether to cache data on disk (default False). 
+    cache_dir: string, optional
+        Specify a disk directory for the cache. Inactive if use_cache is
+        False. If '', a random directory is created. (default '') 
+    flush_cache: bool, optional
+        Specify whether to clear disk cache after completing the 
+        program. Inactive if use_cache is False. Warning: if False, 
+        non-empty temporary directories will persist on disk, if using 
+        cache, and may have to be deleted manually by the user. 
+        (default True)
+    use_memmap : bool, optional 
+        Specify whether to use memory mapping when loading Numpy arrays 
+        into cache, which may speed up GP model readout during 
+        cross-section evaluation. Inactive if use_cache is False. 
+        (default True)
+    """
+    
     
     global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
     USE_CACHE = use_cache
@@ -64,7 +95,8 @@ def init(use_cache=False, cache_dir="", flush_cache=True, use_memmap=False):
             memmap_mode = None
 
         global memory
-        memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode, verbose=0) 
+        memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode,
+                               verbose=0) 
         print("Cache folder: "+str(cachedir))
         
     return 0
@@ -142,14 +174,15 @@ def load_processes(xsections):
 
 def set_kernel(params):
     """
-    Given a parameter dictionary with keys {'matern_prefactor', 'matern_lengthscale', 
-    'matern_nu', 'whitekernel_noiselevel'}, return the corresponding (curried) Matern+WhiteKernel 
-    function of X and Y (default Y=None).
+    Given a parameter dictionary with keys {'matern_prefactor',
+    'matern_lengthscale', 'matern_nu', 'whitekernel_noiselevel'}, return
+    the corresponding (curried) Matern+WhiteKernel function of X and Y
+    (default Y=None).
     """
 
     def kernel_function(X, Y=None):
         """
-        Return the kernel function k(X, Y). Not using a kernel class object in this version.
+        Return the kernel function k(X, Y).
         """
 
         noise_level = params['whitekernel_noiselevel']
@@ -180,17 +213,17 @@ def get_type(xsections):
     # Calculate alpha for wanted production channels
     for xsection in xsections:
         
-        if xsection[0] in squarks and xsection[1] in squarks:
+        if xsection[0] in squark_ids and xsection[1] in squark_ids:
             process_type.update({xsection : 'qq'})
-        elif xsection[0] in squarks and xsection[1] == gluino:
+        elif xsection[0] in squark_ids and xsection[1] == gluino_id:
             process_type.update({xsection : 'gq'})
-        elif xsection[1] in squarks and xsection[0] == gluino:
-            process_type.update({xsection : 'gq'})                
-        elif xsection[0] in squarks and - xsection[1] in squarks:
+        elif xsection[1] in squark_ids and xsection[0] == gluino_id:
+            process_type.update({xsection : 'gq'})
+        elif xsection[0] in squark_ids and - xsection[1] in squark_ids:
             process_type.update({xsection : 'qqbar'})
-        elif xsection[1] in squarks and - xsection[0] in squarks:
-            process_type.update({xsection : 'qqbar'})                
-        elif xsection[0] == gluino and xsection[1] == gluino:
+        elif xsection[1] in squark_ids and - xsection[0] in squark_ids:
+            process_type.update({xsection : 'qqbar'})
+        elif xsection[0] == gluino_id and xsection[1] == gluino_id:
             process_type.update({xsection : 'gg'})
             
     return process_type
@@ -268,9 +301,9 @@ def get_process_name(xsection_var):
 
     # Decide process name
     # Check if one of the partons is a gluino
-    if parton1 == 1000021:
+    if parton1 == gluino_id:
         process_name = str(parton1)+'_'+str(parton2)+'_NLO'
-    elif parton2 == 1000021:
+    elif parton2 == gluino_id:
         process_name = str(parton2)+'_'+str(parton1)+'_NLO'
 
     # Otherwise name starts with the largest parton PID
@@ -464,18 +497,19 @@ def DGP(xsection, features, scale):
 
 def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=False):
     """
-    Gaussian process regression for the individual experts.
-    Takes as input arguments the produced partons, an array of new
-    test features, and the index number of the expert. 
-    Requires running load_processes(...) first.
+    Gaussian process regression for the individual experts. Takes as
+    input arguments the produced partons, an array of new test features,
+    and the index number of the expert. Requires running
+    load_processes(...) first.
 
-    Returns a list of numpy arrays containing the mean value (the predicted 
-    cross-section), the GP standard deviation (or full covariance matrix), 
-    and the square root of the prior variance on the test features.
+    Returns a list of numpy arrays containing the mean value (the
+    predicted cross-section), the GP standard deviation (or full
+    covariance matrix), and the square root of the prior variance on the
+    test features.
 
-    Based on GaussianProcessRegressor.predict(...) from scikit-learn and 
-    algorithm 2.1 of Gaussian Processes for Machine Learning by Rasmussen
-    and Williams.
+    Based on GaussianProcessRegressor.predict(...) from scikit-learn and
+    algorithm 2.1 of Gaussian Processes for Machine Learning by
+    Rasmussen and Williams.
 
     """
     
