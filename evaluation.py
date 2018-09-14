@@ -14,7 +14,6 @@ import kernels
 
 print('Numpy version ' + np.__version__)
 print('Joblib version ' + joblib.__version__)
-print('Hello NIMBUS World')
 
 
 # Specify GP model data directory (can be reset in the run script)
@@ -207,8 +206,6 @@ def get_features(masses, xsections, types):
     mean_index = ['m1000004', 'm1000003','m1000001','m1000002',
                   'm2000002', 'm2000001','m2000003','m2000004']
 
-
-    
     # No pandas
     mean_mass = sum([masses[key] for key in mean_index])/float(len(mean_index))
     
@@ -238,19 +235,13 @@ def get_features(masses, xsections, types):
             
             # Particle before antiparticle
             if abs(xsection[0]) == abs(xsection[1]):
-                features_index = ['m1000021', 'm'+str(max(xsection))]
+                features_index = features_index = ['m1000021', 'm'+str(max(xsection))]
             else:
                 features_index = ['m1000021', 'm'+str(max(xsection)), 'm'+str(abs(min(xsection)))]
 
 
         # Make a feature dictionary
-
-        # This messes everything up, the order is not preserved
-        #features_dict = {key : masses[key] for key in features_index}
-
-        import collections
         # features_dict = {key : masses[key] for key in features_index}
-
         features_dict = collections.OrderedDict()
         for key in features_index:
             features_dict[key] = masses[key]
@@ -258,7 +249,6 @@ def get_features(masses, xsections, types):
         # Add mean squark mass to mass dict
         features_dict.update({'mean' : mean_mass})
         features = features_dict.values()
-
         
         # Add features to feature array
         all_features[i] = features
@@ -314,13 +304,12 @@ def get_process_name(xsection_var):
 def eval_xsection(m1000021, m2000004, m2000003=None,
                   m2000002=None, m2000001=None, m1000004=None,
                   m1000003=None, m1000002=None, m1000001=None):
+
         """
         Read masses and parameters from slha-file and evaluate 
         cross sections
         """
 
-
-        
         ##################################################
         # Check masses                                   #
         ##################################################
@@ -331,9 +320,8 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
             # all squark masses must be provided. 
             
             try:
-                m1000001+m1000002+m2000002+m2000001+m1000003+m2000004 # If you try to add a number and a None, you get False
+                m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
             except TypeError:
-                print 'Error! Masses must either be given as two masses (mg, mq),\n or as all nine masses (mg, mc, msL, mdL, muL, muR, mdR, msR, mcR)'
                 print 'Error! Masses must either be given as two masses (mg, mq), \n \
                  or as all nine masses (mg, mcR, msR, muR, mdR, mcL, msL, muL, mdL).'
                 sys.exit()
@@ -349,7 +337,8 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
             m2000003 = m2000004
             m2000002 = m2000004
             m2000001 = m2000004
-        
+
+
             
         # Put masses in dictionary
         masses = {'m1000021' : m1000021,'m1000004' : m1000004,
@@ -367,40 +356,31 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
         
         for xsection in xsections:
             assert len(xsection) == 2
+            # print 'The production type of ', xsection, 'is ', types[xsection]
         
         # Build feature vectors, depending on production channel type
         features = get_features(masses, xsections, types)
-        
-        # Build feature vectors, depending on production channel type
-        features = get_features(masses, xsections, types)
+        # print 'The features are ', features
+
 
         ###################################################
         # Do DGP regression                               #
         ###################################################
-
-
-        if USE_CACHE and FLUSH_CACHE:
-        # Flush the cache completely  
-            memory.clear(warn=True)
         
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
-
-
             mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
             scale_05_dgp, sigma_05_dgp = DGP(xsection, features[xsection], scale=0.5)
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
-
-            # Here we put in PDF and alpha variations
             scale_3_dgp, sigma_3_dgp = DGP(xsection, features[xsection], scale=3.0)
             scale_4_dgp, sigma_4_dgp = DGP(xsection, features[xsection], scale=4.0)
             scale_5_dgp, sigma_5_dgp = DGP(xsection, features[xsection], scale=5.0)
 
-#            print "DGP, scale 1:", mu_dgp, sigma_dgp
-#            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
-#            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
-#            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
-#            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
-#            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
+            print "DGP, scale 1:", mu_dgp, sigma_dgp
+            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
+            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
+            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
+            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
+            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
 
         xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
                                  scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
@@ -429,12 +409,14 @@ def DGP(xsection, features, scale):
 
     # Decide which GP to use depending on 'scale'
     process_name = get_process_name(xsection_var)
+    # print process_name
     
     # List all trained experts in the chosen directory
 
     models = os.listdir(os.path.join(DATA_DIR, process_name))
     n_experts = len(models)
 
+    # print 'Models:', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
@@ -448,6 +430,7 @@ def DGP(xsection, features, scale):
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
+        # print "-- Resulting mu, sigma, sigma_prior:", mu, sigma, sigma_prior
 
     ########################################
     # Assume here that mus, sigmas and
@@ -514,10 +497,6 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         K_inv = gp_model['K_inv']
         kernel = set_kernel(gp_model['kernel'])
 
-        #if xsection_var[2] == '':
-        #    print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
-        #else:
-        #    print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
         # if xsection_var[2] == '':
         #     print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
         # else:
