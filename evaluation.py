@@ -370,8 +370,8 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
 			print "DGP, adn:", scale_5_dgp, sigma_5_dgp
 
 		xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
-		                         scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
-		                         scale_4_dgp, sigma_4_dgp, scale_5_dgp, sigma_5_dgp]) 
+								 scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
+								 scale_4_dgp, sigma_4_dgp, scale_5_dgp, sigma_5_dgp]) 
 
 		return xsec_array
 		# return 0
@@ -441,7 +441,7 @@ def DGP(xsection, features, scale):
 		mu_DGP +=  var_DGP_neg**(-1) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
 
 	# Transform back to cross section
-	production_type = get_type([xsection])
+	# production_type = get_type([xsection])
 	
 		
 	# Return mean and std
@@ -482,7 +482,6 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 		alpha = gp_model['alpha']
 		L_inv = gp_model['L_inv']
 		K_inv = gp_model['K_inv']
-		# kernel = gp_model['kernel'] # NOTE: not working since joblib won't memmap complex callable objects
 		kernel = set_kernel(gp_model['kernel'])
 
 		# if xsection_var[2] == '':
@@ -511,10 +510,12 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 		# numerical issues. If yes: set the variance to 0.
 		y_var_negative = y_var < 0
 		if np.any(y_var_negative):
-			warnings.warn("Predicted variances smaller than 0. "
-						  "Setting those variances to 0.")
-			y_var[y_var_negative] = 1e-99 # 0 causes DivideByZero error
-		return y_mean, np.sqrt(y_var), np.sqrt(prior_variance.flatten())
+			warnings.warn("Predicted some variance(s) smaller than 0. "
+						  "Approximating these with their absolute value.")
+			y_var[y_var_negative] = np.abs(y_var[y_var_negative]) # not set to 0 or 1e-99, but to approximated right size
+		y_std = np.sqrt(y_var)
+		prior_std = np.sqrt(prior_variance.flatten())
+		return y_mean, y_std, prior_std
  
 	elif return_cov:
 		v = L_inv.dot(K_trans.T) # Line 5
@@ -527,7 +528,7 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 
 def clear_cache():
 	if USE_CACHE and FLUSH_CACHE:
-		# Flush the cache completely  
-		memory.clear(warn=True)
+		# Flush the cache completely
+		memory.clear(warn=False)
 	return 0
 
