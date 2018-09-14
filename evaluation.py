@@ -14,6 +14,7 @@ import kernels
 
 print('Numpy version ' + np.__version__)
 print('Joblib version ' + joblib.__version__)
+print('Hello NIMBUS World')
 
 
 # Specify GP model data directory (can be reset in the run script)
@@ -376,6 +377,11 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
         ###################################################
         # Do DGP regression                               #
         ###################################################
+
+
+        if USE_CACHE and FLUSH_CACHE:
+        # Flush the cache completely  
+            memory.clear(warn=True)
         
         for xsection in xsections: # alternatively: write a 2nd loop over var in VARIATION_PAR
 
@@ -385,25 +391,16 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
             scale_2_dgp, sigma_2_dgp = DGP(xsection, features[xsection], scale=2.0)
 
             # Here we put in PDF and alpha variations
-
-        if USE_CACHE and FLUSH_CACHE:
-            # Flush the cache completely  
-            memory.clear(warn=True)
-
-        xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp, scale_2_dgp, sigma_2_dgp]) 
-
-        #return 0
-        return xsec_array
             scale_3_dgp, sigma_3_dgp = DGP(xsection, features[xsection], scale=3.0)
             scale_4_dgp, sigma_4_dgp = DGP(xsection, features[xsection], scale=4.0)
             scale_5_dgp, sigma_5_dgp = DGP(xsection, features[xsection], scale=5.0)
 
-            print "DGP, scale 1:", mu_dgp, sigma_dgp
-            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
-            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
-            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
-            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
-            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
+#            print "DGP, scale 1:", mu_dgp, sigma_dgp
+#            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
+#            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
+#            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
+#            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
+#            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
 
         xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
                                  scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
@@ -471,7 +468,7 @@ def DGP(xsection, features, scale):
 
     # Combine mus
     for i in range(N):
-        mu_DGP +=  var_DGP_neg**(-2) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
+        mu_DGP +=  var_DGP_neg**(-1) * ( betas[i] * sigmas[i]**(-2) * mus[i] )
 
     # Transform back to cross section
     # production_type = get_type([xsection])
