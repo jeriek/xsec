@@ -7,13 +7,13 @@ Run an instance of the evaluation.py program
 import evaluation as eval
 
 # *** Set processes to load ***
+eval.xsections = [(1000021, 1000021)]
 # eval.xsections = [(1000021, 1000001), (1000021, 1000003)]
 # eval.xsections = [(1000001, -1000001), (1000001, 1000002)]
-eval.xsections = [(1000021, 1000021)]
 
 # *** Set directory with trained GP models (checks ./data if not specified here) ***
-# eval.DATA_DIR = './data/1000pts/'
 eval.DATA_DIR = '../../Nimbus/NIMBUS/gps/newdata_lin/'
+# eval.DATA_DIR = './data/1000pts/'
 
 # *** Set cache choices ***
 eval.init() # run with default settings (no caching)
@@ -25,7 +25,8 @@ print 'Loading process(es):', eval.get_type(eval.xsections)
 eval.load_processes(eval.xsections)
 
 # *** Evaluate a cross-section with given input parameters *** 
-eval.eval_xsection(1000., 1500.)
+# eval.eval_xsection(1000., 500.)
+eval.eval_xsection(5000., 10000.)
 
 # *** Clear cache if necessary (inactive otherwise) ***
 eval.clear_cache() 

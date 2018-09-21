@@ -678,11 +678,11 @@ def plot_lognormal(mu_DGP, sigma_DGP, m_gluino):
     fig, (ax1, ax2) = plt.subplots(1, 2)
     mean, var, skew, kurt = lognorm.stats(
         s=sigma_lognorm, scale=np.exp(mu_lognorm), moments='mvsk')
-    startx = lognorm.ppf(0.001, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    endx = lognorm.ppf(0.999, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    x = np.linspace(startx, endx, 100)
-    y = ax1.plot(x, lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm)),
-        'r-', lw=4, alpha=0.7, color='k', label='lognormal pdf')
+    startx = lognorm.ppf(0.01, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+    endx = lognorm.ppf(0.99, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+    x = np.linspace(startx, endx, 1000)
+    y = lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+    ax1.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='lognormal pdf')
 
     ax1.axvline(x=np.exp(mu_lognorm-sigma_lognorm**2), color='r', label='mode')
     ax1.axvline(x=np.exp(mu_lognorm), color='g', label='median')
@@ -692,7 +692,7 @@ def plot_lognormal(mu_DGP, sigma_DGP, m_gluino):
     # upbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)+np.sqrt(var), color='m', label='mean + std')
     lowbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) - np.sqrt(var)
     upbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) + np.sqrt(var)
-    x_errorrange = np.linspace(lowbound, upbound, 100)
+    x_errorrange = np.linspace(lowbound, upbound, 1000)
     y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm, 
         scale=np.exp(mu_lognorm))
 
@@ -704,27 +704,24 @@ def plot_lognormal(mu_DGP, sigma_DGP, m_gluino):
     ax1.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     ax1.legend()
-    tot_yrange = lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    ax1.set_ylim([-1.05*min(tot_yrange), 1.1*lognorm.pdf(np.exp(mu_lognorm),
-        s=sigma_lognorm, scale=np.exp(mu_lognorm))])
+    ax1.set_ylim([-1.05*min(y), 1.1*max(y)])
 
-    startx = norm.ppf(0.001, loc=mu_DGP, scale=sigma_DGP)
-    endx = norm.ppf(0.999, loc=mu_DGP, scale=sigma_DGP)
+    startx = norm.ppf(0.01, loc=mu_DGP, scale=sigma_DGP)
+    endx = norm.ppf(0.99, loc=mu_DGP, scale=sigma_DGP)
     x = np.linspace(startx, endx, 100)
-    ax2.plot(x, norm.pdf(x, loc=mu_DGP, scale=sigma_DGP),
-             'r-', lw=4, alpha=0.7, color='k', label='normal pdf')
+    y = norm.pdf(x, loc=mu_DGP, scale=sigma_DGP)
+    ax2.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='normal pdf')
 
     lowbound = mu_DGP - sigma_DGP
     upbound = mu_DGP + sigma_DGP
     x_errorrange = np.linspace(lowbound, upbound, 100)
     y_pdfrange = norm.pdf(x_errorrange, scale=sigma_DGP, loc=mu_DGP)
     # ax2.axhspan(x_errorrange, lowbound, upbound)
-    tot_yrange = norm.pdf(x, scale=sigma_DGP, loc=mu_DGP)
+
     ax2.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
                      label=r'mean $\pm$ std', interpolate=True)
                      
-    ax2.set_ylim([-1.05*min(tot_yrange), 1.1 *
-                  norm.pdf(mu_DGP, scale=sigma_DGP, loc=mu_DGP)])
+    ax2.set_ylim([-1.05*min(y), 1.1*max(y)])
 
     ax2.axvline(x=mu_DGP, color='b', label='mean/median/mode')
     ax2.set_xlabel(r"$\log_{10}$(xsection/fb)")
