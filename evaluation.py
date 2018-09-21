@@ -438,7 +438,11 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
             print "DGP, aup:", scale_4_dgp, sigma_4_dgp
             print "DGP, adn:", scale_5_dgp, sigma_5_dgp
         
-        # All returned numbers defined to be deviations from 1
+        # Correction for "mult mg"
+        # NOTE: a cleaner solution should be found!
+        mu_dgp -= 2*np.log(m1000021)/np.log(10)
+
+        # All returned errors are defined to be deviations from 1
 
         # -- Central-scale xsection and regression error (= standard
         #    deviation) in fb.
@@ -484,7 +488,7 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
         print "* alphasdown_rel, alphasup_rel:", round(alphasdown_rel, nr_dec), round(alphasup_rel, nr_dec)
         print "***************************************************"
         # NOTE: plot just for comparison during testing
-        plot_lognormal(mu_dgp, sigma_dgp, m1000021)
+        plot_lognormal(mu_dgp, sigma_dgp)
 
         # xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
                                 #  scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
@@ -660,20 +664,14 @@ def moments_lognormal(mu_DGP, sigma_DGP):
 
     return mean_lognorm, std_lognorm
 
-def plot_lognormal(mu_DGP, sigma_DGP, m_gluino):
+def plot_lognormal(mu_DGP, sigma_DGP):
     # NOTE: Just for testing, not for release.
 
     from scipy.stats import lognorm, norm
     import matplotlib.pyplot as plt
     
-    # Correction for "mult mg"
-    # m_gluino = 1000.
-    mu_DGP -= 2*np.log(m_gluino)/np.log(10)
-
     mu_lognorm = mu_DGP*np.log(10.)
     sigma_lognorm = sigma_DGP*np.log(10.)
-
-    # mu_lognorm += 2*np.log(m_gluino)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     mean, var, skew, kurt = lognorm.stats(

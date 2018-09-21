@@ -25,8 +25,8 @@ print 'Loading process(es):', eval.get_type(eval.xsections)
 eval.load_processes(eval.xsections)
 
 # *** Evaluate a cross-section with given input parameters *** 
-# eval.eval_xsection(1000., 500.)
-eval.eval_xsection(5000., 10000.)
+eval.eval_xsection(1000., 500.)
+# eval.eval_xsection(5000., 10000.)
 
 # *** Clear cache if necessary (inactive otherwise) ***
 eval.clear_cache() 
