@@ -1,6 +1,7 @@
 """
-This program evaluates cross-sections
-using DGP models trained by NIMBUS.
+This program evaluates cross-sections for the production of
+supersymmetric particles, using Distributed Gaussian Processes trained
+by NIMBUS.
 """
 
 # Import packages
@@ -14,8 +15,8 @@ import joblib  # v0.12.2 or later
 
 import kernels
 
-print('Numpy version ' + np.__version__)
-print('Joblib version ' + joblib.__version__)
+# print('Numpy version ' + np.__version__)
+# print('Joblib version ' + joblib.__version__)
 
 
 ###############################################
@@ -25,9 +26,8 @@ print('Joblib version ' + joblib.__version__)
 # Specify GP model data directory (can be reset in the run script)
 DATA_DIR = './data'
 
-
 # Specify available variation parameters (NOTE: to be changed!)
-XSTYPES = ['','05','2','3','4','5']
+XSTYPES = ['', '05', '2', '3', '4', '5']
 
 # Link internal cross-section type (xstype) identifiers here to the
 # corresponding Nimbus file suffixes for each trained xstype
@@ -45,7 +45,8 @@ XSTYPE_FILESUFFIX = {
 
 # List of selected processes (2-tuples of sparticle ids), to be set by
 # the user
-# xsections = [] # e.g. [(1000021,1000021), (1000021,1000002)]
+# TODO: should be XSECTIONS for consistency!
+xsections = [] # e.g. [(1000021, 1000021), (1000021, 1000002)]
 
 # Definition of sparticle PDG ids
 SQUARK_IDS = [1000001, 1000002, 1000003, 1000004,
@@ -55,6 +56,14 @@ GLUINO_ID = 1000021
 # For each selected process, store trained GP model dictionaries here
 # (or a list of their cache locations):
 PROCESS_DICT = {}
+
+# Initialise default settings for using Joblib memory caching, can be
+# modified by user with init()
+USE_CACHE = False
+CACHE_DIR = ''
+FLUSH_CACHE = True
+USE_MEMMAP = True
+CACHE_MEMORY = None
 
 
 ###############################################
@@ -73,7 +82,7 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
     ----------
     use_cache : bool, optional
         Specify whether to cache data on disk (default False).
-    cache_dir: string, optional
+    cache_dir: str, optional
         Specify a disk directory for the cache. Inactive if use_cache is
         False. If '', a random directory is created. (default '')
     flush_cache: bool, optional
@@ -89,7 +98,7 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
         (default True)
     """
 
-
+    # Fix global variables coordinating the use of caching
     global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
     USE_CACHE = use_cache
     CACHE_DIR = cache_dir
@@ -98,18 +107,26 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
 
     if USE_CACHE:
         if CACHE_DIR:
-            cachedir = os.path.expandvars(CACHE_DIR) # expand environment variables
-        else: # create directory with random name
+            # Set cache directory to given name, expand any environment
+            # variables in the name
+            cachedir = os.path.expandvars(CACHE_DIR)
+        else:
+            # Create directory with random name
             from tempfile import mkdtemp
             cachedir = mkdtemp(prefix='xsec_')
         if USE_MEMMAP:
-            memmap_mode = 'c' # memmap mode: copy on write
+            # Set memmap mode 'copy on write'
+            memmap_mode = 'c'
         else:
+            # Disable memmapping
             memmap_mode = None
 
-        global memory
-        memory = joblib.Memory(location=cachedir, mmap_mode=memmap_mode,
-                               verbose=0)
+        # Create a Joblib Memory object managing the cache
+        global CACHE_MEMORY
+        CACHE_MEMORY = joblib.Memory(location=cachedir,
+                                     mmap_mode=memmap_mode,
+                                     verbose=0)
+
         print("Cache folder: "+str(cachedir))
 
     return 0
@@ -119,21 +136,36 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
 # Loading functions                           #
 ###############################################
 
-def load_single_process(xsection_var):
+def load_single_process(xsection_xstype):
     """
     Given a single process and cross-section type (e.g. gluino-gluino at
     the central scale), load the relevant trained GP models for all
     experts and return them in a list of dictionaries, one per expert.
-    The input argument xsection_var is a 3-tuple (xsection[0],
-    xsection[1], var) where the first two numbers represent the process
-    and the last component is a string ('','05','2',...) from
-    XSTYPES.
+
+    Parameters
+    ----------
+    xsection_xstype : tuple of str
+        The input argument xsection_xstype is a 3-tuple
+        (xsection[0], xsection[1], var) where the first two components
+        are integers specifying the process and the last component is a
+        string from XSTYPES.
+        Example: (1000021, 1000021, 'centr')
+
+    Returns
+    -------
+    model_list : list of dict
+        List containing one dictionary per expert trained on the
+        process and cross-section type specified in xsection_xstype.
+        Each dictionary has keys 'X_train', 'K_inv', 'alpha' and
+        'kernel'. These components are all the information needed to
+        make the predictions of the expert with GP_predict().
     """
 
-    assert len(xsection_var) == 3 # ensure 3-component input
+    assert len(xsection_xstype) == 3
+
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
-    process_dir = os.path.join(DATA_DIR, get_process_name(xsection_var))
+    process_dir = os.path.join(DATA_DIR, get_process_name(xsection_xstype))
 
     # Collect the GP model file locations for all the experts
     model_files = [os.path.join(process_dir, f) for f in
@@ -164,53 +196,115 @@ def load_single_process(xsection_var):
 
     return model_list
 
-def load_processes(xsections):
+
+def load_processes(xsections_list):
     """
-    Given a list of processes, load all relevant trained GP models into
-    a cache folder on disk.
+    Given a list of sparticle production processes, load all relevant
+    trained GP models into memory, or into a cache folder on disk if
+    using cache. The function calls load_single_process() for each
+    process in xsections, looping over all cross-section types in
+    XSTYPES. It stores each returned list of models in the global
+    dictionary PROCESS_DICT, indexed with key 'xsection_xstype'. If
+    using cache, a reference to the location of the cached data is
+    stored in PROCESS_DICT, indexed in the same way.
+
+    Parameters
+    ----------
+    xsections : list of tuple
+        The input argument xsections is a list of 2-tuples
+        (xsection[0], xsection[1]), where the components are integers
+        specifying the process. For example, gluino-gluino production
+        corresponds to the tuple (1000021, 1000021).
     """
 
     if USE_CACHE:
-        load_single_process_cache = memory.cache(load_single_process)
+        # Decorate load_single_process() such that its output can be
+        # cached using the Joblib Memory object
+        load_single_process_cache = CACHE_MEMORY.cache(load_single_process)
 
-    for xsection in xsections:
-        # Search for all directories with same process, but
-        # cross-section calculated at varied parameters
-        for var in XSTYPES:
-            xsection_var = (xsection[0],xsection[1],var)
+    # Loop over specified processes
+    for xsection in xsections_list:
+        assert len(xsection) == 2
+        # Search for all directories with same process, accounting for
+        # cross-sections calculated at varied parameters
+        for xstype in XSTYPES:
+            xsection_xstype = (xsection[0], xsection[1], xstype)
             if USE_CACHE:
-                PROCESS_DICT[xsection_var] = load_single_process_cache.call_and_shelve(xsection_var)
+                # If using cache, PROCESS_DICT only keeps a reference
+                # to the data stored in a disk folder ('shelving')
+                PROCESS_DICT[xsection_xstype] = \
+                    load_single_process_cache.call_and_shelve(xsection_xstype)
             else:
-                PROCESS_DICT[xsection_var] = load_single_process(xsection_var)
+                # Loaded GP models are stored in PROCESS_DICT
+                PROCESS_DICT[xsection_xstype] = \
+                    load_single_process(xsection_xstype)
 
-    return 0
 
-def set_kernel(params):
+def set_kernel(kernel_params):
     """
-    Given a parameter dictionary with keys {'matern_prefactor',
-    'matern_lengthscale', 'matern_nu', 'whitekernel_noiselevel'}, return
-    the corresponding (curried) Matern+WhiteKernel function of X and Y
-    (default Y=None).
+    Construct a kernel function from its parameters. In particular, the
+    returned functions are functions of X and Y (optional), and have the
+    form
+        k(X, Y) = WhiteKernel(X, Y, noise_level) +
+                  prefactor*MaternKernel(X, Y, length_scale, nu).
+
+    Parameters
+    ----------
+    kernel_params : dict
+        Parameter dictionary with keys 'matern_prefactor',
+        'matern_lengthscale', 'matern_nu', and 'whitekernel_noiselevel',
+        with corresponding double-precision numerical values.
+        This input format corresponds to the output from the NIMBUS
+        training routines.
+
+    Returns
+    -------
+    kernel_function(X, Y=None) : function
+        Kernel function that is a linear combination of a white kernel
+        and a Matern kernel. If Y = None, kernel_function(X, X) is
+        returned.
     """
 
+    # Define a function object to return (requires loading 'kernels'
+    # module for kernel definitions)
     def kernel_function(X, Y=None):
         """
-        Return the kernel function k(X, Y).
+        Return the Gaussian Process kernel k(X, Y), a linear combination
+        of a white kernel and a Matern kernel. The implementation is
+        based on scikit-learn v0.19.2.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+        Y : array, shape (n_samples_Y, n_features), (optional,
+                                                     default=None)
+            Right argument of the returned kernel k(X, Y). If None,
+            k(X, X) is evaluated instead.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y).
         """
 
-        noise_level = params['whitekernel_noiselevel']
-        prefactor = params['matern_prefactor']
-        nu = params['matern_nu']
-        length_scale = params['matern_lengthscale']
+        # Extract parameters from input dictionary
+        noise_level = kernel_params['whitekernel_noiselevel']
+        prefactor = kernel_params['matern_prefactor']
+        nu = kernel_params['matern_nu']
+        length_scale = kernel_params['matern_lengthscale']
 
+        # Return sum of white kernel and (prefactor times) Matern kernel
         if Y is None:
-            sum = (kernels.WhiteKernel(X, noise_level=noise_level)
-                  + prefactor*kernels.MaternKernel(X, length_scale=length_scale, nu=nu))
+            kernel_sum = (kernels.WhiteKernel(X, noise_level=noise_level)
+                          + prefactor*kernels.MaternKernel(
+                              X, length_scale=length_scale, nu=nu))
         else:
-            sum = (kernels.WhiteKernel(X, Y, noise_level=noise_level)
-                  + prefactor*kernels.MaternKernel(X, Y, length_scale=length_scale, nu=nu))
+            kernel_sum = (kernels.WhiteKernel(X, Y, noise_level=noise_level)
+                          + prefactor*kernels.MaternKernel(
+                              X, Y, length_scale=length_scale, nu=nu))
 
-        return sum
+        return kernel_sum
 
     return kernel_function
 
@@ -220,12 +314,10 @@ def set_kernel(params):
 # Helper functions                            #
 ###############################################
 
-def get_type(xsections):
+def get_process_type(xsections_list):   
     process_type = {}
 
-    # Calculate alpha for wanted production channels
-    for xsection in xsections:
-
+    for xsection in xsections_list:
         if xsection[0] in SQUARK_IDS and xsection[1] in SQUARK_IDS:
             process_type.update({xsection : 'qq'})
         elif xsection[0] in SQUARK_IDS and xsection[1] == GLUINO_ID:
@@ -248,11 +340,9 @@ def get_features(masses, xsections, types):
     # As dict
     all_features_dict = {}
 
-    # print all_features
     mean_index = ['m1000004', 'm1000003','m1000001','m1000002',
                   'm2000002', 'm2000001','m2000003','m2000004']
 
-    # No pandas
     mean_mass = sum([masses[key] for key in mean_index])/float(len(mean_index))
 
     for i in range(len(xsections)):
@@ -305,12 +395,12 @@ def get_features(masses, xsections, types):
     return all_features_dict
 
 
-def get_process_name(xsection_var):
+def get_process_name(xsection_xstype):
     # Get the partons of the process
-    assert len(xsection_var) == 3
-    parton1 = xsection_var[0]
-    parton2 = xsection_var[1]
-    param = xsection_var[2]
+    assert len(xsection_xstype) == 3
+    parton1 = xsection_xstype[0]
+    parton2 = xsection_xstype[1]
+    param = xsection_xstype[2]
 
     # Decide process name
     # Check if one of the partons is a gluino
@@ -351,151 +441,151 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
                   m2000002=None, m2000001=None, m1000004=None,
                   m1000003=None, m1000002=None, m1000001=None):
 
-        """
-        Read masses and parameters from slha-file and evaluate
-        cross sections
-        """
+    """
+    Read masses and parameters from slha-file and evaluate
+    cross sections
+    """
 
-        ##################################################
-        # Check masses                                   #
-        ##################################################
+    ##################################################
+    # Check masses                                   #
+    ##################################################
 
-        if m2000003 is not None:
+    if m2000003 is not None:
 
-            # If more than two two first masses are provided, then
-            # all squark masses must be provided.
+        # If more than two two first masses are provided, then
+        # all squark masses must be provided.
 
-            try:
-                m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
-            except TypeError:
-                print 'Error! Masses must either be given as two masses (mg, mq), \n \
-                 or as all nine masses (mg, mcR, msR, muR, mdR, mcL, msL, muL, mdL).'
-                sys.exit()
+        try:
+            m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
+        except TypeError:
+            print 'Error! Masses must either be given as two masses (mg, mq), \n \
+                or as all nine masses (mg, mcR, msR, muR, mdR, mcL, msL, muL, mdL).'
+            sys.exit()
 
-        else:
+    else:
 
-            # If only the two first masses are given the squark masses
-            # are degenerate, and set to m2000004
-            m1000004 = m2000004
-            m1000003 = m2000004
-            m1000002 = m2000004
-            m1000001 = m2000004
-            m2000003 = m2000004
-            m2000002 = m2000004
-            m2000001 = m2000004
-
-
-
-        # Put masses in dictionary
-        masses = {'m1000021' : m1000021,'m1000004' : m1000004,
-                  'm1000003' : m1000003, 'm1000001': m1000001,
-                  'm1000002' : m1000002, 'm2000002' : m2000002,
-                  'm2000001' : m2000001, 'm2000003' : m2000003, 'm2000004' : m2000004}
+        # If only the two first masses are given the squark masses
+        # are degenerate, and set to m2000004
+        m1000004 = m2000004
+        m1000003 = m2000004
+        m1000002 = m2000004
+        m1000001 = m2000004
+        m2000003 = m2000004
+        m2000002 = m2000004
+        m2000001 = m2000004
 
 
-        ##################################################
-        # Build feature vector                           #
-        ##################################################
 
-        # Decide the production channel type
-        types = get_type(xsections)
-
-        for xsection in xsections:
-            assert len(xsection) == 2
-            # print 'The production type of ', xsection, 'is ', types[xsection]
-
-        # Build feature vectors, depending on production channel type
-        features = get_features(masses, xsections, types)
-        # print 'The features are ', features
+    # Put masses in dictionary
+    masses = {'m1000021' : m1000021,'m1000004' : m1000004,
+                'm1000003' : m1000003, 'm1000001': m1000001,
+                'm1000002' : m1000002, 'm2000002' : m2000002,
+                'm2000001' : m2000001, 'm2000003' : m2000003, 'm2000004' : m2000004}
 
 
-        ###################################################
-        # Do DGP regression                               #
-        ###################################################
+    ##################################################
+    # Build feature vector                           #
+    ##################################################
 
-        for xsection in xsections: # alternatively: write a 2nd loop over var in XSTYPES
-            mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
-            scale_05_dgp, sigma_05_dgp = DGP(
-                xsection, features[xsection], scale=0.5)
-            scale_2_dgp, sigma_2_dgp = DGP(
-                xsection, features[xsection], scale=2.0)
-            scale_3_dgp, sigma_3_dgp = DGP(
-                xsection, features[xsection], scale=3.0)
-            scale_4_dgp, sigma_4_dgp = DGP(
-                xsection, features[xsection], scale=4.0)
-            scale_5_dgp, sigma_5_dgp = DGP(
-                xsection, features[xsection], scale=5.0)
-            # scale_05_dgp, _ = DGP(xsection, features[xsection], scale=0.5)
-            # scale_2_dgp, _ = DGP(xsection, features[xsection], scale=2.0)
-            # scale_3_dgp, _ = DGP(xsection, features[xsection], scale=3.0)
-            # scale_4_dgp, _ = DGP(xsection, features[xsection], scale=4.0)
-            # scale_5_dgp, _ = DGP(xsection, features[xsection], scale=5.0)
+    # Decide the production channel type
+    types = get_process_type(xsections)
 
-            print "DGP, scale 1:", mu_dgp, sigma_dgp
-            print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
-            print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
-            print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
-            print "DGP, aup:", scale_4_dgp, sigma_4_dgp
-            print "DGP, adn:", scale_5_dgp, sigma_5_dgp
-        
-        # Correction for "mult mg"
-        # NOTE: a cleaner solution should be found!
-        mu_dgp -= 2*np.log(m1000021)/np.log(10)
+    for xsection in xsections:
+        assert len(xsection) == 2
+        # print 'The production type of ', xsection, 'is ', types[xsection]
 
-        # All returned errors are defined to be deviations from 1
+    # Build feature vectors, depending on production channel type
+    features = get_features(masses, xsections, types)
+    # print 'The features are ', features
 
-        # -- Central-scale xsection and regression error (= standard
-        #    deviation) in fb.
-        xsection_central, reg_err = moments_lognormal(mu_dgp, sigma_dgp)  
-        # -- Xsection deviating one (lognormal) regression error away
-        #    from the central-scale xsection, relative to the latter.
-        regdown_rel = 1 - reg_err/xsection_central  
-        regup_rel = 1 + reg_err/xsection_central 
-        # -- Xsection at lower and higher scale (0.5x and 2x central
-        #    scale), relative to the central-scale xsection. To prevent
-        #    that the unusual case with xsection_scaleup >
-        #    xsection_scaledown causes errors, min/max ensures
-        #    scaledown_rel gives the lower bound and scaleup_rel the
-        #    higher one.
-        scaledown_rel = np.minimum(scale_05_dgp, scale_2_dgp)
-        scaleup_rel = np.maximum(scale_05_dgp, scale_2_dgp)
-        # -- Xsection deviating one pdf error away from the
-        #    central-scale xsection, relative to the latter.
-        delta_pdf_rel = scale_3_dgp
-        pdfdown_rel = 1 - delta_pdf_rel
-        pdfup_rel = 1 + delta_pdf_rel
-        # -- Xsection deviating one symmetrised alpha_s error away from
-        #    the central-scale xsection, relative to the latter.
-        delta_alphas_rel = 0.5 * (abs(scale_4_dgp-1) 
-                                  + abs(1-scale_5_dgp))
-        alphasdown_rel = 1 - delta_alphas_rel 
-        alphasup_rel = 1 + delta_alphas_rel
 
-        # Collect values for output in Numpy array
-        return_array = np.array([
-            xsection_central, regdown_rel, regup_rel, 
-            scaledown_rel, scaleup_rel, pdfdown_rel, 
-            pdfup_rel, alphasdown_rel, alphasup_rel
-            ])
+    ###################################################
+    # Do DGP regression                               #
+    ###################################################
 
-        print "************** NEW OUTPUT FORMAT ******************"
-        nr_dec = 4
-        print "* xsection_central (fb):", '{:0.4e}'.format(xsection_central)
-        print "* regdown_rel, regup_rel:", round(
-            regdown_rel, nr_dec), round(regup_rel, nr_dec)
-        print "* scaledown_rel, scaleup_rel:", round(scaledown_rel, nr_dec), round(scaleup_rel, nr_dec)
-        print "* pdfdown_rel, pdfup_rel:", round(pdfdown_rel, nr_dec), round(pdfup_rel, nr_dec)
-        print "* alphasdown_rel, alphasup_rel:", round(alphasdown_rel, nr_dec), round(alphasup_rel, nr_dec)
-        print "***************************************************"
-        # NOTE: plot just for comparison during testing
-        plot_lognormal(mu_dgp, sigma_dgp)
+    for xsection in xsections: # alternatively: write a 2nd loop over var in XSTYPES
+        mu_dgp, sigma_dgp = DGP(xsection, features[xsection], scale=1.0)
+        scale_05_dgp, sigma_05_dgp = DGP(
+            xsection, features[xsection], scale=0.5)
+        scale_2_dgp, sigma_2_dgp = DGP(
+            xsection, features[xsection], scale=2.0)
+        scale_3_dgp, sigma_3_dgp = DGP(
+            xsection, features[xsection], scale=3.0)
+        scale_4_dgp, sigma_4_dgp = DGP(
+            xsection, features[xsection], scale=4.0)
+        scale_5_dgp, sigma_5_dgp = DGP(
+            xsection, features[xsection], scale=5.0)
+        # scale_05_dgp, _ = DGP(xsection, features[xsection], scale=0.5)
+        # scale_2_dgp, _ = DGP(xsection, features[xsection], scale=2.0)
+        # scale_3_dgp, _ = DGP(xsection, features[xsection], scale=3.0)
+        # scale_4_dgp, _ = DGP(xsection, features[xsection], scale=4.0)
+        # scale_5_dgp, _ = DGP(xsection, features[xsection], scale=5.0)
 
-        # xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
-                                #  scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
-                                #  scale_4_dgp, sigma_4_dgp, scale_5_dgp, sigma_5_dgp])
+        print "DGP, scale 1:", mu_dgp, sigma_dgp
+        print "DGP, scale 0.5:", scale_05_dgp, sigma_05_dgp
+        print "DGP, scale 2:", scale_2_dgp, sigma_2_dgp
+        print "DGP, pdf:", scale_3_dgp, sigma_3_dgp
+        print "DGP, aup:", scale_4_dgp, sigma_4_dgp
+        print "DGP, adn:", scale_5_dgp, sigma_5_dgp
 
-        # print return_array
-        return return_array
+    # Correction for "mult mg"
+    # NOTE: a cleaner solution should be found!
+    mu_dgp -= 2*np.log(m1000021)/np.log(10)
+
+    # All returned errors are defined to be deviations from 1
+
+    # -- Central-scale xsection and regression error (= standard
+    #    deviation) in fb.
+    xsection_central, reg_err = moments_lognormal(mu_dgp, sigma_dgp)
+    # -- Xsection deviating one (lognormal) regression error away
+    #    from the central-scale xsection, relative to the latter.
+    regdown_rel = 1 - reg_err/xsection_central
+    regup_rel = 1 + reg_err/xsection_central
+    # -- Xsection at lower and higher scale (0.5x and 2x central
+    #    scale), relative to the central-scale xsection. To prevent
+    #    that the unusual case with xsection_scaleup >
+    #    xsection_scaledown causes errors, min/max ensures
+    #    scaledown_rel gives the lower bound and scaleup_rel the
+    #    higher one.
+    scaledown_rel = np.minimum(scale_05_dgp, scale_2_dgp)
+    scaleup_rel = np.maximum(scale_05_dgp, scale_2_dgp)
+    # -- Xsection deviating one pdf error away from the
+    #    central-scale xsection, relative to the latter.
+    delta_pdf_rel = scale_3_dgp
+    pdfdown_rel = 1 - delta_pdf_rel
+    pdfup_rel = 1 + delta_pdf_rel
+    # -- Xsection deviating one symmetrised alpha_s error away from
+    #    the central-scale xsection, relative to the latter.
+    delta_alphas_rel = 0.5 * (abs(scale_4_dgp-1)
+                                + abs(1-scale_5_dgp))
+    alphasdown_rel = 1 - delta_alphas_rel
+    alphasup_rel = 1 + delta_alphas_rel
+
+    # Collect values for output in Numpy array
+    return_array = np.array([
+        xsection_central, regdown_rel, regup_rel,
+        scaledown_rel, scaleup_rel, pdfdown_rel,
+        pdfup_rel, alphasdown_rel, alphasup_rel
+        ])
+
+    print "************** NEW OUTPUT FORMAT ******************"
+    nr_dec = 4
+    print "* xsection_central (fb):", '{:0.4e}'.format(xsection_central)
+    print "* regdown_rel, regup_rel:", round(
+        regdown_rel, nr_dec), round(regup_rel, nr_dec)
+    print "* scaledown_rel, scaleup_rel:", round(scaledown_rel, nr_dec), round(scaleup_rel, nr_dec)
+    print "* pdfdown_rel, pdfup_rel:", round(pdfdown_rel, nr_dec), round(pdfup_rel, nr_dec)
+    print "* alphasdown_rel, alphasup_rel:", round(alphasdown_rel, nr_dec), round(alphasup_rel, nr_dec)
+    print "***************************************************"
+    # NOTE: plot just for comparison during testing
+    plot_lognormal(mu_dgp, sigma_dgp)
+
+    # xsec_array = np.asarray([mu_dgp, sigma_dgp, scale_05_dgp, sigma_05_dgp,
+                            #  scale_2_dgp, sigma_2_dgp, scale_3_dgp, sigma_3_dgp,
+                            #  scale_4_dgp, sigma_4_dgp, scale_5_dgp, sigma_5_dgp])
+
+    # print return_array
+    return return_array
 
 
 def DGP(xsection, features, scale):
@@ -503,20 +593,20 @@ def DGP(xsection, features, scale):
     # of model folder
 
     if scale==0.5:
-        xsection_var = (xsection[0], xsection[1], '05')
+        xsection_xstype = (xsection[0], xsection[1], '05')
     elif scale==2.0:
-        xsection_var = (xsection[0], xsection[1], '2')
+        xsection_xstype = (xsection[0], xsection[1], '2')
     elif scale==3.0:
-        xsection_var = (xsection[0], xsection[1], '3')
+        xsection_xstype = (xsection[0], xsection[1], '3')
     elif scale==4.0:
-        xsection_var = (xsection[0], xsection[1], '4')
+        xsection_xstype = (xsection[0], xsection[1], '4')
     elif scale==5.0:
-        xsection_var = (xsection[0], xsection[1], '5')
+        xsection_xstype = (xsection[0], xsection[1], '5')
     else: # scale==1.0
-        xsection_var = (xsection[0], xsection[1], '')
+        xsection_xstype = (xsection[0], xsection[1], '')
 
     # Decide which GP to use depending on 'scale'
-    process_name = get_process_name(xsection_var)
+    process_name = get_process_name(xsection_xstype)
     # print process_name
 
     # List all trained experts in the chosen directory
@@ -534,7 +624,7 @@ def DGP(xsection, features, scale):
     # Loop over GP models/experts
     for i in range(len(models)):
         # model = models[i]
-        mu, sigma, sigma_prior = GP_predict(xsection_var, features, index=i, return_std=True)
+        mu, sigma, sigma_prior = GP_predict(xsection_xstype, features, index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
@@ -564,7 +654,7 @@ def DGP(xsection, features, scale):
         mu_DGP +=  var_DGP_inv**(-1) * (betas[i] * sigmas[i]**(-2) * mus[i])
 
     # Transform back to cross section
-    # production_type = get_type([xsection])
+    # production_type = get_process_type([xsection])
 
 
     # Return mean and std
@@ -572,21 +662,21 @@ def DGP(xsection, features, scale):
 
 
 
-def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=False):
+def GP_predict(xsection_xstype, features, index=0, return_std=True, return_cov=False):
     """
     Gaussian process regression for the individual experts. Takes as
     input arguments the produced partons, an array of new test features,
     and the index number of the expert. Requires running
-    load_processes(...) first.
+    load_processes() first.
 
     Returns a list of numpy arrays containing the mean value (the
     predicted cross-section), the GP standard deviation (or full
     covariance matrix), and the square root of the prior variance on the
     test features.
 
-    Based on GaussianProcessRegressor.predict(...) from scikit-learn and
-    algorithm 2.1 of Gaussian Processes for Machine Learning by
-    Rasmussen and Williams.
+    Based on GaussianProcessRegressor.predict() from scikit-learn 
+    v0.19.2 and algorithm 2.1 of Gaussian Processes for Machine Learning
+    by Rasmussen and Williams.
 
     """
 
@@ -596,10 +686,10 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
 
     try:
         if USE_CACHE:
-            # model_list = PROCESS_DICT[xsection_var].get() # list of loaded models for the specified process
-            gp_model = PROCESS_DICT[xsection_var].get()[index]
+            # Get list of loaded models for the specified process
+            gp_model = PROCESS_DICT[xsection_xstype].get()[index]
         else:
-            gp_model = PROCESS_DICT[xsection_var][index]
+            gp_model = PROCESS_DICT[xsection_xstype][index]
 
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
@@ -608,13 +698,13 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
         K_inv = gp_model['K_inv']
         kernel = set_kernel(gp_model['kernel'])
 
-        # if xsection_var[2] == '':
-        #     print("- Do GP regression for: " + get_process_name(xsection_var) + " at scale 1.0")
+        # if xsection_xstype[2] == '':
+        #     print("- Do GP regression for: " + get_process_name(xsection_xstype) + " at scale 1.0")
         # else:
-        #     print ("- Do GP regression for: " + get_process_name(xsection_var) + " with variation parameter " + xsection_var[2])
+        #     print ("- Do GP regression for: " + get_process_name(xsection_xstype) + " with variation parameter " + xsection_xstype[2])
     except KeyError, e:
         print(KeyError, e)
-        print("No trained GP models loaded for: " + str(xsection_var))
+        print("No trained GP models loaded for: " + str(xsection_xstype))
         return None
 
     X = np.atleast_2d(features)
@@ -649,11 +739,21 @@ def GP_predict(xsection_var, features, index=0, return_std=True, return_cov=Fals
     else:
         return y_mean
 
+
+def clear_cache():
+    if USE_CACHE and FLUSH_CACHE:
+        # Flush the cache completely
+        CACHE_MEMORY.clear(warn=False)
+    return 0
+
+# ----------------------------------------------------------------------
+# ------------ ONLY FOR TESTING, TO BE REMOVED LATER -------------------
+
 def moments_lognormal(mu_DGP, sigma_DGP):
     """
     Given the output mean and std of a DGP trained on log10(x), return
     the expectation value and standard deviation of x.
-    """ 
+    """
     # Parameters of the lognormal pdf
     mu_lognorm = mu_DGP*np.log(10.)
     sigma_lognorm = sigma_DGP*np.log(10.)
@@ -669,7 +769,7 @@ def plot_lognormal(mu_DGP, sigma_DGP):
 
     from scipy.stats import lognorm, norm
     import matplotlib.pyplot as plt
-    
+
     mu_lognorm = mu_DGP*np.log(10.)
     sigma_lognorm = sigma_DGP*np.log(10.)
 
@@ -685,16 +785,16 @@ def plot_lognormal(mu_DGP, sigma_DGP):
     ax1.axvline(x=np.exp(mu_lognorm-sigma_lognorm**2), color='r', label='mode')
     ax1.axvline(x=np.exp(mu_lognorm), color='g', label='median')
     ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2), color='b', label='mean')
-    
+
     # lowbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)-np.sqrt(var), color='m', label='mean - std')
     # upbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)+np.sqrt(var), color='m', label='mean + std')
     lowbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) - np.sqrt(var)
     upbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) + np.sqrt(var)
     x_errorrange = np.linspace(lowbound, upbound, 1000)
-    y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm, 
+    y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm,
         scale=np.exp(mu_lognorm))
 
-    ax1.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4, 
+    ax1.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
         label=r'mean $\pm$ std', interpolate=True)
 
     ax1.set_xlabel('xsection in fb')
@@ -718,7 +818,7 @@ def plot_lognormal(mu_DGP, sigma_DGP):
 
     ax2.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
                      label=r'mean $\pm$ std', interpolate=True)
-                     
+
     ax2.set_ylim([-1.05*min(y), 1.1*max(y)])
 
     ax2.axvline(x=mu_DGP, color='b', label='mean/median/mode')
@@ -728,10 +828,3 @@ def plot_lognormal(mu_DGP, sigma_DGP):
     ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     ax2.legend()
     plt.show()
-
-
-def clear_cache():
-    if USE_CACHE and FLUSH_CACHE:
-        # Flush the cache completely
-        memory.clear(warn=False)
-    return 0
