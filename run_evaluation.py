@@ -7,13 +7,13 @@ Run an instance of the evaluation.py program
 import evaluation as evl
 
 # *** Set processes to load ***
-# evl.xsections = [(1000021, 1000021)]
+# evl.XSECTIONS = [(1000021, 1000021)]
 evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002),
                  (1000021, 1000001), (1000021, 1000003)]
-# evl.xsections = [(1000001, -1000001), (1000001, 1000002)]
+# evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002)]
 
 # *** Set directory with trained GP models (checks ./data if not specified here) ***
-evl.DATA_DIR = '../../Nimbus/NIMBUS/gps/'
+evl.DATA_DIR = '../../Nimbus/NIMBUS/gps'
 # evl.DATA_DIR = './data/1000pts'
 # evl.DATA_DIR = './data'
 
