@@ -11,7 +11,7 @@ import sys
 # import imp
 # import warnings
 import collections
-from itertools import product
+# from itertools import product
 
 import numpy as np # v1.14 or later
 import joblib  # v0.12.2 or later
@@ -143,11 +143,11 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
     # datatransform = imp.load_source('', os.path.join(DATA_DIR, 'transform.py'))
 
     # - Works in any Python version, despite being ugly:
-    transform_file = os.path.join(DATA_DIR, 'transform.py')
+    # Execute the module and add its functions to the global scope
+    transform_file = os.path.join(os.path.abspath(DATA_DIR), 'transform.py')
     with open(transform_file) as f:
         transform_code = compile(f.read(), transform_file, 'exec')
         exec(transform_code, globals(), globals()) # globals(), locals())
-    # TODO: add comments
 
     # https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
     # https://stackoverflow.com/questions/6347588/is-it-possible-to-import-to-the-global-scope-from-inside-a-function-python
@@ -189,7 +189,8 @@ def load_single_process(xsection_xstype):
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
-    process_dir = os.path.join(DATA_DIR, get_processdir_name(xsection_xstype))
+    process_dir = os.path.join(os.path.abspath(DATA_DIR), 
+                               get_processdir_name(xsection_xstype))
 
     # Collect the GP model file locations for all the experts
     model_files = [os.path.join(process_dir, f) for f in
@@ -648,6 +649,7 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
         scaledown_rel, scaleup_rel, pdfdown_rel,
         pdfup_rel, alphasdown_rel, alphasup_rel
         ])
+    # print(return_array)
 
     print("************** NEW XSEC OUTPUT FORMAT ******************")
     nr_dec = 4

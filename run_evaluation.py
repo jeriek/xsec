@@ -7,9 +7,9 @@ Run an instance of the evaluation.py program
 import evaluation as evl
 
 # *** Set processes to load ***
-# evl.XSECTIONS = [(1000021, 1000021)]
-evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002),
-                 (1000021, 1000001), (1000021, 1000003)]
+evl.XSECTIONS = [(1000021, 1000021)]
+# evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002),
+                #  (1000021, 1000001), (1000021, 1000003)]
 # evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002)]
 
 # *** Set directory with trained GP models (checks ./data if not specified here) ***
