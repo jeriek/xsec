@@ -1,4 +1,4 @@
-# Module containing a dictionary of features keyed by pid tuple pairs
+# Module containing a dictionary of features for processes keyed by pid tuple pairs
 
 features = { (1000021,1000021) : ['m1000021', 'm2000004', 'm2000003',
                                   'm2000002', 'm2000001', 'm1000004',
@@ -9,7 +9,7 @@ features = { (1000021,1000021) : ['m1000021', 'm2000004', 'm2000003',
              (1000021,1000004) :  ['m1000021', 'm1000004', 'mean']
            }
 
-# Function that provides features for a tuple pair. Order is irrelevant.
+# Function that provides features for a tuple pid pair. Order of pids irrelevant.
 # The function will raise errors when keys are not found.
 def get_features(pid1, pid2):
     try:
