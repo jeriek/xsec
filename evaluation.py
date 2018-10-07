@@ -13,6 +13,8 @@ import sys
 import collections
 # from itertools import product
 
+from parameters import param
+
 import numpy as np # v1.14 or later
 import joblib  # v0.12.2 or later
 
@@ -355,6 +357,8 @@ def get_process_type(xsections_list):
             process_type.update({xsection : 'qqbar'})
         elif xsection[0] == GLUINO_ID and xsection[1] == GLUINO_ID:
             process_type.update({xsection : 'gg'})
+        elif xsection[0] == 1000006 and xsection[1] == -1000006:
+            process_type.update({xsection : 'tb'})
 
     return process_type
 
@@ -403,6 +407,11 @@ def get_features(masses, xsections_list, types):
                 features_index = ['m1000021', 'm'+str(max(xsection)),
                                   'm'+str(abs(min(xsection)))]
 
+        elif types[xsection] == 'tb':
+            if abs(xsection[0]) == 1000006:
+                features_index = ['m1000021','m1000006']
+            elif abs(xsection[0]) == 2000006:
+                features_index = ['m1000021','m2000006']
 
         # Make a feature dictionary
         # features_dict = {key : masses[key] for key in features_index}
@@ -499,8 +508,10 @@ def get_xsections_list_str(xsections_list):
 # Main functions                              #
 ###############################################
 
-def eval_xsection(m1000021, m2000004, m2000003=None,
-                  m2000002=None, m2000001=None, m1000004=None,
+# Evaluation of cross sections for processes stored in global variable XSECTIONS
+# TODO: Remove dependence on masses to global parameter object
+def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m2000003=None,
+                  m2000002=None, m2000001=None, m1000006=None, m1000005=None, m1000004=None,
                   m1000003=None, m1000002=None, m1000001=None):
 
     """
@@ -539,11 +550,13 @@ def eval_xsection(m1000021, m2000004, m2000003=None,
 
 
     # Put masses in dictionary
-    masses = {'m1000021' : m1000021, 'm1000004' : m1000004,
-              'm1000003' : m1000003, 'm1000001': m1000001,
+    masses = {'m1000021' : m1000021, 'm1000006' : m1000006,
+              'm1000005' : m1000005, 'm1000004' : m1000004,
+              'm1000003' : m1000003, 'm1000001' : m1000001,
               'm1000002' : m1000002, 'm2000002' : m2000002,
               'm2000001' : m2000001, 'm2000003' : m2000003,
-              'm2000004' : m2000004}
+              'm2000004' : m2000004, 'm2000005' : m2000005,
+              'm2000006' : m2000006}
 
 
     ##################################################
