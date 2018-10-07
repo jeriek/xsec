@@ -13,12 +13,13 @@ import sys
 import collections
 # from itertools import product
 
-from parameters import param
+from parameters import param, set_parameters, mean_mass
+from features import get_features
+import kernels
 
 import numpy as np # v1.14 or later
 import joblib  # v0.12.2 or later
 
-import kernels
 # from data.transform import inverse_transform
 # NOTE: currently no relative import, meaning DATA_DIR should stay
 # ./data, else transform.py won't be found (if not ./data, would need to
@@ -341,86 +342,35 @@ def set_kernel(kernel_params):
 # Helper functions                            #
 ###############################################
 
-def get_process_type(xsections_list):
-    process_type = {}
-
-    for xsection in xsections_list:
-        if xsection[0] in SQUARK_IDS and xsection[1] in SQUARK_IDS:
-            process_type.update({xsection : 'qq'})
-        elif xsection[0] in SQUARK_IDS and xsection[1] == GLUINO_ID:
-            process_type.update({xsection : 'gq'})
-        elif xsection[1] in SQUARK_IDS and xsection[0] == GLUINO_ID:
-            process_type.update({xsection : 'gq'})
-        elif xsection[0] in SQUARK_IDS and - xsection[1] in SQUARK_IDS:
-            process_type.update({xsection : 'qqbar'})
-        elif xsection[1] in SQUARK_IDS and - xsection[0] in SQUARK_IDS:
-            process_type.update({xsection : 'qqbar'})
-        elif xsection[0] == GLUINO_ID and xsection[1] == GLUINO_ID:
-            process_type.update({xsection : 'gg'})
-        elif xsection[0] == 1000006 and xsection[1] == -1000006:
-            process_type.update({xsection : 'tb'})
-
-    return process_type
-
-
-def get_features(masses, xsections_list, types):
+# Produce a dictionary of features and their masses for each process in xsections_list
+def get_feature_dict(xsections_list):
 
     all_features = range(len(xsections_list)) # initialise dummy list
     # As dict
     all_features_dict = {}
 
+    # Find mean squark mass. TODO: Move out of here to separate function.
     mean_index = ['m1000004', 'm1000003', 'm1000001', 'm1000002',
                   'm2000002', 'm2000001', 'm2000003', 'm2000004']
-
-    mean_mass = sum([masses[key] for key in mean_index])/float(len(mean_index))
-
+    mean_mass = sum([param[key] for key in mean_index])/float(len(mean_index))
+    param['mean'] = mean_mass
+    #mean = mean_mass()
+    
+    # xsections_list has a list of proxesses we want features for so loop
     for i in range(len(xsections_list)):
 
+        # Extract current process
         xsection = xsections_list[i]
 
-        if types[xsection] == 'gg':
-            features_index = ['m1000021', 'm2000004', 'm2000003',
-                              'm2000002','m2000001', 'm1000004',
-                              'm1000003','m1000002','m1000001']
-
-        elif types[xsection] == 'gq':
-            features_index = ['m1000021', 'm'+str(xsection[1])] # Given that gluino is first
-
-        elif types[xsection] == 'qq':
-
-            # Largest index first, so convention
-            # mcR, msR, muR, mdR, mcL, msL, muL, mdL
-            if xsection[0] == xsection[1]:
-                # Only use one mass if the partons are identical
-                features_index = ['m1000021', 'm'+str(max(xsection))]
-            else:
-                features_index = ['m1000021', 'm'+str(max(xsection)), 
-                                  'm'+str(min(xsection))]
-
-        elif types[xsection] == 'qqbar':
-
-            # Particle before antiparticle
-            if abs(xsection[0]) == abs(xsection[1]):
-                features_index = features_index = ['m1000021', 
-                                                   'm'+str(max(xsection))]
-            else:
-                features_index = ['m1000021', 'm'+str(max(xsection)),
-                                  'm'+str(abs(min(xsection)))]
-
-        elif types[xsection] == 'tb':
-            if abs(xsection[0]) == 1000006:
-                features_index = ['m1000021','m1000006']
-            elif abs(xsection[0]) == 2000006:
-                features_index = ['m1000021','m2000006']
+        # Find features for this process
+        features_index = get_features(xsection[0],xsection[1])
 
         # Make a feature dictionary
         # features_dict = {key : masses[key] for key in features_index}
         features_dict = collections.OrderedDict()
         for key in features_index:
-            features_dict[key] = masses[key]
+            features_dict[key] = param[key]
 
-        # Add mean squark mass to mass dict
-        features_dict.update({'mean' : mean_mass})
         features = features_dict.values()
 
         # Add features to feature array
@@ -548,7 +498,6 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
         m2000001 = m2000004
 
 
-
     # Put masses in dictionary
     masses = {'m1000021' : m1000021, 'm1000006' : m1000006,
               'm1000005' : m1000005, 'm1000004' : m1000004,
@@ -556,7 +505,9 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
               'm1000002' : m1000002, 'm2000002' : m2000002,
               'm2000001' : m2000001, 'm2000003' : m2000003,
               'm2000004' : m2000004, 'm2000005' : m2000005,
-              'm2000006' : m2000006}
+              'm2000006' : m2000006, 'mean' : 0}
+    # Store in param dictionary
+    set_parameters(masses)
 
 
     ##################################################
@@ -566,15 +517,12 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
     # Get local variable to avoid multiple slow lookups in global namespace
     xsections = XSECTIONS 
 
-    # Decide the production channel type
-    types = get_process_type(xsections)
-
     for xsection in xsections:
         assert len(xsection) == 2
         # print 'The production type of ', xsection, 'is ', types[xsection]
 
-    # Build feature vectors, depending on production channel type
-    features = get_features(masses, xsections, types)
+    # Build feature vectors, depending on production channel
+    features = get_feature_dict(xsections)
     # print 'The features are ', features
 
 
