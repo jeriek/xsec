@@ -14,7 +14,7 @@ evl.XSECTIONS = [(1000021, 1000021)]
 
 # *** Set directory with trained GP models (checks ./data if not specified here) ***
 evl.DATA_DIR = '../nimbus/NIMBUS/gps'
-#evl.DATA_DIR = '../../Nimbus/NIMBUS/gps'
+# evl.DATA_DIR = '../../Nimbus/NIMBUS/gps'
 # evl.DATA_DIR = './data/1000pts'
 # evl.DATA_DIR = './data'
 
@@ -28,7 +28,24 @@ evl.init()  # run with default settings (no caching)
 evl.load_processes(evl.XSECTIONS)
 
 # *** Evaluate a cross-section with given input parameters ***
-evl.eval_xsection(1000., 500.)
+evl.set_parameters({
+    'm1000021': 1000.,
+    'm1000001': 500.,
+    'm1000002': 500.,
+    'm1000003': 500.,
+    'm1000004': 500.,
+    'm1000005': 500.,
+    'm1000006': 500.,
+    'm2000001': 500.,
+    'm2000002': 500.,
+    'm2000003': 500.,
+    'm2000004': 500.,
+    'm2000005': 500.,
+    'm2000006': 500.,
+    'thetab': 0.,
+    'thetat': 0.
+})
+evl.eval_xsection()
 # evl.eval_xsection(5000., 10000.)
 
 # *** Clear cache if necessary (inactive otherwise) ***
