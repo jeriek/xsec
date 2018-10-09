@@ -7,7 +7,8 @@ Run an instance of the evaluation.py program
 import evaluation as evl
 
 # *** Set processes to load ***
-evl.XSECTIONS = [(1000021, 1000021)]
+#evl.XSECTIONS = [(1000021, 1000021)]
+evl.XSECTIONS = [(1000006, -1000006)]
 # evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002),
                 #  (1000021, 1000001), (1000021, 1000003)]
 # evl.XSECTIONS = [(1000001, -1000001), (1000001, 1000002)]
@@ -28,7 +29,8 @@ evl.init()  # run with default settings (no caching)
 evl.load_processes(evl.XSECTIONS)
 
 # *** Evaluate a cross-section with given input parameters ***
-evl.eval_xsection(1000., 500.)
+#evl.eval_xsection(1000., 500.)
+evl.eval_xsection(1000., m1000006=500., m2000004=500., thetat=0.)
 # evl.eval_xsection(5000., 10000.)
 
 # *** Clear cache if necessary (inactive otherwise) ***

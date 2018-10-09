@@ -352,9 +352,9 @@ def get_feature_dict(xsections_list):
     # Find mean squark mass. TODO: Move out of here to separate function.
     mean_index = ['m1000004', 'm1000003', 'm1000001', 'm1000002',
                   'm2000002', 'm2000001', 'm2000003', 'm2000004']
-    mean_mass = sum([param[key] for key in mean_index])/float(len(mean_index))
-    param['mean'] = mean_mass
-    #mean = mean_mass()
+    mean = sum([param[key] for key in mean_index])/float(len(mean_index))
+    param['mean'] = mean
+    mean = mean_mass()
     
     # xsections_list has a list of proxesses we want features for so loop
     for i in range(len(xsections_list)):
@@ -462,7 +462,7 @@ def get_xsections_list_str(xsections_list):
 # TODO: Remove dependence on masses to global parameter object
 def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m2000003=None,
                   m2000002=None, m2000001=None, m1000006=None, m1000005=None, m1000004=None,
-                  m1000003=None, m1000002=None, m1000001=None):
+                  m1000003=None, m1000002=None, m1000001=None, thetat=None):
 
     """
     Read masses and parameters from slha-file and evaluate
@@ -505,7 +505,7 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
               'm1000002' : m1000002, 'm2000002' : m2000002,
               'm2000001' : m2000001, 'm2000003' : m2000003,
               'm2000004' : m2000004, 'm2000005' : m2000005,
-              'm2000006' : m2000006, 'mean' : 0}
+        'm2000006' : m2000006, 'mean' : 0, 'thetat' : thetat}
     # Store in param dictionary
     set_parameters(masses)
 
