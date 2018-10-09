@@ -13,13 +13,14 @@ import sys
 import collections
 # from itertools import product
 
-from parameters import param, set_parameters, mean_mass
-from features import get_features
+import numpy as np  # Needs v1.14 or later
+import joblib       # Needs v0.12.2 or later
+
+# Need to import all setters to allow access upon importing only
+# 'evaluation'!
+from parameters import PARAMS, set_parameters, set_mean_mass
+from features import get_features, get_features_dict
 import kernels
-
-import numpy as np # v1.14 or later
-import joblib  # v0.12.2 or later
-
 # from data.transform import inverse_transform
 # NOTE: currently no relative import, meaning DATA_DIR should stay
 # ./data, else transform.py won't be found (if not ./data, would need to
@@ -192,7 +193,7 @@ def load_single_process(xsection_xstype):
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
-    process_dir = os.path.join(os.path.abspath(DATA_DIR), 
+    process_dir = os.path.join(os.path.abspath(DATA_DIR),
                                get_processdir_name(xsection_xstype))
 
     # Collect the GP model file locations for all the experts
@@ -342,46 +343,6 @@ def set_kernel(kernel_params):
 # Helper functions                            #
 ###############################################
 
-# Produce a dictionary of features and their masses for each process in xsections_list
-def get_feature_dict(xsections_list):
-
-    all_features = range(len(xsections_list)) # initialise dummy list
-    # As dict
-    all_features_dict = {}
-
-    # Find mean squark mass. TODO: Move out of here to separate function.
-    mean_index = ['m1000004', 'm1000003', 'm1000001', 'm1000002',
-                  'm2000002', 'm2000001', 'm2000003', 'm2000004']
-    mean = sum([param[key] for key in mean_index])/float(len(mean_index))
-    param['mean'] = mean
-    mean = mean_mass()
-    
-    # xsections_list has a list of proxesses we want features for so loop
-    for i in range(len(xsections_list)):
-
-        # Extract current process
-        xsection = xsections_list[i]
-
-        # Find features for this process
-        features_index = get_features(xsection[0],xsection[1])
-
-        # Make a feature dictionary
-        # features_dict = {key : masses[key] for key in features_index}
-        features_dict = collections.OrderedDict()
-        for key in features_index:
-            features_dict[key] = param[key]
-
-        features = features_dict.values()
-
-        # Add features to feature array
-        all_features[i] = features
-        all_features_dict.update({xsection : features})
-
-    # Return feature array for all processes
-    #return np.asarray(all_features)
-    return all_features_dict
-
-
 def get_processdir_name(xsection_xstype):
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(xsection_xstype)
@@ -459,10 +420,7 @@ def get_xsections_list_str(xsections_list):
 ###############################################
 
 # Evaluation of cross sections for processes stored in global variable XSECTIONS
-# TODO: Remove dependence on masses to global parameter object
-def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m2000003=None,
-                  m2000002=None, m2000001=None, m1000006=None, m1000005=None, m1000004=None,
-                  m1000003=None, m1000002=None, m1000001=None, thetat=None):
+def eval_xsection():
 
     """
     Read masses and parameters from slha-file and evaluate
@@ -470,61 +428,17 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
     """
 
     ##################################################
-    # Check masses                                   #
-    ##################################################
-
-    if m2000003 is not None:
-
-        # If more than two two first masses are provided, then
-        # all squark masses must be provided.
-
-        try:
-            m1000001+m1000002+m2000002+m2000001+m2000003+m2000004 # If you try to add a number and a None, you get False
-        except TypeError:
-            print('Error! Masses must either be given as two masses (mg, mq), \n \
-                or as all nine masses (mg, mcR, msR, muR, mdR, mcL, msL, muL, mdL).')
-            sys.exit()
-
-    else:
-
-        # If only the two first masses are given the squark masses
-        # are degenerate, and set to m2000004
-        m1000004 = m2000004
-        m1000003 = m2000004
-        m1000002 = m2000004
-        m1000001 = m2000004
-        m2000003 = m2000004
-        m2000002 = m2000004
-        m2000001 = m2000004
-
-
-    # Put masses in dictionary
-    masses = {'m1000021' : m1000021, 'm1000006' : m1000006,
-              'm1000005' : m1000005, 'm1000004' : m1000004,
-              'm1000003' : m1000003, 'm1000001' : m1000001,
-              'm1000002' : m1000002, 'm2000002' : m2000002,
-              'm2000001' : m2000001, 'm2000003' : m2000003,
-              'm2000004' : m2000004, 'm2000005' : m2000005,
-        'm2000006' : m2000006, 'mean' : 0, 'thetat' : thetat}
-    # Store in param dictionary
-    set_parameters(masses)
-
-
-    ##################################################
     # Build feature vector                           #
     ##################################################
 
     # Get local variable to avoid multiple slow lookups in global namespace
-    xsections = XSECTIONS 
+    xsections = XSECTIONS
 
     for xsection in xsections:
         assert len(xsection) == 2
-        # print 'The production type of ', xsection, 'is ', types[xsection]
 
     # Build feature vectors, depending on production channel
-    features = get_feature_dict(xsections)
-    # print 'The features are ', features
-
+    features = get_features_dict(xsections)
 
     ###################################################
     # Do DGP regression                               #
@@ -540,12 +454,8 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
     # Dictionary of xsections-ordered lists
     dgp_results = {
         xstype: [
-            inverse_transform(DGP(xsection, xstype, features[xsection]),
-                              (xsection, xstype), m1000021=m1000021,
-                              m2000004=m2000004, m2000003=m2000003,
-                              m2000002=m2000002, m2000001=m2000001,
-                              m1000004=m1000004, m1000003=m1000003,
-                              m1000002=m1000002, m1000001=m1000001)
+            inverse_transform(xsection, xstype, features[xsection],
+                              *DGP(xsection, xstype, features[xsection]))
             for xsection in xsections
             ]
         for xstype in XSTYPES
@@ -612,11 +522,13 @@ def eval_xsection(m1000021, m2000006=None, m2000005=None, m2000004=None, m200000
         ])
     # print(return_array)
 
-    print("************** NEW XSEC OUTPUT FORMAT ******************")
+    print("*********************** XSEC **************************")
     nr_dec = 4
     np.set_printoptions(precision=nr_dec)
-    print("* Processes requested, in order: \n", "  ",
+    print("* Processes requested, in order: \n  ",
           *get_xsections_list_str(xsections))
+    print("* Input features: \n  ", get_features(*XSECTIONS[0]), "\n  ",
+        get_features_dict(XSECTIONS)[xsections[0]])
     print("* xsection_central (fb):", xsection_central)
     print("* regdown_rel:", regdown_rel)
     print("* regup_rel:", regup_rel)
@@ -800,67 +712,67 @@ def moments_lognormal(mu_DGP, sigma_DGP):
 
     return mean_lognorm, std_lognorm
 
-def plot_lognormal(mu_DGP, sigma_DGP):
-    # NOTE: Just for testing, not for release.
+# def plot_lognormal(mu_DGP, sigma_DGP):
+#     # NOTE: Just for testing, not for release.
 
-    from scipy.stats import lognorm, norm
-    import matplotlib.pyplot as plt
+#     from scipy.stats import lognorm, norm
+#     import matplotlib.pyplot as plt
 
-    mu_lognorm = mu_DGP*np.log(10.)
-    sigma_lognorm = sigma_DGP*np.log(10.)
+#     mu_lognorm = mu_DGP*np.log(10.)
+#     sigma_lognorm = sigma_DGP*np.log(10.)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    mean, var, _, _  = lognorm.stats(
-        s=sigma_lognorm, scale=np.exp(mu_lognorm), moments='mvsk')
-    startx = lognorm.ppf(0.01, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    endx = lognorm.ppf(0.99, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    x = np.linspace(startx, endx, 1000)
-    y = lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-    ax1.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='lognormal pdf')
+#     fig, (ax1, ax2) = plt.subplots(1, 2)
+#     mean, var, _, _  = lognorm.stats(
+#         s=sigma_lognorm, scale=np.exp(mu_lognorm), moments='mvsk')
+#     startx = lognorm.ppf(0.01, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+#     endx = lognorm.ppf(0.99, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+#     x = np.linspace(startx, endx, 1000)
+#     y = lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm))
+#     ax1.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='lognormal pdf')
 
-    ax1.axvline(x=np.exp(mu_lognorm-sigma_lognorm**2), color='r', label='mode')
-    ax1.axvline(x=np.exp(mu_lognorm), color='g', label='median')
-    ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2), color='b', label='mean')
+#     ax1.axvline(x=np.exp(mu_lognorm-sigma_lognorm**2), color='r', label='mode')
+#     ax1.axvline(x=np.exp(mu_lognorm), color='g', label='median')
+#     ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2), color='b', label='mean')
 
-    # lowbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)-np.sqrt(var), color='m', label='mean - std')
-    # upbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)+np.sqrt(var), color='m', label='mean + std')
-    lowbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) - np.sqrt(var)
-    upbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) + np.sqrt(var)
-    x_errorrange = np.linspace(lowbound, upbound, 1000)
-    y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm,
-        scale=np.exp(mu_lognorm))
+#     # lowbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)-np.sqrt(var), color='m', label='mean - std')
+#     # upbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)+np.sqrt(var), color='m', label='mean + std')
+#     lowbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) - np.sqrt(var)
+#     upbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) + np.sqrt(var)
+#     x_errorrange = np.linspace(lowbound, upbound, 1000)
+#     y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm,
+#         scale=np.exp(mu_lognorm))
 
-    ax1.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
-        label=r'mean $\pm$ std', interpolate=True)
+#     ax1.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
+#         label=r'mean $\pm$ std', interpolate=True)
 
-    ax1.set_xlabel('xsection in fb')
-    ax1.set_ylabel('lognormal pdf')
-    ax1.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    ax1.legend()
-    ax1.set_ylim([-1.05*min(y), 1.1*max(y)])
+#     ax1.set_xlabel('xsection in fb')
+#     ax1.set_ylabel('lognormal pdf')
+#     ax1.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+#     ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+#     ax1.legend()
+#     ax1.set_ylim([-1.05*min(y), 1.1*max(y)])
 
-    startx = norm.ppf(0.01, loc=mu_DGP, scale=sigma_DGP)
-    endx = norm.ppf(0.99, loc=mu_DGP, scale=sigma_DGP)
-    x = np.linspace(startx, endx, 100)
-    y = norm.pdf(x, loc=mu_DGP, scale=sigma_DGP)
-    ax2.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='normal pdf')
+#     startx = norm.ppf(0.01, loc=mu_DGP, scale=sigma_DGP)
+#     endx = norm.ppf(0.99, loc=mu_DGP, scale=sigma_DGP)
+#     x = np.linspace(startx, endx, 100)
+#     y = norm.pdf(x, loc=mu_DGP, scale=sigma_DGP)
+#     ax2.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='normal pdf')
 
-    lowbound = mu_DGP - sigma_DGP
-    upbound = mu_DGP + sigma_DGP
-    x_errorrange = np.linspace(lowbound, upbound, 100)
-    y_pdfrange = norm.pdf(x_errorrange, scale=sigma_DGP, loc=mu_DGP)
-    # ax2.axhspan(x_errorrange, lowbound, upbound)
+#     lowbound = mu_DGP - sigma_DGP
+#     upbound = mu_DGP + sigma_DGP
+#     x_errorrange = np.linspace(lowbound, upbound, 100)
+#     y_pdfrange = norm.pdf(x_errorrange, scale=sigma_DGP, loc=mu_DGP)
+#     # ax2.axhspan(x_errorrange, lowbound, upbound)
 
-    ax2.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
-                     label=r'mean $\pm$ std', interpolate=True)
+#     ax2.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
+#                      label=r'mean $\pm$ std', interpolate=True)
 
-    ax2.set_ylim([-1.05*min(y), 1.1*max(y)])
+#     ax2.set_ylim([-1.05*min(y), 1.1*max(y)])
 
-    ax2.axvline(x=mu_DGP, color='b', label='mean/median/mode')
-    ax2.set_xlabel(r"$\log_{10}$(xsection/fb)")
-    ax2.set_ylabel('normal pdf')
-    ax2.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-    ax2.legend()
-    plt.show()
+#     ax2.axvline(x=mu_DGP, color='b', label='mean/median/mode')
+#     ax2.set_xlabel(r"$\log_{10}$(xsection/fb)")
+#     ax2.set_ylabel('normal pdf')
+#     ax2.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+#     ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+#     ax2.legend()
+#     plt.show()
