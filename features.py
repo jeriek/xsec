@@ -125,12 +125,6 @@ def get_features_dict(xsections_list):
     # As dict
     all_features_dict = {}
 
-    # TODO: why is mean mass set here? either the user specified it, so
-    # we should set all other squark masses _here_, or it is not used at
-    # all in the run ... unless we want to implement transforms using
-    # the calculated mean squark mass! 
-    set_mean_mass()
-
     # xsections_list has a list of proxesses we want features for so loop
     for i in range(len(xsections_list)):
 

@@ -18,7 +18,7 @@ import joblib       # Needs v0.12.2 or later
 
 # Need to import all setters to allow access upon importing only
 # 'evaluation'!
-from parameters import PARAMS, set_parameters, set_mean_mass
+from parameters import PARAMS, set_parameters, set_parameter, set_mean_mass
 from features import get_features, get_features_dict
 import kernels
 # from data.transform import inverse_transform
