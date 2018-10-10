@@ -21,10 +21,6 @@ import joblib       # Needs v0.12.2 or later
 from parameters import PARAMS, set_parameters, set_mean_mass
 from features import get_features, get_features_dict
 import kernels
-# from data.transform import inverse_transform
-# NOTE: currently no relative import, meaning DATA_DIR should stay
-# ./data, else transform.py won't be found (if not ./data, would need to
-# append to PYTHONPATH even?)
 
 # print('Numpy version ' + np.__version__)
 # print('Joblib version ' + joblib.__version__)
@@ -37,27 +33,23 @@ import kernels
 # Specify GP model data directory (can be reset in the run script)
 DATA_DIR = './data'
 
-# Specify available variation parameters (NOTE: to be changed!)
-# XSTYPES = ['', '05', '2', '3', '4', '5']
-
 # Link internal cross-section type (xstype) identifiers here to the
 # corresponding Nimbus file suffixes for each trained xstype
-# TODO: this should replace part of get_processdir_name()
 XSTYPE_FILESUFFIX = {
-    'centr' : '', # xsection @ central scale
-    'sclup' : '_2', # xsection @ higher scale (2 x central scale)
-    'scldn' : '_05', # xsection @ lower scale (0.5 x central scale)
-    'pdf' : '_pdf', # xsection error due to pdf variation
-    'aup' : '_aup', # xsection @ higher alpha_s
-    'adn' : '_adn' # xsection @ lower alpha_s
-    }
+    'centr': '',  # xsection @ central scale
+    'sclup': '_2',  # xsection @ higher scale (2 x central scale)
+    'scldn': '_05',  # xsection @ lower scale (0.5 x central scale)
+    'pdf': '_pdf',  # xsection error due to pdf variation
+    'aup': '_aup',  # xsection @ higher alpha_s
+    'adn': '_adn'  # xsection @ lower alpha_s
+}
 # List of the internal xstype identifiers
 XSTYPES = XSTYPE_FILESUFFIX.keys()
 
 # List of selected processes (2-tuples of sparticle ids), to be set by
 # the user
-# TODO: should be XSECTIONS for consistency!
-XSECTIONS = [] # e.g. [(1000021, 1000021), (1000021, 1000002)]
+# TODO: add set_processes function
+PROCESSES = []  # e.g. [(1000021, 1000021), (1000021, 1000002)]
 
 # Definition of sparticle PDG ids
 SQUARK_IDS = [1000001, 1000002, 1000003, 1000004,
@@ -81,7 +73,7 @@ CACHE_MEMORY = None
 # Initialisation                              #
 ###############################################
 
-def init(use_cache=False, cache_dir='', flush_cache=True,
+def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
          use_memmap=True):
     """
     Initialise run settings for the program. In particular, whether to
@@ -91,6 +83,9 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
 
     Parameters
     ----------
+    data_dir : str, optional
+        Specify the path of the top directory containing all of the GP
+        model data directories. (default '')
     use_cache : bool, optional
         Specify whether to cache data on disk (default False).
     cache_dir: str, optional
@@ -108,6 +103,12 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
         cross-section evaluation. Inactive if use_cache is False.
         (default True)
     """
+
+    # Set the data directory, if the given string isn't empty
+    # TODO: try/except
+    if data_dir:
+        global DATA_DIR
+        DATA_DIR = data_dir
 
     # Fix global variables coordinating the use of caching
     global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
@@ -151,7 +152,7 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
     transform_file = os.path.join(os.path.abspath(DATA_DIR), 'transform.py')
     with open(transform_file) as f:
         transform_code = compile(f.read(), transform_file, 'exec')
-        exec(transform_code, globals(), globals()) # globals(), locals())
+        exec(transform_code, globals(), globals())  # globals(), locals())
 
     # https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
     # https://stackoverflow.com/questions/6347588/is-it-possible-to-import-to-the-global-scope-from-inside-a-function-python
@@ -164,7 +165,7 @@ def init(use_cache=False, cache_dir='', flush_cache=True,
 # Loading functions                           #
 ###############################################
 
-def load_single_process(xsection_xstype):
+def load_single_process(process_xstype):
     """
     Given a single process and cross-section type (e.g. gluino-gluino at
     the central scale), load the relevant trained GP models for all
@@ -172,9 +173,9 @@ def load_single_process(xsection_xstype):
 
     Parameters
     ----------
-    xsection_xstype : tuple of str
-        The input argument xsection_xstype is a 3-tuple
-        (xsection[0], xsection[1], var) where the first two components
+    process_xstype : tuple of str
+        The input argument process_xstype is a 3-tuple
+        (process[0], process[1], var) where the first two components
         are integers specifying the process and the last component is a
         string from XSTYPES.
         Example: (1000021, 1000021, 'centr')
@@ -183,18 +184,18 @@ def load_single_process(xsection_xstype):
     -------
     model_list : list of dict
         List containing one dictionary per expert trained on the
-        process and cross-section type specified in xsection_xstype.
+        process and cross-section type specified in process_xstype.
         Each dictionary has keys 'X_train', 'K_inv', 'alpha' and
         'kernel'. These components are all the information needed to
         make the predictions of the expert with GP_predict().
     """
 
-    assert len(xsection_xstype) == 3
+    assert len(process_xstype) == 3
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
     process_dir = os.path.join(os.path.abspath(DATA_DIR),
-                               get_processdir_name(xsection_xstype))
+                               get_processdir_name(process_xstype))
 
     # Collect the GP model file locations for all the experts
     model_files = [os.path.join(process_dir, f) for f in
@@ -226,22 +227,22 @@ def load_single_process(xsection_xstype):
     return model_list
 
 
-def load_processes(xsections_list):
+def load_processes(process_list):
     """
     Given a list of sparticle production processes, load all relevant
     trained GP models into memory, or into a cache folder on disk if
     using cache. The function calls load_single_process() for each
-    process in xsections_list, looping over all cross-section types in
+    process in process_list, looping over all cross-section types in
     XSTYPES. It stores each returned list of models in the global
-    dictionary PROCESS_DICT, indexed with key 'xsection_xstype'. If
+    dictionary PROCESS_DICT, indexed with key 'process_xstype'. If
     using cache, a reference to the location of the cached data is
     stored in PROCESS_DICT, indexed in the same way.
 
     Parameters
     ----------
-    xsections_list : list of tuple
+    process_list : list of tuple
         The input argument is a list of 2-tuples
-        (xsection[0], xsection[1]), where the components are integers
+        (process[0], process[1]), where the components are integers
         specifying the process. For example, gluino-gluino production
         corresponds to the tuple (1000021, 1000021).
     """
@@ -252,21 +253,21 @@ def load_processes(xsections_list):
         load_single_process_cache = CACHE_MEMORY.cache(load_single_process)
 
     # Loop over specified processes
-    for xsection in xsections_list:
-        assert len(xsection) == 2
+    for process in process_list:
+        assert len(process) == 2
         # Search for all directories with same process, accounting for
         # cross-sections calculated at varied parameters
         for xstype in XSTYPES:
-            xsection_xstype = get_process_id(xsection, xstype)
+            process_xstype = get_process_id(process, xstype)
             if USE_CACHE:
                 # If using cache, PROCESS_DICT only keeps a reference
                 # to the data stored in a disk folder ('shelving')
-                PROCESS_DICT[xsection_xstype] = \
-                    load_single_process_cache.call_and_shelve(xsection_xstype)
+                PROCESS_DICT[process_xstype] = (
+                    load_single_process_cache.call_and_shelve(process_xstype))
             else:
                 # Loaded GP models are stored in PROCESS_DICT
-                PROCESS_DICT[xsection_xstype] = \
-                    load_single_process(xsection_xstype)
+                PROCESS_DICT[process_xstype] = (
+                    load_single_process(process_xstype))
 
 
 def set_kernel(kernel_params):
@@ -338,14 +339,13 @@ def set_kernel(kernel_params):
     return kernel_function
 
 
-
 ###############################################
 # Helper functions                            #
 ###############################################
 
-def get_processdir_name(xsection_xstype):
+def get_processdir_name(process_xstype):
     # Get the partons of the process
-    parton1, parton2, xstype = get_process_id_split(xsection_xstype)
+    parton1, parton2, xstype = get_process_id_split(process_xstype)
 
     # Decide process name
     # Check if one of the partons is a gluino
@@ -369,57 +369,57 @@ def get_processdir_name(xsection_xstype):
     return processdir_name
 
 
-def get_process_id(xsection, xstype):
-    assert len(xsection) == 2
-    xsection_xstype = (xsection[0], xsection[1], xstype)
+def get_process_id(process, xstype):
+    assert len(process) == 2
+    process_xstype = (process[0], process[1], xstype)
 
-    return xsection_xstype
+    return process_xstype
 
 
-def get_process_id_str(xsection, xstype):
-    assert len(xsection) == 2
-    xsection_xstype_str = (str(xsection[0]) + '_' + str(xsection[1]) + '_'
+def get_process_id_str(process, xstype):
+    assert len(process) == 2
+    process_xstype_str = (str(process[0]) + '_' + str(process[1]) + '_'
                            + xstype)
 
-    return xsection_xstype_str
+    return process_xstype_str
 
 
-def get_process_id_split(xsection_xstype):
-    assert len(xsection_xstype) == 3
-    parton1 = xsection_xstype[0]
-    parton2 = xsection_xstype[1]
-    xstype = xsection_xstype[2]
+def get_process_id_split(process_xstype):
+    assert len(process_xstype) == 3
+    parton1 = process_xstype[0]
+    parton2 = process_xstype[1]
+    xstype = process_xstype[2]
 
     return parton1, parton2, xstype
 
 
-def get_xsection_from_process_id(xsection_xstype):
-    parton1 = xsection_xstype[0]
-    parton2 = xsection_xstype[1]
+def get_process_from_process_id(process_xstype):
+    parton1 = process_xstype[0]
+    parton2 = process_xstype[1]
 
     return (parton1, parton2)
 
 
-def get_xstype_from_process_id(xsection_xstype):
-    xstype = xsection_xstype[-1]
+def get_xstype_from_process_id(process_xstype):
+    xstype = process_xstype[-1]
 
     return xstype
 
 
-def get_xsections_list_str(xsections_list):
-    xsection_str_list = []
-    for xsection in xsections_list:
-        xsection_str = str(xsection[0]) + '_' + str(xsection[1])
-        xsection_str_list.append(xsection_str)
+def get_process_list_str(process_list):
+    process_str_list = []
+    for process in process_list:
+        process_str = str(process[0]) + '_' + str(process[1])
+        process_str_list.append(process_str)
 
-    return xsection_str_list
+    return process_str_list
 
 
 ###############################################
 # Main functions                              #
 ###############################################
 
-# Evaluation of cross sections for processes stored in global variable XSECTIONS
+# Evaluation of cross sections for processes stored in global variable PROCESSES
 def eval_xsection(verbose=True):
 
     """
@@ -432,13 +432,13 @@ def eval_xsection(verbose=True):
     ##################################################
 
     # Get local variable to avoid multiple slow lookups in global namespace
-    xsections = XSECTIONS
+    processes = PROCESSES
 
-    for xsection in xsections:
-        assert len(xsection) == 2
+    for process in processes:
+        assert len(process) == 2
 
     # Build feature vectors, depending on production channel
-    features = get_features_dict(xsections)
+    features = get_features_dict(processes)
 
     params = PARAMS
 
@@ -446,19 +446,19 @@ def eval_xsection(verbose=True):
     # Do DGP regression                               #
     ###################################################
 
-    # Call a DGP for each xsection_xstype, store results as lists of
+    # Call a DGP for each process_xstype, store results as lists of
     # (mu_dgp, sigma_dgp) in dictionary with key xstype; i-th element of
     # list dgp_results[xstype] gives DGP result for
-    # xsection = xsections[i] and the specified xstype.
+    # process = processes[i] and the specified xstype.
     # Immediately corrected for any data transformation during training
     #  with Nimbus.
 
-    # Dictionary of xsections-ordered lists
+    # Dictionary of PROCESSES-ordered lists
     dgp_results = {
         xstype: [
-            inverse_transform(xsection, xstype, params,
-                              *DGP(xsection, xstype, features[xsection]))
-            for xsection in xsections
+            inverse_transform(process, xstype, params,
+                              *DGP(process, xstype, features[process]))
+            for process in processes
             ]
         for xstype in XSTYPES
         }
@@ -477,7 +477,7 @@ def eval_xsection(verbose=True):
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
     # mu and one for sigma values -- then convert to arrays by mapping)
     # NOTE: Result arrays are now ordered in the user-specified order
-    # from the global xsections variable!
+    # from the global PROCESSES variable!
 
     # -- Xsection deviating one (lognormal) regression error away
     #    from the central-scale xsection, relative to the latter.
@@ -539,9 +539,9 @@ def eval_xsection(verbose=True):
         nr_dec = 4
         np.set_printoptions(precision=nr_dec)
         print("* Processes requested, in order: \n  ",
-            *get_xsections_list_str(xsections))
-        print("* Input features: \n  ", get_features(*XSECTIONS[0]), "\n  ",
-            get_features_dict(XSECTIONS)[xsections[0]])
+            *get_process_list_str(processes))
+        print("* Input features: \n  ", get_features(*PROCESSES[0]), "\n  ",
+            get_features_dict(PROCESSES)[processes[0]])
         print("* xsection_central (fb):", xsection_central)
         print("* regdown_rel:", regdown_rel)
         print("* regup_rel:", regup_rel)
@@ -560,13 +560,13 @@ def eval_xsection(verbose=True):
     return return_array
 
 
-def DGP(xsection, xstype, features):
+def DGP(process, xstype, features):
 
-    assert len(xsection) == 2
-    xsection_xstype = (xsection[0], xsection[1], xstype)
+    assert len(process) == 2
+    process_xstype = (process[0], process[1], xstype)
 
     # Decide which GP to use depending on 'scale'
-    processdir_name = get_processdir_name(xsection_xstype)
+    processdir_name = get_processdir_name(process_xstype)
     # print processdir_name
 
     # List all trained experts in the chosen directory
@@ -584,7 +584,7 @@ def DGP(xsection, xstype, features):
     # Loop over GP models/experts
     for i in range(len(models)):
         # model = models[i]
-        mu, sigma, sigma_prior = GP_predict(xsection_xstype, features,
+        mu, sigma, sigma_prior = GP_predict(process_xstype, features,
                                             index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
@@ -620,7 +620,7 @@ def DGP(xsection, xstype, features):
 
 
 
-def GP_predict(xsection_xstype, features, index=0, return_std=True, return_cov=False):
+def GP_predict(process_xstype, features, index=0, return_std=True, return_cov=False):
     """
     Gaussian process regression for the individual experts. Takes as
     input arguments the produced partons, an array of new test features,
@@ -645,9 +645,9 @@ def GP_predict(xsection_xstype, features, index=0, return_std=True, return_cov=F
     try:
         if USE_CACHE:
             # Get list of loaded models for the specified process
-            gp_model = PROCESS_DICT[xsection_xstype].get()[index]
+            gp_model = PROCESS_DICT[process_xstype].get()[index]
         else:
-            gp_model = PROCESS_DICT[xsection_xstype][index]
+            gp_model = PROCESS_DICT[process_xstype][index]
 
         kernel = gp_model['kernel']
         X_train = gp_model['X_train']
@@ -656,13 +656,9 @@ def GP_predict(xsection_xstype, features, index=0, return_std=True, return_cov=F
         K_inv = gp_model['K_inv']
         kernel = set_kernel(gp_model['kernel'])
 
-        # if xsection_xstype[2] == '':
-        #     print("- Do GP regression for: " + get_processdir_name(xsection_xstype) + " at scale 1.0")
-        # else:
-        #     print ("- Do GP regression for: " + get_processdir_name(xsection_xstype) + " with variation parameter " + xsection_xstype[2])
     except KeyError, e:
         print(KeyError, e)
-        print("No trained GP models loaded for: " + str(xsection_xstype))
+        print("No trained GP models loaded for: " + str(process_xstype))
         return None
 
     X = np.atleast_2d(features)
@@ -673,13 +669,17 @@ def GP_predict(xsection_xstype, features, index=0, return_std=True, return_cov=F
     prior_variance = kernel(X) # Note: 1x1 if just 1 new test point!]
 
     if return_std:
-        # Compute variance of predictive distribution
-        y_var = np.diag(prior_variance.copy()) # Note: = prior_variance if 1x1, deep copy else prior_variance = y_var alias
-        y_var.setflags(write=True) # else this array is read-only
-        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True)
+        # Compute variance of predictive distribution Note: =
+        # prior_variance if 1x1, deep copy else prior_variance = y_var
+        # alias
+        y_var = np.diag(prior_variance.copy())
+        y_var.setflags(write=True)  # else this array is read-only
+        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv),
+                           K_trans, optimize=True)
 
-        # Check if any of the variances is negative because of
-        # numerical issues. If yes: set the variance to 0.
+        # Check if any of the variances is negative because of numerical
+        # issues. If yes: set the variance to absolute value, to keep
+        # the rough order of magnitude right.
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
             # warnings.warn("Predicted some variance(s) smaller than 0. "
@@ -703,89 +703,3 @@ def clear_cache():
         # Flush the cache completely
         CACHE_MEMORY.clear(warn=False)
     return 0
-
-# ----------------------------------------------------------------------
-# -------- NOTE: ONLY FOR TESTING, TO BE REMOVED LATER -----------------
-
-# def moments_lognormal(mu_DGP, sigma_DGP):
-#     """
-#     Given the output mean and std of a DGP trained on log10(x), return
-#     the expectation value and standard deviation of x.
-#     """
-#     # Parameters of the lognormal pdf
-#     mu_lognorm = mu_DGP*np.log(10.)
-#     sigma_lognorm = sigma_DGP*np.log(10.)
-#     # Moments of the lognormal pdf
-#     mean_lognorm = np.exp(mu_lognorm + 0.5*sigma_lognorm**2)
-#     std_lognorm = mean_lognorm * np.sqrt(np.exp(sigma_lognorm**2) - 1)
-#     print("----", mu_DGP, sigma_DGP)
-#     # NOTE: The 'skewness' ratio is only printed for test purposes!
-#     # print("~DEBUG OUTPUT: ", "std_lognorm/mean_lognorm = ",
-#         # round(std_lognorm/mean_lognorm, 6))
-
-#     return mean_lognorm, std_lognorm
-
-# def plot_lognormal(mu_DGP, sigma_DGP):
-#     # NOTE: Just for testing, not for release.
-
-#     from scipy.stats import lognorm, norm
-#     import matplotlib.pyplot as plt
-
-#     mu_lognorm = mu_DGP*np.log(10.)
-#     sigma_lognorm = sigma_DGP*np.log(10.)
-
-#     fig, (ax1, ax2) = plt.subplots(1, 2)
-#     mean, var, _, _  = lognorm.stats(
-#         s=sigma_lognorm, scale=np.exp(mu_lognorm), moments='mvsk')
-#     startx = lognorm.ppf(0.01, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-#     endx = lognorm.ppf(0.99, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-#     x = np.linspace(startx, endx, 1000)
-#     y = lognorm.pdf(x, s=sigma_lognorm, scale=np.exp(mu_lognorm))
-#     ax1.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='lognormal pdf')
-
-#     ax1.axvline(x=np.exp(mu_lognorm-sigma_lognorm**2), color='r', label='mode')
-#     ax1.axvline(x=np.exp(mu_lognorm), color='g', label='median')
-#     ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2), color='b', label='mean')
-
-#     # lowbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)-np.sqrt(var), color='m', label='mean - std')
-#     # upbound = ax1.axvline(x=np.exp(mu_lognorm+0.5*sigma_lognorm**2)+np.sqrt(var), color='m', label='mean + std')
-#     lowbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) - np.sqrt(var)
-#     upbound = np.exp(mu_lognorm+0.5*sigma_lognorm**2) + np.sqrt(var)
-#     x_errorrange = np.linspace(lowbound, upbound, 1000)
-#     y_pdfrange = lognorm.pdf(x_errorrange, s=sigma_lognorm,
-#         scale=np.exp(mu_lognorm))
-
-#     ax1.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
-#         label=r'mean $\pm$ std', interpolate=True)
-
-#     ax1.set_xlabel('xsection in fb')
-#     ax1.set_ylabel('lognormal pdf')
-#     ax1.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-#     ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-#     ax1.legend()
-#     ax1.set_ylim([-1.05*min(y), 1.1*max(y)])
-
-#     startx = norm.ppf(0.01, loc=mu_DGP, scale=sigma_DGP)
-#     endx = norm.ppf(0.99, loc=mu_DGP, scale=sigma_DGP)
-#     x = np.linspace(startx, endx, 100)
-#     y = norm.pdf(x, loc=mu_DGP, scale=sigma_DGP)
-#     ax2.plot(x, y, 'r-', lw=4, alpha=0.7, color='k', label='normal pdf')
-
-#     lowbound = mu_DGP - sigma_DGP
-#     upbound = mu_DGP + sigma_DGP
-#     x_errorrange = np.linspace(lowbound, upbound, 100)
-#     y_pdfrange = norm.pdf(x_errorrange, scale=sigma_DGP, loc=mu_DGP)
-#     # ax2.axhspan(x_errorrange, lowbound, upbound)
-
-#     ax2.fill_between(x_errorrange, -1.1*min(y_pdfrange), y_pdfrange, facecolor='c', alpha=0.4,
-#                      label=r'mean $\pm$ std', interpolate=True)
-
-#     ax2.set_ylim([-1.05*min(y), 1.1*max(y)])
-
-#     ax2.axvline(x=mu_DGP, color='b', label='mean/median/mode')
-#     ax2.set_xlabel(r"$\log_{10}$(xsection/fb)")
-#     ax2.set_ylabel('normal pdf')
-#     ax2.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-#     ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-#     ax2.legend()
-#     plt.show()
