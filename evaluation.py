@@ -420,7 +420,7 @@ def get_xsections_list_str(xsections_list):
 ###############################################
 
 # Evaluation of cross sections for processes stored in global variable XSECTIONS
-def eval_xsection():
+def eval_xsection(verbose=True):
 
     """
     Read masses and parameters from slha-file and evaluate
@@ -440,6 +440,8 @@ def eval_xsection():
     # Build feature vectors, depending on production channel
     features = get_features_dict(xsections)
 
+    params = PARAMS
+
     ###################################################
     # Do DGP regression                               #
     ###################################################
@@ -454,7 +456,7 @@ def eval_xsection():
     # Dictionary of xsections-ordered lists
     dgp_results = {
         xstype: [
-            inverse_transform(xsection, xstype, features[xsection],
+            inverse_transform(xsection, xstype, params,
                               *DGP(xsection, xstype, features[xsection]))
             for xsection in xsections
             ]
@@ -466,9 +468,12 @@ def eval_xsection():
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
     xsection_central, reg_err = map(
-        np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
-                        for mu_sigma_dgp in dgp_results['centr']))
+        np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results['centr']))
         )
+    # xsection_central, reg_err = map(
+    #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
+    #                     for mu_sigma_dgp in dgp_results['centr']))
+    #     )
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
     # mu and one for sigma values -- then convert to arrays by mapping)
     # NOTE: Result arrays are now ordered in the user-specified order
@@ -522,23 +527,31 @@ def eval_xsection():
         ])
     # print(return_array)
 
-    print("*********************** XSEC **************************")
-    nr_dec = 4
-    np.set_printoptions(precision=nr_dec)
-    print("* Processes requested, in order: \n  ",
-          *get_xsections_list_str(xsections))
-    print("* Input features: \n  ", get_features(*XSECTIONS[0]), "\n  ",
-        get_features_dict(XSECTIONS)[xsections[0]])
-    print("* xsection_central (fb):", xsection_central)
-    print("* regdown_rel:", regdown_rel)
-    print("* regup_rel:", regup_rel)
-    print("* scaledown_rel:", scaledown_rel)
-    print("* scaleup_rel:", scaleup_rel)
-    print("* pdfdown_rel:", pdfdown_rel)
-    print("* pdfup_rel:", pdfup_rel)
-    print("* alphasdown_rel:", alphasdown_rel)
-    print("* alphasup_rel:", alphasup_rel)
-    print("********************************************************")
+    if verbose:
+        # Alright alright, I will remove this ... soon
+        print(
+            "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
+            "\t     _/  _/    _/        _/        _/          \n"
+            "\t      _/        _/_/    _/_/_/    _/           \n"
+            "\t   _/  _/          _/  _/        _/            \n"
+            "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
+        )
+        nr_dec = 4
+        np.set_printoptions(precision=nr_dec)
+        print("* Processes requested, in order: \n  ",
+            *get_xsections_list_str(xsections))
+        print("* Input features: \n  ", get_features(*XSECTIONS[0]), "\n  ",
+            get_features_dict(XSECTIONS)[xsections[0]])
+        print("* xsection_central (fb):", xsection_central)
+        print("* regdown_rel:", regdown_rel)
+        print("* regup_rel:", regup_rel)
+        print("* scaledown_rel:", scaledown_rel)
+        print("* scaleup_rel:", scaleup_rel)
+        print("* pdfdown_rel:", pdfdown_rel)
+        print("* pdfup_rel:", pdfup_rel)
+        print("* alphasdown_rel:", alphasdown_rel)
+        print("* alphasup_rel:", alphasup_rel)
+        print("**************************************************************")
 
     # NOTE: plot just for comparison during testing
     # plot_lognormal(mu_dgp, sigma_dgp)
@@ -694,23 +707,23 @@ def clear_cache():
 # ----------------------------------------------------------------------
 # -------- NOTE: ONLY FOR TESTING, TO BE REMOVED LATER -----------------
 
-def moments_lognormal(mu_DGP, sigma_DGP):
-    """
-    Given the output mean and std of a DGP trained on log10(x), return
-    the expectation value and standard deviation of x.
-    """
-    # Parameters of the lognormal pdf
-    mu_lognorm = mu_DGP*np.log(10.)
-    sigma_lognorm = sigma_DGP*np.log(10.)
-    # Moments of the lognormal pdf
-    mean_lognorm = np.exp(mu_lognorm + 0.5*sigma_lognorm**2)
-    std_lognorm = mean_lognorm * np.sqrt(np.exp(sigma_lognorm**2) - 1)
+# def moments_lognormal(mu_DGP, sigma_DGP):
+#     """
+#     Given the output mean and std of a DGP trained on log10(x), return
+#     the expectation value and standard deviation of x.
+#     """
+#     # Parameters of the lognormal pdf
+#     mu_lognorm = mu_DGP*np.log(10.)
+#     sigma_lognorm = sigma_DGP*np.log(10.)
+#     # Moments of the lognormal pdf
+#     mean_lognorm = np.exp(mu_lognorm + 0.5*sigma_lognorm**2)
+#     std_lognorm = mean_lognorm * np.sqrt(np.exp(sigma_lognorm**2) - 1)
+#     print("----", mu_DGP, sigma_DGP)
+#     # NOTE: The 'skewness' ratio is only printed for test purposes!
+#     # print("~DEBUG OUTPUT: ", "std_lognorm/mean_lognorm = ",
+#         # round(std_lognorm/mean_lognorm, 6))
 
-    # NOTE: The 'skewness' ratio is only printed for test purposes!
-    # print("~DEBUG OUTPUT: ", "std_lognorm/mean_lognorm = ",
-        # round(std_lognorm/mean_lognorm, 6))
-
-    return mean_lognorm, std_lognorm
+#     return mean_lognorm, std_lognorm
 
 # def plot_lognormal(mu_DGP, sigma_DGP):
 #     # NOTE: Just for testing, not for release.
