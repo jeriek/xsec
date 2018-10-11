@@ -117,22 +117,22 @@ def get_features(pid1, pid2):
             raise e
 
 
-def get_features_dict(xsections_list):
+def get_features_dict(process_list):
 # Produce a dictionary of features and their masses for each process in
-# xsections_list
+# process_list
 
-    # all_features = range(len(xsections_list)) # initialise dummy list
+    # all_features = range(len(process_list)) # initialise dummy list
     # As dict
     all_features_dict = {}
 
-    # xsections_list has a list of proxesses we want features for so loop
-    for i in range(len(xsections_list)):
+    # process_list has a list of proxesses we want features for so loop
+    for i in range(len(process_list)):
 
         # Extract current process
-        xsection = xsections_list[i]
+        process = process_list[i]
 
         # Find features for this process
-        features_index = get_features(xsection[0], xsection[1])
+        features_index = get_features(process[0], process[1])
 
         # Make a feature dictionary
         #TODO: try/except KeyError!
@@ -146,7 +146,7 @@ def get_features_dict(xsections_list):
 
         # Add features to feature array
         # all_features[i] = features
-        all_features_dict.update({xsection: features})
+        all_features_dict.update({process: features})
 
     # Return feature array for all processes
     #return np.asarray(all_features)

@@ -415,16 +415,39 @@ def get_process_list_str(process_list):
     return process_str_list
 
 
+# Function to test consistency of parameters.
+# This will check that all necessary parameters are set and that they are
+# internally consistent, e.g. the mean mass.
+def check_parameters(process_list, params):
+    # Check that the parameters for all required feature have been supplied
+    for process in process_list:
+        features = get_features(process[0],process[1])
+        for feature in features:
+            if params[feature] == None:
+                raise ValueError('The feature {feature} used in this cross section evaulation has not been set!'.format(feature=feature))
+    # Check that the mean squark mass has been set consistently
+    squark_features = ['m1000001','m1000002','m1000003','m1000004','m2000001','m2000002','m2000003','m2000004']
+    mean = 0
+    nsquark = 0
+    for key in squark_features:
+        if params[key] != None:
+            mean += params[key]
+            nsquark += 1
+    mean = mean/8.
+    if nsquark == 8 and (params['mean'] - mean) > 0.1:
+        raise ValueError('The squark masses mean {mean1} is not equal to the mean mass feature used {mean2}!'.format(mean1=mean,mean2=params['mean']))
+
+
 ###############################################
 # Main functions                              #
 ###############################################
 
 # Evaluation of cross sections for processes stored in global variable PROCESSES
-def eval_xsection(verbose=True):
+def eval_xsection(verbose=True, check_consistency=True):
 
     """
-    Read masses and parameters from slha-file and evaluate
-    cross sections
+    Evaluates cross sections for processes stored in global PROCESSES with
+    parameters stored in in global PARAMS.
     """
 
     ##################################################
@@ -437,10 +460,17 @@ def eval_xsection(verbose=True):
     for process in processes:
         assert len(process) == 2
 
+    params = PARAMS
+
+
+    set_parameter('m1000001', 1000.1)
+    # Sanity check parameter inputs
+    if check_consistency :
+        check_parameters(processes, params)
+
     # Build feature vectors, depending on production channel
     features = get_features_dict(processes)
-
-    params = PARAMS
+    
 
     ###################################################
     # Do DGP regression                               #
