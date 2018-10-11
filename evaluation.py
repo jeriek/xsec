@@ -467,11 +467,7 @@ def eval_xsection(verbose=True, check_consistency=True):
         check_parameters(processes, params)
 
     # Build feature vectors, depending on production channel
-    features, feature_names = get_features_dict(processes)
-
-    print("-------------- Only for testing --------------")
-    print("Iterable set of all features in use: ", feature_names)
-
+    features = get_features_dict(processes)
 
     ###################################################
     # Do DGP regression                               #
@@ -574,7 +570,7 @@ def eval_xsection(verbose=True, check_consistency=True):
         for process in processes:
             print("* Input features: \n  ", process, ": ",
                   zip(get_features(*process),
-                  get_features_dict(PROCESSES)[0][process]))
+                  get_features_dict(PROCESSES)[process]))
         print("* xsection_central (fb):", xsection_central)
         print("* regdown_rel:", regdown_rel)
         print("* regup_rel:", regup_rel)
