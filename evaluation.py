@@ -18,7 +18,7 @@ import joblib       # Needs v0.12.2 or later
 
 # Need to import all setters to allow access upon importing only
 # 'evaluation'!
-from parameters import PARAMS, set_parameters, set_parameter, set_mean_mass
+from parameters import PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass
 from features import get_features, get_features_dict
 import kernels
 
@@ -426,10 +426,9 @@ def check_parameters(process_list, params):
             if params[feature] == None:
                 raise ValueError('The feature {feature} used in this cross section evaulation has not been set!'.format(feature=feature))
     # Check that the mean squark mass has been set consistently
-    squark_features = ['m1000001','m1000002','m1000003','m1000004','m2000001','m2000002','m2000003','m2000004']
     mean = 0
     nsquark = 0
-    for key in squark_features:
+    for key in MEAN_INDEX:
         if params[key] != None:
             mean += params[key]
             nsquark += 1
@@ -442,12 +441,16 @@ def check_parameters(process_list, params):
 # Main functions                              #
 ###############################################
 
-# Evaluation of cross sections for processes stored in global variable PROCESSES
+# Evaluation of cross sections
 def eval_xsection(verbose=True, check_consistency=True):
 
     """
-    Evaluates cross sections for processes stored in global PROCESSES with
-    parameters stored in in global PARAMS.
+    Evaluates cross sections for processes in global list PROCESSES using
+    parameter values stored in global dictionary PARAMS.
+    
+    The function has two options:
+    verbose:    Turns on and off printing of values to terminal
+    check_consistency:  Forces a consistency check of the paramters in PARAMS
     """
 
     ##################################################
@@ -470,7 +473,7 @@ def eval_xsection(verbose=True, check_consistency=True):
     features = get_features_dict(processes)
 
     ###################################################
-    # Do DGP regression                               #
+    # Do DGP evaluation                               #
     ###################################################
 
     # Call a DGP for each process_xstype, store results as lists of
@@ -555,7 +558,6 @@ def eval_xsection(verbose=True, check_consistency=True):
     # print(return_array)
 
     if verbose:
-        # Alright alright, I will remove this ... soon
         print(
             "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
             "\t     _/  _/    _/        _/        _/          \n"
@@ -590,7 +592,9 @@ def eval_xsection(verbose=True, check_consistency=True):
 
 
 def DGP(process, xstype, features):
-
+    """
+        Evaluate a set of distributed Gaussian processes (DGPs)
+    """"
     assert len(process) == 2
     process_xstype = (process[0], process[1], xstype)
 
@@ -651,7 +655,7 @@ def DGP(process, xstype, features):
 
 def GP_predict(process_xstype, features, index=0, return_std=True, return_cov=False):
     """
-    Gaussian process regression for the individual experts. Takes as
+    Gaussian process evaluation for the individual experts. Takes as
     input arguments the produced partons, an array of new test features,
     and the index number of the expert. Requires running
     load_processes() first.
@@ -664,7 +668,7 @@ def GP_predict(process_xstype, features, index=0, return_std=True, return_cov=Fa
     Based on GaussianProcessRegressor.predict() from scikit-learn
     v0.19.2 and algorithm 2.1 of Gaussian Processes for Machine Learning
     by Rasmussen and Williams.
-
+ 
     """
 
     if return_std and return_cov:
