@@ -594,7 +594,7 @@ def eval_xsection(verbose=True, check_consistency=True):
 def DGP(process, xstype, features):
     """
         Evaluate a set of distributed Gaussian processes (DGPs)
-    """"
+    """
     assert len(process) == 2
     process_xstype = (process[0], process[1], xstype)
 
