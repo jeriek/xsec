@@ -434,7 +434,7 @@ def check_parameters(process_list, params):
             mean += params[key]
             nsquark += 1
     mean = mean/8.
-    if nsquark == 8 and (params['mean'] - mean) > 0.1:
+    if nsquark == 8 and abs(params['mean'] - mean) > 0.1:
         raise ValueError('The squark masses mean {mean1} is not equal to the mean mass feature used {mean2}!'.format(mean1=mean,mean2=params['mean']))
 
 
@@ -462,15 +462,16 @@ def eval_xsection(verbose=True, check_consistency=True):
 
     params = PARAMS
 
-
-    set_parameter('m1000001', 1000.1)
     # Sanity check parameter inputs
-    if check_consistency :
+    if check_consistency:
         check_parameters(processes, params)
 
     # Build feature vectors, depending on production channel
-    features = get_features_dict(processes)
-    
+    features, feature_names = get_features_dict(processes)
+
+    print("-------------- Only for testing --------------")
+    print("Iterable set of all features in use: ", feature_names)
+
 
     ###################################################
     # Do DGP regression                               #
@@ -570,8 +571,10 @@ def eval_xsection(verbose=True, check_consistency=True):
         np.set_printoptions(precision=nr_dec)
         print("* Processes requested, in order: \n  ",
             *get_process_list_str(processes))
-        print("* Input features: \n  ", get_features(*PROCESSES[0]), "\n  ",
-            get_features_dict(PROCESSES)[processes[0]])
+        for process in processes:
+            print("* Input features: \n  ", process, ": ",
+                  zip(get_features(*process),
+                  get_features_dict(PROCESSES)[0][process]))
         print("* xsection_central (fb):", xsection_central)
         print("* regdown_rel:", regdown_rel)
         print("* regup_rel:", regup_rel)

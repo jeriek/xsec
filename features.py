@@ -118,12 +118,14 @@ def get_features(pid1, pid2):
 
 
 def get_features_dict(process_list):
-# Produce a dictionary of features and their masses for each process in
-# process_list
+# Produce a dictionary of processes and values for their features, for
+# each process in process_list. Also returns a set with the names of all
+# the features that are used for at least one process in process_list.
 
-    # all_features = range(len(process_list)) # initialise dummy list
-    # As dict
+    # Dictionary {process : [feature values list]}
     all_features_dict = {}
+    # Set {names of all features in use}
+    all_feature_names = set()
 
     # process_list has a list of proxesses we want features for so loop
     for i in range(len(process_list)):
@@ -131,8 +133,9 @@ def get_features_dict(process_list):
         # Extract current process
         process = process_list[i]
 
-        # Find features for this process
+        # Find features for this process and add their names to the set
         features_index = get_features(process[0], process[1])
+        all_feature_names.update(features_index)
 
         # Make a feature dictionary
         #TODO: try/except KeyError!
@@ -150,4 +153,6 @@ def get_features_dict(process_list):
 
     # Return feature array for all processes
     #return np.asarray(all_features)
-    return all_features_dict
+    return all_features_dict, all_feature_names
+
+# also get set of features in use

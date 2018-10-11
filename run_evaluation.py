@@ -7,8 +7,9 @@ Run an instance of the evaluation.py program
 import evaluation as evl
 
 # *** Set processes to load ***
+evl.PROCESSES = [(1000021, 1000021), (1000006, -1000006)]
 # evl.PROCESSES = [(1000021, 1000021)]
-evl.PROCESSES = [(1000006, -1000006)]
+# evl.PROCESSES = [(1000006, -1000006)]
 # evl.PROCESSES = [(1000001, -1000001), (1000001, 1000002),
                 #  (1000021, 1000001), (1000021, 1000003)]
 # evl.PROCESSES = [(1000001, -1000001), (1000001, 1000002)]
@@ -42,7 +43,8 @@ evl.set_parameters({
     'm2000005': 500.,
     'm2000006': 500.,
     'thetab': 0.,
-    'thetat': 0.
+    'thetat': 0.,
+    'mean': 500.
 })
 evl.eval_xsection()
 
