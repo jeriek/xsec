@@ -11,7 +11,7 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
-setup(name='funniest',
+setup(name='xsec',
       version='0.1.0',
       description='Cross-section evaluation code',
       long_description=readme(),
@@ -27,6 +27,7 @@ setup(name='funniest',
       maintainer_email='jeriekvda@fys.uio.no',
       license='GPL',
       packages=['xsec'],
+      scripts=['xsec/run_evaluation.py'],
       install_requires=[
           'numpy>=1.14',
           'joblib>=0.12.2'
