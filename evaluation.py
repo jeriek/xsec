@@ -7,20 +7,16 @@ by NIMBUS.
 # Import packages
 from __future__ import print_function
 import os
-import sys
-# import imp
-# import warnings
-import collections
-# from itertools import product
 
 import numpy as np  # Needs v1.14 or later
 import joblib       # Needs v0.12.2 or later
 
-# Need to import all setters to allow access upon importing only
-# 'evaluation'!
-from parameters import PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass
-from features import get_features, get_features_dict
 import kernels
+from parameters import (
+    PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass)
+from features import get_features, get_features_dict
+# NOTE: Explicitly import set/get functions that have to be
+# user-accessible upon importing only the evaluation module.
 
 # print('Numpy version ' + np.__version__)
 # print('Joblib version ' + joblib.__version__)
@@ -145,7 +141,8 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     # set definitively, need to import from path and add to global scope
     # - Works in Python 2.x:
     # global datatransform
-    # datatransform = imp.load_source('', os.path.join(DATA_DIR, 'transform.py'))
+    # datatransform = imp.load_source(
+    #   '', os.path.join(DATA_DIR, 'transform.py'))
 
     # - Works in any Python version, despite being ugly:
     # Execute the module and add its functions to the global scope
@@ -153,10 +150,6 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     with open(transform_file) as f:
         transform_code = compile(f.read(), transform_file, 'exec')
         exec(transform_code, globals(), globals())  # globals(), locals())
-
-    # https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
-    # https://stackoverflow.com/questions/6347588/is-it-possible-to-import-to-the-global-scope-from-inside-a-function-python
-    # from data.transform import inverse_transform
 
     return 0
 
@@ -423,18 +416,22 @@ def check_parameters(process_list, params):
     for process in process_list:
         features = get_features(process[0],process[1])
         for feature in features:
-            if params[feature] == None:
-                raise ValueError('The feature {feature} used in this cross section evaulation has not been set!'.format(feature=feature))
+            if params[feature] is None:
+                raise ValueError(
+                    'The feature {feature} used in this cross section '
+                    'evaluation has not been set!'.format(feature=feature))
     # Check that the mean squark mass has been set consistently
     mean = 0
     nsquark = 0
     for key in MEAN_INDEX:
-        if params[key] != None:
+        if params[key] is not None:
             mean += params[key]
             nsquark += 1
     mean = mean/8.
     if nsquark == 8 and abs(params['mean'] - mean) > 0.1:
-        raise ValueError('The squark masses mean {mean1} is not equal to the mean mass feature used {mean2}!'.format(mean1=mean,mean2=params['mean']))
+        raise ValueError(
+            'The squark masses mean {mean1} is not equal to the mean mass '
+            'feature used {mean2}!'.format(mean1=mean, mean2=params['mean']))
 
 
 ###############################################
@@ -447,7 +444,7 @@ def eval_xsection(verbose=True, check_consistency=True):
     """
     Evaluates cross sections for processes in global list PROCESSES using
     parameter values stored in global dictionary PARAMS.
-    
+
     The function has two options:
     verbose:    Turns on and off printing of values to terminal
     check_consistency:  Forces a consistency check of the paramters in PARAMS
@@ -631,11 +628,11 @@ def DGP(process, xstype, features):
     N = len(mus)
 
     # Find weight (beta) for each expert
-    betas = 0.5*(  2*np.log(sigma_priors) - 2*np.log(sigmas) )
+    betas = 0.5*(2*np.log(sigma_priors) - 2*np.log(sigmas))
 
     # Final mean and variance
     mu_dgp = 0.
-    var_dgp_inv = 0. # (sigma^2)^-1
+    var_dgp_inv = 0.  # (sigma^2)^-1
 
     # Combine sigmas
     for i in range(N):
@@ -645,7 +642,7 @@ def DGP(process, xstype, features):
 
     # Combine mus
     for i in range(N):
-        mu_dgp +=  var_dgp_inv**(-1) * (betas[i] * sigmas[i]**(-2) * mus[i])
+        mu_dgp += var_dgp_inv**(-1) * (betas[i] * sigmas[i]**(-2) * mus[i])
 
 
     # Return mean and std
@@ -653,7 +650,8 @@ def DGP(process, xstype, features):
 
 
 
-def GP_predict(process_xstype, features, index=0, return_std=True, return_cov=False):
+def GP_predict(process_xstype, features, index=0, return_std=True,
+               return_cov=False):
     """
     Gaussian process evaluation for the individual experts. Takes as
     input arguments the produced partons, an array of new test features,
@@ -668,7 +666,6 @@ def GP_predict(process_xstype, features, index=0, return_std=True, return_cov=Fa
     Based on GaussianProcessRegressor.predict() from scikit-learn
     v0.19.2 and algorithm 2.1 of Gaussian Processes for Machine Learning
     by Rasmussen and Williams.
- 
     """
 
     if return_std and return_cov:
