@@ -1,30 +1,22 @@
 """
-Run an instance of the evaluation.py program
+Run an instance of the evaluation.py program.
 
 @author: Ingrid A V Holm and Jeriek VdA
 """
 
 import evaluation as evl
 
-# *** Set processes to load ***
-evl.PROCESSES = [(1000021, 1000021), (1000006, -1000006)]
-# evl.PROCESSES = [(1000021, 1000021)]
-# evl.PROCESSES = [(1000006, -1000006)]
-# evl.PROCESSES = [(1000001, -1000001), (1000001, 1000002),
-                #  (1000021, 1000001), (1000021, 1000003)]
-# evl.PROCESSES = [(1000001, -1000001), (1000001, 1000002)]
 
-# *** Set directory with trained GP models (checks ./data if not specified here) ***
-evl.DATA_DIR = '../nimbus/NIMBUS/gps'
-# evl.DATA_DIR = '../../Nimbus/NIMBUS/gps'
+# *** Set processes to load ***
+evl.PROCESSES = [(1000021, 1000021)]
+
+# *** Reset directory with trained GP models (default: '') ***
+evl.DATA_DIR = ''
 
 # *** Set cache choices ***
 evl.init()  # run with default settings (no caching)
-# evl.init(use_cache=False, cache_dir="$SCRATCH/xsec_cache", flush_cache=True,\
-# 	 use_memmap=False)
 
 # *** Load GP models for the specified process(es) ***
-# print 'Loading process(es):', evl.get_process_type(eval.xsections)
 evl.load_processes(evl.PROCESSES)
 
 # *** Evaluate a cross-section with given input parameters ***
