@@ -3,13 +3,13 @@
 """
 Setup information to allow installation with pip.
 """
-
-from setuptools import setup
+from setuptools import setup  # find_packages
 
 
 def readme():
     with open('README.md') as f:
         return f.read()
+
 
 setup(name='xsec',
       version='0.1.0',
@@ -26,8 +26,8 @@ setup(name='xsec',
       maintainer='Jeriek Van den Abeele',
       maintainer_email='jeriekvda@fys.uio.no',
       license='GPL',
-      packages=['xsec'],
-      scripts=['xsec/run_evaluation.py'],
+      packages=['xsec'],  # find_packages() includes any code in 'xsec.data'
+      py_modules=['xsec.data.__init__'],  # import only init, not transform.py
       install_requires=[
           'numpy>=1.14',
           'joblib>=0.12.2'

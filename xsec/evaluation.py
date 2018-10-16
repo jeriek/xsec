@@ -215,10 +215,7 @@ def load_single_process(process_xstype):
     # cross-section type, using global data directory variable DATA_DIR
     # process_dir = os.path.join(os.path.abspath(DATA_DIR),
     #                            get_processdir_name(process_xstype))
-    # TODO: make general, if DATA_DIR is not None or ''
-    xsec_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(xsec_dir, 'data')
-    process_dir = os.path.join(data_dir, get_processdir_name(process_xstype))
+    process_dir = os.path.join(DATA_DIR, get_processdir_name(process_xstype))
 
     # Collect the GP model file locations for all the experts
     model_files = [os.path.join(process_dir, f) for f in
