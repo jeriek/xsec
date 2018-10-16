@@ -151,9 +151,18 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     # TODO: try/except
     if not DATA_DIR:
         global inverse_transform
-        from data.transform import inverse_transform
         xsec_dir = os.path.dirname(os.path.realpath(__file__))
-        DATA_DIR = os.path.join(xsec_dir, 'data')
+        try:
+            from data.transform import inverse_transform
+            DATA_DIR = os.path.join(xsec_dir, 'data')
+        except ImportError:
+            raise ImportError(
+                'Please check that the /data directory is located inside '
+                '{dir}, and that it contains the file transform.py'.format(
+                    dir=xsec_dir
+                )
+            )
+
     else:
         # Execute the transform module and add its functions to the
         # global scope
