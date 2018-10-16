@@ -10,8 +10,8 @@ import evaluation as evl
 # *** Set processes to load ***
 evl.PROCESSES = [(1000021, 1000021)]
 
-# *** Set directory with trained GP models (default: './data') ***
-evl.DATA_DIR = './data'
+# *** Reset directory with trained GP models (default: '') ***
+evl.DATA_DIR = ''
 
 # *** Set cache choices ***
 evl.init()  # run with default settings (no caching)

@@ -26,8 +26,13 @@ from features import get_features, get_features_dict
 # Global variables                            #
 ###############################################
 
-# Specify GP model data directory (can be reset in the run script)
-DATA_DIR = './data'
+# Reset the GP model data directory. By default, DATA_DIR gets set to
+# the /data directory inside the xsec installation folder when init() is
+# executed. This can be overwritten by manually specifying DATA_DIR in
+# the run script, either through accessing the DATA_DIR global variable
+# explicitly, or through specifying the data_dir keyword inside init().
+# The latter takes precedence if both methods are used simultaneously.
+DATA_DIR = ''
 
 # Link internal cross-section type (xstype) identifiers here to the
 # corresponding Nimbus file suffixes for each trained xstype
@@ -100,10 +105,10 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
         (default True)
     """
 
-    # Set the data directory, if the given string isn't empty
+    # Reset the data directory, if the given string isn't empty
     # TODO: try/except
+    global DATA_DIR
     if data_dir:
-        global DATA_DIR
         DATA_DIR = data_dir
 
     # Fix global variables coordinating the use of caching
@@ -144,12 +149,33 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     # datatransform = imp.load_source(
     #   '', os.path.join(DATA_DIR, 'transform.py'))
 
-    # - Works in any Python version, despite being ugly:
+    # - Works in any Python version:
     # Execute the module and add its functions to the global scope
-    transform_file = os.path.join(os.path.abspath(DATA_DIR), 'transform.py')
-    with open(transform_file) as f:
-        transform_code = compile(f.read(), transform_file, 'exec')
-        exec(transform_code, globals(), globals())  # globals(), locals())
+    # transform_file = os.path.join(os.path.abspath(DATA_DIR), 'transform.py')
+    # with open(transform_file) as f:
+    #     transform_code = compile(f.read(), transform_file, 'exec')
+    #     exec(transform_code, globals(), globals())  # globals(), locals())
+
+    # If, as default, DATA_DIR was not set manually before init(), nor
+    # with the data_dir keyword inside init(), then the data directory
+    # is the default /data folder within the xsec installation
+    # directory. Fix DATA_DIR to that default location now and import
+    # the inverse_transform function. Else, DATA_DIR is already fixed,
+    # just need to import inverse_transform() now.
+    # TODO: try/except
+    if not DATA_DIR:
+        global inverse_transform
+        from data.transform import inverse_transform
+        xsec_dir = os.path.dirname(os.path.realpath(__file__))
+        DATA_DIR = os.path.join(xsec_dir, 'data')
+    else:
+        # Execute the transform module and add its functions to the
+        # global scope
+        transform_file = os.path.join(
+            os.path.abspath(DATA_DIR), 'transform.py')
+        with open(transform_file) as f:
+            transform_code = compile(f.read(), transform_file, 'exec')
+            exec(transform_code, globals(), globals())  # globals(), locals())
 
     return 0
 
@@ -187,8 +213,12 @@ def load_single_process(process_xstype):
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
-    process_dir = os.path.join(os.path.abspath(DATA_DIR),
-                               get_processdir_name(process_xstype))
+    # process_dir = os.path.join(os.path.abspath(DATA_DIR),
+    #                            get_processdir_name(process_xstype))
+    # TODO: make general, if DATA_DIR is not None or ''
+    xsec_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(xsec_dir, 'data')
+    process_dir = os.path.join(data_dir, get_processdir_name(process_xstype))
 
     # Collect the GP model file locations for all the experts
     model_files = [os.path.join(process_dir, f) for f in
@@ -239,7 +269,8 @@ def load_processes(process_list):
         specifying the process. For example, gluino-gluino production
         corresponds to the tuple (1000021, 1000021).
     """
-
+    # TODO: Remove process_list argument, just use PROCESSES (and add
+    # set_processes() function)
     if USE_CACHE:
         # Decorate load_single_process() such that its output can be
         # cached using the Joblib Memory object
@@ -595,16 +626,13 @@ def DGP(process, xstype, features):
     assert len(process) == 2
     process_xstype = (process[0], process[1], xstype)
 
-    # Decide which GP to use depending on 'scale'
+    # Decide which GP to use depending on xstype
     processdir_name = get_processdir_name(process_xstype)
     # print processdir_name
 
     # List all trained experts in the chosen directory
-
     models = os.listdir(os.path.join(DATA_DIR, processdir_name))
     n_experts = len(models)
-
-    # print 'Models:', models
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
