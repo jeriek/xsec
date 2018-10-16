@@ -142,20 +142,6 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
 
         print("Cache folder: "+str(cachedir))
 
-    # Can only import Nimbus data transformation code after DATA_DIR is
-    # set definitively, need to import from path and add to global scope
-    # - Works in Python 2.x:
-    # global datatransform
-    # datatransform = imp.load_source(
-    #   '', os.path.join(DATA_DIR, 'transform.py'))
-
-    # - Works in any Python version:
-    # Execute the module and add its functions to the global scope
-    # transform_file = os.path.join(os.path.abspath(DATA_DIR), 'transform.py')
-    # with open(transform_file) as f:
-    #     transform_code = compile(f.read(), transform_file, 'exec')
-    #     exec(transform_code, globals(), globals())  # globals(), locals())
-
     # If, as default, DATA_DIR was not set manually before init(), nor
     # with the data_dir keyword inside init(), then the data directory
     # is the default /data folder within the xsec installation
