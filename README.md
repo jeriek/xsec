@@ -5,6 +5,7 @@ Requirements:
 - numpy v1.14 or later
 - joblib v0.12.2 or later
 
+[NOTE: pip installation is still in the development phase.]
 Currently: for `pip` installation, clone the repo and `cd` into it, then run
 `pip install --user .`.
 To uninstall: `pip uninstall xsec`.
