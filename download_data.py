@@ -69,7 +69,7 @@ def main():
         # Force writing to terminal; otherwise stdout is buffered first
         sys.stdout.flush()
 
-        # Download compressedfile to a temporary location (since
+        # Download compressed file to a temporary location (since
         # filename=None)
         # @todo Put this in a try,except block to catch download errors
         tmp_filename, _ = urlretrieve(
@@ -117,10 +117,10 @@ def download_progress_hook(count, block_size, total_size):
         toolbar_width = 18
         progress_symbol = "/"
         n_progress_lines = int(percent*toolbar_width/100.)
+
         # Output to screen: progress bar, some useful info
         # (\r returns cursor to start of line to overwrite old info,
         # \b backspace, \t tab)
-
         sys.stdout.write(
             "\r[%s] \t\b\b %s%%  --  %.1f MB, %.1f s, %d KB/s"
             % (progress_symbol*n_progress_lines
