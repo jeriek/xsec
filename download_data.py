@@ -69,9 +69,9 @@ def main():
         # Force writing to terminal; otherwise stdout is buffered first
         sys.stdout.flush()
 
-        #
+        # Download compressedfile to a temporary location (since
+        # filename=None)
         # @todo Put this in a try,except block to catch download errors
-        #
         tmp_filename, _ = urlretrieve(
             url, filename=None, reporthook=download_progress_hook)
 
