@@ -5,11 +5,8 @@ Simple script for downloading trained Gaussian Processes
 for use with the cross-section evaluation code.
 Compatible with Python 2 and 3.
 
-@author Anders Kvellestad
-        anders.kvellestad@fys.uio.no
-
 Usage:
-  ./download_data_2.py
+  ./download_data.py
 """
 
 
@@ -85,7 +82,7 @@ def main():
         sys.stdout.flush()
 
     print()
-    print("All downloads completed.")
+    print("All downloads completed. Data files stored in", xsec_data_dir)
     print()
 
 
