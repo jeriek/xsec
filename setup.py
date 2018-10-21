@@ -39,4 +39,5 @@ setup(name='xsec',
           'joblib>=0.12.2'
       ],
       include_package_data=False,
+      scripts=['scripts/download_gprocs.py','scripts/example_xsec_eval.py'],
       zip_safe=False)

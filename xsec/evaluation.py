@@ -111,37 +111,6 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     if data_dir:
         DATA_DIR = data_dir
 
-    # Fix global variables coordinating the use of caching
-    global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
-    USE_CACHE = use_cache
-    CACHE_DIR = cache_dir
-    FLUSH_CACHE = flush_cache
-    USE_MEMMAP = use_memmap
-
-    if USE_CACHE:
-        if CACHE_DIR:
-            # Set cache directory to given name, expand any environment
-            # variables in the name
-            cachedir = os.path.expandvars(CACHE_DIR)
-        else:
-            # Create directory with random name
-            from tempfile import mkdtemp
-            cachedir = mkdtemp(prefix='xsec_')
-        if USE_MEMMAP:
-            # Set memmap mode 'copy on write'
-            memmap_mode = 'c'
-        else:
-            # Disable memmapping
-            memmap_mode = None
-
-        # Create a Joblib Memory object managing the cache
-        global CACHE_MEMORY
-        CACHE_MEMORY = joblib.Memory(location=cachedir,
-                                     mmap_mode=memmap_mode,
-                                     verbose=0)
-
-        print("Cache folder: "+str(cachedir))
-
     # If, as default, DATA_DIR was not set manually before init(), nor
     # with the data_dir keyword inside init(), then the data directory
     # is the default /data folder within the xsec installation
@@ -171,6 +140,37 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
         with open(transform_file) as f:
             transform_code = compile(f.read(), transform_file, 'exec')
             exec(transform_code, globals(), globals())  # globals(), locals())
+
+    # Fix global variables coordinating the use of caching
+    global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
+    USE_CACHE = use_cache
+    CACHE_DIR = cache_dir
+    FLUSH_CACHE = flush_cache
+    USE_MEMMAP = use_memmap
+    
+    if USE_CACHE:
+        if CACHE_DIR:
+            # Set cache directory to given name, expand any environment
+            # variables in the name
+            cachedir = os.path.expandvars(CACHE_DIR)
+        else:
+            # Create directory with random name
+            from tempfile import mkdtemp
+            cachedir = mkdtemp(prefix='xsec_')
+        if USE_MEMMAP:
+            # Set memmap mode 'copy on write'
+            memmap_mode = 'c'
+        else:
+            # Disable memmapping
+            memmap_mode = None
+    
+        # Create a Joblib Memory object managing the cache
+        global CACHE_MEMORY
+        CACHE_MEMORY = joblib.Memory(location=cachedir,
+                                     mmap_mode=memmap_mode,
+                                     verbose=0)
+
+    print("Cache folder: "+str(cachedir))
 
     return 0
 

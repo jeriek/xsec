@@ -1,10 +1,15 @@
+#! /usr/bin/env python
+
 """
-Run an instance of the evaluation.py program.
+Run a simple test instance of the evaluation module.
+
+This script can be used as a basis for a more complete routine to evalute cross
+sections.
 
 @author: Ingrid A V Holm and Jeriek VdA
 """
 
-import evaluation as evl
+import xsec.evaluation as evl
 
 
 # *** Set processes to load ***

@@ -6,7 +6,7 @@ for use with the cross-section evaluation code.
 Compatible with Python 2 and 3.
 
 Usage:
-  ./download_data.py
+  ./download_gprocs.py
 """
 
 
