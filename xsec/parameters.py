@@ -1,6 +1,6 @@
 # Module containing dictionary of parameters and input output methods
 
-import pyslha
+import pyslha   # Needs v3.2 or later
 
 PARAMS = {
     'm1000001': None,

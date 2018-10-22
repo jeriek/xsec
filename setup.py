@@ -36,7 +36,8 @@ setup(name='xsec',
       py_modules=['xsec.data.__init__'],
       install_requires=[
           'numpy>=1.14',
-          'joblib>=0.12.2'
+          'joblib>=0.12.2',
+          'pyslha>=3.2.0'
       ],
       include_package_data=False,
       scripts=['scripts/download_gprocs.py','scripts/example_xsec_eval.py'],
