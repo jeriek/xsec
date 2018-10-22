@@ -16,7 +16,7 @@ import xsec.evaluation as evl
 evl.PROCESSES = [(1000021, 1000021)]
 
 # *** Reset directory with trained GP models (default: '') ***
-evl.DATA_DIR = ''
+evl.DATA_DIR = 'gprocs'
 
 # *** Set cache choices ***
 evl.init()  # run with default settings (no caching)

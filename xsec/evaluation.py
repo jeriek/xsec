@@ -1,7 +1,8 @@
 """
-This program evaluates cross-sections for the production of
-supersymmetric particles, using Distributed Gaussian Processes trained
-by NIMBUS.
+This module evaluates cross-sections for the production of
+supersymmetric particles, using pre-trained Distributed Gaussian Processes.
+
+@author: I.A.V. Holm, A. Kvellestad, A. Raklev, J.V. Sparre, J. Van den Abeele
 """
 
 # Import packages
@@ -13,9 +14,9 @@ import joblib       # Needs v0.12.2 or later
 
 import kernels
 from parameters import (
-    PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass)
+    PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass, import_slha)
 from features import get_features, get_features_dict
-# NOTE: Explicitly import set/get functions that have to be
+# NOTE: We explicitly import set/get functions that have to be
 # user-accessible upon importing only the evaluation module.
 
 # print('Numpy version ' + np.__version__)
