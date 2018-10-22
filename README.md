@@ -21,7 +21,7 @@ To download data after `pip` installation, ensure `~/.local/bin` is in `$PATH`, 
 ```
 download_gprocs.py [<directory-for-xsec-data>]
 ```
-If no argument is given, the data will be extracted in the current working directory, otherwise the user-specified path is used.
+If no argument is given, the data will be extracted in the current working directory, otherwise the user-specified path is used. To avoid cluttering an existing directory, it is strongly recommended to specify a new directory in `<directory-for-xsec-data>`, which will then be created by the download script.
 
 To check whether the xsec installation finds the data correctly, check whether the following shell command runs without returning an error:
 ```
