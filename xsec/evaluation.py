@@ -109,7 +109,7 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     # TODO: try/except
     global DATA_DIR
     if data_dir:
-        DATA_DIR = data_dir
+        DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
 
     # If, as default, DATA_DIR was not set manually before init(), nor
     # with the data_dir keyword inside init(), then the data directory
@@ -118,20 +118,20 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     # the inverse_transform function. Else, DATA_DIR is already fixed,
     # just need to import inverse_transform() now.
     # TODO: try/except
+    # TODO: all of this will change with the new transform.py structure!
     if not DATA_DIR:
         global inverse_transform
         xsec_dir = os.path.dirname(os.path.realpath(__file__))
         try:
-            from data.transform import inverse_transform
-            DATA_DIR = os.path.join(xsec_dir, 'data')
+            from gprocs.transform import inverse_transform
+            DATA_DIR = os.path.join(xsec_dir, 'gprocs')
         except ImportError:
             raise ImportError(
-                'Please check that the /data directory is located inside '
+                'Please check that the /gprocs directory is located inside '
                 '{dir}, and that it contains the file transform.py'.format(
                     dir=xsec_dir
                 )
             )
-
     else:
         # Execute the transform module and add its functions to the
         # global scope
@@ -147,12 +147,12 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     CACHE_DIR = cache_dir
     FLUSH_CACHE = flush_cache
     USE_MEMMAP = use_memmap
-    
+
     if USE_CACHE:
         if CACHE_DIR:
             # Set cache directory to given name, expand any environment
             # variables in the name
-            cachedir = os.path.expandvars(CACHE_DIR)
+            cachedir = os.path.expandvars(os.path.expanduser(CACHE_DIR))
         else:
             # Create directory with random name
             from tempfile import mkdtemp
@@ -163,14 +163,13 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
         else:
             # Disable memmapping
             memmap_mode = None
-    
+
         # Create a Joblib Memory object managing the cache
         global CACHE_MEMORY
         CACHE_MEMORY = joblib.Memory(location=cachedir,
                                      mmap_mode=memmap_mode,
                                      verbose=0)
-
-    print("Cache folder: "+str(cachedir))
+        print("Cache folder: "+str(cachedir))
 
     return 0
 
@@ -233,7 +232,7 @@ def load_single_process(process_xstype):
             gp_reco['X_train'] = gp_model['X_train'].astype('float64')
             gp_reco['L_inv'] = gp_model['L_inv'].astype('float64')
             gp_reco['alpha'] = gp_model['alpha'].astype('float64')
-            gp_reco['kernel'] = gp_model['kernel'] # kernel parameters
+            gp_reco['kernel'] = gp_model['kernel']  # kernel parameters
             # Compute K_inv from L_inv and store it in the dict
             gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
 

@@ -6,7 +6,7 @@ for use with the cross-section evaluation code.
 Compatible with Python 2 and 3.
 
 Usage:
-  ./download_gprocs.py
+  ./download_gprocs.py <directory-for-xsec-data>
 """
 
 
@@ -15,6 +15,7 @@ from __future__ import print_function
 import os
 import sys
 import time
+import errno
 import tarfile
 
 try:  # if python3
@@ -22,13 +23,9 @@ try:  # if python3
 except ImportError:  # if python2
     from urllib import urlretrieve
 
-# @todo Let the user choose specific GPs to download via command line options.
 
-#
-# If no GPs are specified at the command line, download all of them.
 # Each download is specified as a (url,file_name) tuple in the list below.
-#
-download_list = [
+DOWNLOAD_LIST = [
     ("https://github.com/jeriek/xstest/releases/download/0.0.1/data.tar.gz",
      "data.tar.gz")
 ]
@@ -36,18 +33,29 @@ download_list = [
 
 def main():
     """
-    Download all files in download_list.
+    Download all files in DOWNLOAD_LIST.
     """
 
-    top_xsec_dir = os.path.dirname(os.path.realpath(__file__))
-    xsec_data_dir = os.path.join(top_xsec_dir, 'xsec', 'data')
+    # If argument is given, use this at download directory
+    # If no argument, specify current working directory as default
+
+    # TODO: check if multiple arguments are given, raise error
+
+    try:
+        xsec_data_dir = sys.argv[1]
+        print("Setting download directory for the data as specified:\n",
+              xsec_data_dir)
+    except IndexError:
+        xsec_data_dir = os.getcwd()
+        print("Setting download directory for the data to the current working "
+              "directory:\n", xsec_data_dir)
     data_init_filepath = os.path.join(xsec_data_dir, '__init__.py')
 
     # Create data dir and/or init file if not existing
     if not os.path.exists(xsec_data_dir):
         try:
             # Create data directory and empty init file
-            os.mkdir(xsec_data_dir)
+            mkdir_p(xsec_data_dir)
             open(data_init_filepath, 'a').close()
         except OSError:
             raise
@@ -61,8 +69,8 @@ def main():
     # Print a new line
     print()
 
-    for url, file_name in download_list:
-        print("-- Downloading file", file_name, "from", url, ":\n")
+    for url, file_name in DOWNLOAD_LIST:
+        print("-- Downloading file", file_name, "from\n", url, ":\n")
         # Force writing to terminal; otherwise stdout is buffered first
         sys.stdout.flush()
 
@@ -82,8 +90,22 @@ def main():
         sys.stdout.flush()
 
     print()
-    print("All downloads completed. Data files stored in", xsec_data_dir)
+    print("All downloads completed. Data files stored in",
+          xsec_data_dir, "\b.")
     print()
+
+
+def mkdir_p(path):
+    """
+    Safely make new directories recursively, as with "mkdir -p".
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 def download_progress_hook(count, block_size, total_size):
@@ -141,30 +163,5 @@ def download_progress_hook(count, block_size, total_size):
 
 
 # When the code is executed as a script, run the following.
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
-
-
-
-# from urllib.request import urlopen
-# from shutil import copyfileobj
-# from tempfile import NamedTemporaryFile
-# url = 'http://mirror.pnl.gov/releases/16.04.2/ubuntu-16.04.2-desktop-amd64.iso'
-# with urlopen(url) as fsrc, NamedTemporaryFile(delete=False) as fdst:
-#     copyfileobj(fsrc, fdst)
-
-
-# import wget
-# print('Beginning file download with wget module')
-# url = 'http://i3.ytimg.com/vi/J---aiyznGQ/mqdefault.jpg'
-# wget.download(url, '/Users/scott/Downloads/cat4.jpg')
-
-# import URLError first...
-#  try: urllib2.urlopen(req)
-# ... except urllib2.URLError as e:
-# ...    print e.reason
-# ...
-# (4, 'getaddrinfo failed')
-
-
-# curl -L https://github.com/jeriek/xstest/releases/download/0.0.1/data.tar.gz | tar zx
