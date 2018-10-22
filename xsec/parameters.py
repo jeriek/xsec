@@ -78,11 +78,21 @@ def import_slha(filename):
     PARAMS['thetab'] = slha.blocks['SBOTMIX'][1,1]
     PARAMS['thetat'] = slha.blocks['STOPMIX'][1,1]
 
-# Write calculated cross sections to SLHA file in XSECTION block
-def write_slha(filename):
+# Write calculated cross sections to already existing SLHA file in XSECTION block
+def write_xsec(filename):
+    # Try to open file
+    try:
+        slha = pyslha.read(filename, ignoreblocks=['DCINFO'])
+    except IOError as e:
+        print 'Unable to find SLHA file %s. Cross sections not recorded.' % filename
+        raise e
+
+    sqrts = 13000.
+    qcd_order = 1
+    ew_order = 0
+    kappa_f = 1.
+    kappa_r = 1.
+    pdf_id = 10000 # fake
+    value = 5.
     print 'Not implemented!'
 
-
-#import_slha('sps2a.slha')
-#for key in PARAMS:
-#    print key, PARAMS[key]

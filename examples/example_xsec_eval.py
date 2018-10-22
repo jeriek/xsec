@@ -45,5 +45,9 @@ evl.set_parameters({
 })
 evl.eval_xsection()
 
+# *** Evaluate a cross-section with input from a SLHA file ***
+evl.import_slha('sps1a.slha')
+evl.eval_xsection()
+
 # *** Clear cache if necessary (inactive otherwise) ***
 evl.clear_cache()
