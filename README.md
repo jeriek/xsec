@@ -28,4 +28,6 @@ To check whether the xsec installation finds the data correctly, check whether t
 python2 -c "import xsec.evaluation as evl; evl.init(data_dir='<directory-for-xsec-data>')"
 ```
 
-Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified. 
+Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified.
+
+An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file.
