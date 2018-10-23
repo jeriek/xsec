@@ -2,7 +2,7 @@
 This module evaluates cross-sections for the production of
 supersymmetric particles, using pre-trained Distributed Gaussian Processes.
 
-@author: I.A.V. Holm, A. Kvellestad, A. Raklev, J.V. Sparre, J. Van den Abeele
+@author: A. Buckley, I.A.V. Holm, A. Kvellestad, A. Raklev, P. Scott, J.V. Sparre, J. Van den Abeele
 """
 
 # Import packages
@@ -14,8 +14,9 @@ import joblib       # Needs v0.12.2 or later
 
 import kernels
 from parameters import (
-    PARAMS, MEAN_INDEX, set_parameters, set_parameter, set_mean_mass, import_slha)
-from features import get_features, get_features_dict
+    PARAMS, set_parameters, set_parameter, set_mean_mass,
+    import_slha, check_parameters)
+from features import get_features, get_feature_list, get_features_dict
 # NOTE: We explicitly import set/get functions that have to be
 # user-accessible upon importing only the evaluation module.
 
@@ -431,32 +432,6 @@ def get_process_list_str(process_list):
     return process_str_list
 
 
-# Function to test consistency of parameters.
-# This will check that all necessary parameters are set and that they are
-# internally consistent, e.g. the mean mass.
-def check_parameters(process_list, params):
-    # Check that the parameters for all required feature have been supplied
-    for process in process_list:
-        features = get_features(process[0],process[1])
-        for feature in features:
-            if params[feature] is None:
-                raise ValueError(
-                    'The feature {feature} used in this cross section '
-                    'evaluation has not been set!'.format(feature=feature))
-    # Check that the mean squark mass has been set consistently
-    mean = 0
-    nsquark = 0
-    for key in MEAN_INDEX:
-        if params[key] is not None:
-            mean += params[key]
-            nsquark += 1
-    mean = mean/8.
-    if nsquark == 8 and abs(params['mean'] - mean) > 0.1:
-        raise ValueError(
-            'The squark masses mean {mean1} is not equal to the mean mass '
-            'feature used {mean2}!'.format(mean1=mean, mean2=params['mean']))
-
-
 ###############################################
 # Main functions                              #
 ###############################################
@@ -469,8 +444,14 @@ def eval_xsection(verbose=True, check_consistency=True):
     parameter values stored in global dictionary PARAMS.
 
     The function has two options:
+    
     verbose:    Turns on and off printing of values to terminal
-    check_consistency:  Forces a consistency check of the paramters in PARAMS
+    
+    check_consistency:  Forces a consistency check of the parameters in PARAMS.
+                        This function checks that all necessary parameters have
+                        been set, that they are internally consistent and that
+                        the parameters are in a range where the evaluation can
+                        be trusted.
     """
 
     ##################################################
@@ -479,15 +460,13 @@ def eval_xsection(verbose=True, check_consistency=True):
 
     # Get local variable to avoid multiple slow lookups in global namespace
     processes = PROCESSES
-
-    for process in processes:
-        assert len(process) == 2
-
     params = PARAMS
 
     # Sanity check parameter inputs
     if check_consistency:
-        check_parameters(processes, params)
+        # First make a list of all unique features used for all processes
+        feature_list = get_feature_list(processes)
+        check_parameters(feature_list)
 
     # Build feature vectors, depending on production channel
     features = get_features_dict(processes)

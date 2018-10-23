@@ -116,6 +116,15 @@ def get_features(pid1, pid2):
                   pid1, pid2)
             raise e
 
+# Make a list of required (unique) features for a list of processes
+def get_feature_list(process_list):
+    feature_list = []
+    for process in process_list:
+        assert len(process) == 2
+        features = get_features(process[0],process[1])
+        # Add to feature list without duplicates
+        feature_list = list(set(feature_list + features))
+    return feature_list
 
 def get_features_dict(process_list):
 # Produce a dictionary of processes and values for their features, for

@@ -24,25 +24,70 @@ PARAMS = {
 MEAN_INDEX = ['m1000004', 'm1000003', 'm1000001', 'm1000002',
               'm2000002', 'm2000001', 'm2000003', 'm2000004']
 
+MIXING_INDEX = ['thetab', 'thetat']
 
 # Set single parameter with key name to value
-# TODO try/except
 def set_parameter(name, value):
     if name not in PARAMS.keys():
         print 'Parameter name %s not known!' % name
         raise KeyError
     PARAMS[name] = value
 
-
+# Set multiple parameters from a dictionary
 def set_parameters(params_in):
     for name, value in params_in.items():
         set_parameter(name, value)
 
-# Calculate mean (light) squark mass
+# Calculate mean (first and second generation) squark mass
 def set_mean_mass():
     m = sum([PARAMS[key] for key in MEAN_INDEX])/float(len(MEAN_INDEX))
     PARAMS['mean'] = m
     return m
+
+# Checks the consistencey of a parameter
+def check_parameter(key):
+    # Check that the value has been supplied
+    if PARAMS[key] is None:
+        raise ValueError(
+                         'The feature {feature} used in this cross section '
+                         'evaluation has not been set!'.format(feature=key))
+    # Check that the value is sensible
+    # First check if we have a mixing parameter
+    elif key in MIXING_INDEX:
+        if abs(PARAMS[key]) > 1. :
+            raise ValueError('The absolute value of the mixing angle {feature} '
+                             'is greater than one!'
+                             .format(feature=key))
+    # If we get here we have a set mass parameter
+    else:
+        if PARAMS[key] > 4000:
+            raise ValueError('The mass feature {feature} has been set to a '
+                             'value ({value}) where the evaluation is an '
+                             'extrapolation outside of training data.'
+                             .format(feature=key, value=PARAMS[key]))
+        elif PARAMS[key] < 0:
+            raise ValueError('The mass feature {feature} has been set to a '
+                             'negative value!'.format(feature=key))
+
+# Checks the consistencey of a list of parameters
+def check_parameters(parameters):
+    # Check each individual parameter
+    for par in parameters:
+        check_parameter(par)
+    # Check internal consistency of parameters.
+    # For now just that the mean mass is set correctly
+    mean = 0
+    nsquark = 0
+    for key in MEAN_INDEX:
+        if PARAMS[key] is not None:
+            mean += PARAMS[key]
+            nsquark += 1
+    mean = mean/8.
+    if nsquark == 8 and abs(PARAMS['mean'] - mean) > 0.1:
+        raise ValueError(
+                         'The squark masses mean {mean1} is not equal to the '
+                         'mean mass feature used {mean2}!'
+                         .format(mean1=mean, mean2=PARAMS['mean']))
 
 
 ################################
