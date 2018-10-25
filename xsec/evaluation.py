@@ -14,7 +14,7 @@ import joblib       # Needs v0.12.2 or later
 
 import kernels
 from parameters import (
-    PARAMS, set_parameters, set_parameter, set_mean_mass,
+    PARAMS, set_parameters, set_parameter, calc_mean_squark_mass,
     import_slha, check_parameters)
 from features import get_features, get_feature_list, get_features_dict
 # NOTE: We explicitly import set/get functions that have to be

@@ -1,6 +1,6 @@
 # Module containing a dictionary of features for processes keyed by pid tuple pairs
 import collections
-from parameters import PARAMS, set_mean_mass
+from parameters import PARAMS
 
 FEATURES_LIST = {
     # --- Gluino--gluino
