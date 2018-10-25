@@ -5,11 +5,13 @@ Setup information to allow installation with pip.
 """
 from setuptools import setup  # find_packages
 
-# The long_description field is used by PyPI when registering a package,
-# to build its home page. It is now set to use the text in README.md
 def readme():
-    with open('README.md') as f:
-        return f.read()
+    """
+    Define the README text used by PyPI to build the package homepage.
+    """
+    # Set to use the text in README.md
+    with open('README.md') as readme_file:
+        return readme_file.read()
 
 # Add the package metadata and specify which files to include in the
 # distribution. Setting packages=find_packages() would include code in
@@ -31,7 +33,7 @@ setup(name='xsec',
       url='https://github.com/jeriek/xsec',
       maintainer='Jeriek Van den Abeele',
       maintainer_email='jeriekvda@fys.uio.no',
-      license='GPLv3+',
+      license='GPLv3',
       packages=['xsec'],
       py_modules=['xsec.gprocs.__init__'],
       install_requires=[

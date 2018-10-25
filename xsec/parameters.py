@@ -4,6 +4,8 @@ import os
 
 import pyslha   # Needs v3.2 or later
 
+# TODO: Make compatible with Python 3
+
 # Dictionary of all parameters and their values
 PARAMS = {
     'm1000001': None,
@@ -44,10 +46,14 @@ def set_parameter(name, value):
     Set single parameter with key name to value.
     """
     try:
-        PARAMS[name] = value
+        PARAMS[name] = float(value)
     except KeyError:
         print 'Parameter name \'%s\' not known!' % name
         raise
+    except TypeError:
+        print 'Parameter name \'%s\' should be set to a number!' % name
+        raise
+
 
 
 def set_parameters(params_in):
@@ -55,7 +61,7 @@ def set_parameters(params_in):
     Set multiple parameters from a dictionary.
     """
     for name, value in params_in.items():
-        set_parameter(name, value)
+        set_parameter(name, float(value))
 
 
 def calc_mean_squark_mass():
@@ -100,7 +106,11 @@ def clear_parameter(name):
     """
     Clear the value of a parameter.
     """
-    set_parameter(name, None)
+    try:
+        PARAMS[name] = None
+    except KeyError:
+        print 'Parameter name \'%s\' not known!' % name
+        raise
 
 
 def clear_parameters(name_list=PARAM_NAMES):
@@ -127,13 +137,15 @@ def get_parameter(name):
         raise
 
 
-def get_parameters(name_list=PARAM_NAMES):
+def get_parameters(name_list=None):
     """
     Get the values of a list of parameters. If no argument is
-    given, all parameter values are erased.
+    given, a dictionary of all parameter values is returned.
     """
-    for name in name_list:
-        clear_parameter(name)
+    if name_list is None:
+        return PARAMS
+    else:
+        return [PARAMS[name] for name in name_list]
 
 
 ###############################################

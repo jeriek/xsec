@@ -243,7 +243,7 @@ def load_single_process(process_xstype):
     return model_list
 
 
-def load_processes(process_list):
+def load_processes(process_list=PROCESSES):
     """
     Given a list of sparticle production processes, load all relevant
     trained GP models into memory, or into a cache folder on disk if
