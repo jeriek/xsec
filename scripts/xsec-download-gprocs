@@ -6,7 +6,9 @@ for use with the cross-section evaluation code.
 Compatible with Python 2 and 3.
 
 Usage:
-  ./download_gprocs.py <directory-for-xsec-data>
+    xsec-download-gprocs <directory-for-xsec-data>
+    If no argument <directory-for-xsec-data> is given, the current
+    working directory is used.
 """
 
 
