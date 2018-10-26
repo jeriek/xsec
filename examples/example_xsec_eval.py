@@ -9,23 +9,19 @@ sections.
 @author: Ingrid A V Holm and Jeriek VdA
 """
 
-import xsec.evaluation as evl
-
-
-# *** Set processes to load ***
-evl.PROCESSES = [(1000021, 1000021)]
-
-# *** Reset directory with trained GP models (default: '') ***
-evl.DATA_DIR = 'gprocs'
+import xsec
 
 # *** Set cache choices ***
-evl.init()  # run with default settings (no caching)
+xsec.init(data_dir='gprocs')  # run with default settings (no caching)
+
+# *** Set processes to load ***
+xsec.set_processes([(1000021, 1000021)])
 
 # *** Load GP models for the specified process(es) ***
-evl.load_processes(evl.PROCESSES)
+xsec.load_processes()
 
 # *** Evaluate a cross-section with given input parameters ***
-evl.set_parameters({
+xsec.set_parameters({
     'm1000021': 1000.,
     'm1000001': 500.,
     'm1000002': 500.,
@@ -43,11 +39,12 @@ evl.set_parameters({
     'thetat': 0.,
     'mean': 500.
 })
-evl.eval_xsection()
+
+xsec.eval_xsection()
 
 # *** Evaluate a cross-section with input from a SLHA file ***
-evl.import_slha('sps1a.slha')
-evl.eval_xsection()
+xsec.import_slha('sps1a.slha')
+xsec.eval_xsection()
 
 # *** Clear cache if necessary (inactive otherwise) ***
-evl.clear_cache()
+xsec.clear_cache()
