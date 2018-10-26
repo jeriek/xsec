@@ -36,6 +36,12 @@ MEAN_INDEX = ['m1000004', 'm1000003', 'm1000001', 'm1000002',
 # List of mixing angle parameters
 MIXING_INDEX = ['thetab', 'thetat']
 
+# List of sparticle PDG ids
+SQUARK_IDS = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006,
+              2000001, 2000002, 2000003, 2000004, 2000005, 2000006]
+GLUINO_ID = 1000021
+SPARTICLE_IDS = SQUARK_IDS + [GLUINO_ID]
+
 
 ###############################################
 # Set functions                               #
