@@ -6,6 +6,7 @@ import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
+
 def _check_length_scale(X, length_scale):
     length_scale = np.squeeze(length_scale).astype(float)
     if np.ndim(length_scale) > 1:
@@ -19,8 +20,10 @@ def _check_length_scale(X, length_scale):
 
 def WhiteKernel(X, Y=None, noise_level=1.0):
     """
-    Mainly used as part of a sum-kernel where it explains the noise-component of the signal. 
-    Return: 
+    Mainly used as part of a sum-kernel where it explains the
+    noise-component of the signal.
+
+    Return:
         k(x_1, x_2) = noise_level if x_1 == x_2 else 0
     """
 
@@ -33,10 +36,10 @@ def WhiteKernel(X, Y=None, noise_level=1.0):
         return np.zeros((X.shape[0], Y.shape[0]))
 
 
-
 def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
     """
-    Standard Matern kernel implementation, parametrised as in scikit-learn.
+    Standard Matern kernel implementation, parametrised as in
+    scikit-learn.
     """
     X = np.atleast_2d(X)
     length_scale = _check_length_scale(X, length_scale)
@@ -68,3 +71,72 @@ def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
         np.fill_diagonal(K, 1)
 
     return K
+
+
+def set_kernel(kernel_params):
+    """
+    Construct a kernel function from its parameters. In particular, the
+    returned functions are functions of X and Y (optional), and have the
+    form
+        k(X, Y) = WhiteKernel(X, Y, noise_level) +
+                  prefactor*MaternKernel(X, Y, length_scale, nu).
+
+    Parameters
+    ----------
+    kernel_params : dict
+        Parameter dictionary with keys 'matern_prefactor',
+        'matern_lengthscale', 'matern_nu', and 'whitekernel_noiselevel',
+        with corresponding double-precision numerical values.
+        This input format corresponds to the output from the NIMBUS
+        training routines.
+
+    Returns
+    -------
+    kernel_function(X, Y=None) : function
+        Kernel function that is a linear combination of a white kernel
+        and a Matern kernel. If Y = None, kernel_function(X, X) is
+        returned.
+    """
+
+    # Define a function object to return (requires loading 'kernels'
+    # module for kernel definitions)
+    def kernel_function(X, Y=None):
+        """
+        Return the Gaussian Process kernel k(X, Y), a linear combination
+        of a white kernel and a Matern kernel. The implementation is
+        based on scikit-learn v0.19.2.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+        Y : array, shape (n_samples_Y, n_features), (optional,
+                                                     default=None)
+            Right argument of the returned kernel k(X, Y). If None,
+            k(X, X) is evaluated instead.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y).
+        """
+
+        # Extract parameters from input dictionary
+        noise_level = kernel_params['whitekernel_noiselevel']
+        prefactor = kernel_params['matern_prefactor']
+        nu = kernel_params['matern_nu']
+        length_scale = kernel_params['matern_lengthscale']
+
+        # Return sum of white kernel and (prefactor times) Matern kernel
+        if Y is None:
+            kernel_sum = (WhiteKernel(X, noise_level=noise_level)
+                          + prefactor*MaternKernel(
+                              X, length_scale=length_scale, nu=nu))
+        else:
+            kernel_sum = (WhiteKernel(X, Y, noise_level=noise_level)
+                          + prefactor*MaternKernel(
+                              X, Y, length_scale=length_scale, nu=nu))
+
+        return kernel_sum
+
+    return kernel_function
