@@ -1,0 +1,60 @@
+#! /usr/bin/env python
+
+"""
+Run a simple test instance of the evaluation module.
+
+This script can be used as a basis for a more complete routine to evalute cross
+sections.
+
+@author: Ingrid A V Holm and Jeriek VdA
+"""
+
+# import os
+import sys
+import xsec
+
+try:
+    input_dir = sys.argv[1]
+except IndexError:
+    input_dir = os.getcwd()
+
+# *** Set cache choices ***
+xsec.init(data_dir=input_dir)  # run with default settings (no caching)
+
+# *** Set processes to load ***
+xsec.set_processes([(1000021, 1000021)])
+
+# *** Load GP models for the specified process(es) ***
+xsec.load_processes()
+
+# *** Evaluate a cross-section with given input parameters ***
+xsec.set_parameters({
+    'm1000021': 1000.,
+    'm1000001': 500.,
+    'm1000002': 500.,
+    'm1000003': 500.,
+    'm1000004': 500.,
+    'm1000005': 500.,
+    'm1000006': 500.,
+    'm2000001': 500.,
+    'm2000002': 500.,
+    'm2000003': 500.,
+    'm2000004': 500.,
+    'm2000005': 500.,
+    'm2000006': 500.,
+    'thetab': 0.,
+    'thetat': 0.,
+    'mean': 500.
+})
+
+xsec.eval_xsection()
+
+# *** Evaluate a cross-section with input from a SLHA file ***
+# xsec_topdir = os.path.dirname(xsec.__file__)
+# xsec_slhafile = os.path.join(xsec_topdir, 'xsec', 'examples', 'sps1a.slha')
+
+# xsec.import_slha(xsec_slhafile)
+# xsec.eval_xsection()
+
+# *** Clear cache if necessary (inactive otherwise) ***
+xsec.clear_cache()
