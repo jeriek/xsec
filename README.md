@@ -20,15 +20,16 @@ The `pip` installation doesn't automatically include the data required to run `r
 
 To download data after `pip` installation, ensure `~/.local/bin` is in `$PATH`, and execute the following shell command:
 ```
-download_gprocs.py [<directory-for-xsec-data>]
+xsec-download-gprocs [<directory-for-xsec-data>]
 ```
 If no argument is given, the data will be extracted in the current working directory, otherwise the user-specified path is used. To avoid cluttering an existing directory, it is strongly recommended to specify a new directory in `<directory-for-xsec-data>`, which will then be created by the download script.
 
-To check whether the xsec installation finds the data correctly, check whether the following shell command runs without returning an error:
+To check whether the xsec installation finds the data correctly, try a test cross-section evaluation:
 ```
-python2 -c "import xsec.evaluation as evl; evl.init(data_dir='<directory-for-xsec-data>')"
+xsec-test [<directory-for-xsec-data>]
 ```
+If no argument is given, the data is assumed to be in the current working directory, otherwise the user-specified path is used.
 
-Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified.
+NOTE: Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified.
 
 An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file.
