@@ -42,5 +42,5 @@ setup(name='xsec',
           'pyslha>=3.2.0'
       ],
       include_package_data=False,
-      scripts=['scripts/download_gprocs.py'],
+      scripts=['scripts/xsec-download-gprocs', 'scripts/xsec-test'],
       zip_safe=False)
