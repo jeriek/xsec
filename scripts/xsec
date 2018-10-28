@@ -12,7 +12,7 @@ Use:
     current working directory is assumed.
 
 Example:
-	xsec 1000021 1000001 1000 500 500 grpocs
+	xsec 1000021 1000001 1000 500 500 gprocs
 """
 
 from __future__ import print_function
@@ -53,6 +53,9 @@ xsec.load_processes()
 for i,feature in enumerate(features):
 #    print(feature, '=', val[i], ',', end=' ')
     xsec.set_parameter(feature,val[i])
+
+# If using SLHA file input instead
+# xsec.import_slha(xsec_slhafile)
 
 # Calculate cross section
 xsec.eval_xsection()

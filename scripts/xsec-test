@@ -14,7 +14,7 @@ Use:
     working directory is used.
 """
 
-# import os
+import os
 import sys
 import xsec
 
