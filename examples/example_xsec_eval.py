@@ -11,7 +11,7 @@ sections.
 
 import xsec
 
-# *** Set cache choices ***
+# *** Set directory and cache choices ***
 xsec.init(data_dir='gprocs')  # run with default settings (no caching)
 
 # *** Set processes to load ***

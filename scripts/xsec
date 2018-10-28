@@ -1,0 +1,61 @@
+#! /usr/bin/env python
+
+"""
+Command line interface to xsec
+
+Use:
+    xsec-test pid1 pid2 val1 ... valn --gppath=directory-for-xsec-gps
+    Here pid1 and pid2 are the pid codes of the final state sparticles.
+    The list of values must correspond to the features required for 
+    the process in the particular order defined in features.py.
+    If the --gppath flag is not set, a directory named gprocs in the
+    current working directory is assumed.
+
+Example:
+	xsec 1000021 1000001 1000 500 500 grpocs
+"""
+
+from __future__ import print_function
+import os
+import sys
+import xsec
+
+# Set command line inputs
+val = []
+try:
+    pid1      = int(sys.argv[1])
+    pid2      = int(sys.argv[2])
+    features  = xsec.get_features(pid1, pid2)
+    nfeatures = len(features)
+    for i in range(0,nfeatures):
+        val.append(float(sys.argv[3+i]))
+except IndexError as e:
+    print('The wrong number of parameters was passed.')
+    raise e
+
+# Test if we are being told where the GPs are
+try:
+    input_dir = sys.argv[3+nfeatures]
+except IndexError:
+    input_dir = os.getcwd()+'/gprocs'
+
+# Set directory
+xsec.init(data_dir=input_dir)  # run with default settings (no caching)
+
+# Set process
+xsec.set_processes([(pid1, pid2)])
+
+# Load GP models for the specified process
+xsec.load_processes()
+
+# Set parameters used
+#print('Using paramter values:')
+for i,feature in enumerate(features):
+#    print(feature, '=', val[i], ',', end=' ')
+    xsec.set_parameter(feature,val[i])
+
+# Calculate cross section
+xsec.eval_xsection()
+
+# *** Clear cache if necessary (inactive otherwise) ***
+xsec.clear_cache()
