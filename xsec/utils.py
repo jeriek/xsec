@@ -156,5 +156,3 @@ def fetch_bibtex(ref):
 
     return bibtex
 
-get_references(1000021,1000021)
-finalize()
