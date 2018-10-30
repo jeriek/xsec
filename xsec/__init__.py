@@ -1,5 +1,6 @@
 from gploader import (
-    init, set_processes, load_processes, get_processes, clear_cache
+    init, set_processes, load_processes, get_processes,
+    finalize
     )
 from features import(
     get_features, get_feature_list, get_features_dict

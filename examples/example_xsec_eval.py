@@ -37,14 +37,16 @@ xsec.set_parameters({
     'm2000006': 500.,
     'thetab': 0.,
     'thetat': 0.,
-    'mean': 500.
+    'mean': 500.,
+    'energy': 13000
 })
 
 xsec.eval_xsection()
 
 # *** Evaluate a cross-section with input from a SLHA file ***
 xsec.import_slha('sps1a.slha')
+xsec.set_parameter('energy',13000)
 xsec.eval_xsection()
 
-# *** Clear cache if necessary (inactive otherwise) ***
-xsec.clear_cache()
+# *** Finalize (clears cache if necessary, inactive otherwise) ***
+xsec.finalize()

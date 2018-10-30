@@ -1,6 +1,9 @@
 # Module containing dictionary of parameters and input output methods
 
+from __future__ import print_function
 import os
+
+import utils
 
 import pyslha   # Needs v3.2 or later
 
@@ -21,9 +24,10 @@ PARAMS = {
     'm2000005': None,
     'm2000006': None,
     'm1000021': None,
-    'mean': None,
-    'thetab': None,
-    'thetat': None
+    'mean'    : None,
+    'thetab'  : None,
+    'thetat'  : None,
+    'energy'  : None       # CoM energy sqrt(s) in GeV
 }
 
 # List of all parameter names
@@ -54,12 +58,11 @@ def set_parameter(name, value):
     try:
         PARAMS[name] = float(value)
     except KeyError:
-        print 'Parameter name \'%s\' not known!' % name
+        print('Parameter name {name} not known!'.format(name=name))
         raise
     except TypeError:
-        print 'Parameter name \'%s\' should be set to a number!' % name
+        print('Parameter name {name} should be set to a number!'.format(name=name))
         raise
-
 
 
 def set_parameters(params_in):
@@ -115,7 +118,7 @@ def clear_parameter(name):
     try:
         PARAMS[name] = None
     except KeyError:
-        print 'Parameter name \'%s\' not known!' % name
+        print('Parameter name {name} not known!'.format(name=name))
         raise
 
 
@@ -139,7 +142,7 @@ def get_parameter(name):
     try:
         return PARAMS[name]
     except KeyError:
-        print 'Parameter name %s not known!' % name
+        print('Parameter name {name} not known!'.format(name=name))
         raise
 
 
@@ -194,8 +197,8 @@ def check_parameters(parameters):
         check_parameter(par)
 
     # 2/ Check internal consistency of parameters
-    # (For now just that the mean mass is set correctly. Only check when
-    # all of the masses in MEAN_INDEX are specified, otherwise the
+    # (For now just that the mean mass and energy is set correctly. Only check
+    # when all of the masses in MEAN_INDEX are specified, otherwise the
     # undefined mass(es) could be such that the user-specified mean mass
     # is correct.)
 
@@ -212,17 +215,19 @@ def check_parameters(parameters):
                 'specified \'mean\' mass feature ({mean2})!'
                 .format(mean1=mean, mean2=PARAMS['mean']))
 
+    # Check energy
+    if PARAMS['energy'] != 13000 :
+        raise ValueError('Currently the only available energy is 13000 GeV')
+
 
 ###############################################
 # SLHA1 interface using pySLHA                #
 ###############################################
 
-# TODO: Isn't this compatible with SLHA2 as well? It works for me ...
-
 def import_slha(filename):
     """
-    Import parameters from SLHA-file. This also calculates a mean squark
-    mass.
+    Import parameters from SLHA-file.
+    This also calculates a mean squark mass for the first two generations.
     """
     # Try to open file (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
@@ -230,7 +235,7 @@ def import_slha(filename):
         slha = pyslha.read(filename, ignoreblocks=['DCINFO'])
         # TODO: More checking of reasonable file?
     except IOError as e:
-        print 'Unable to find SLHA file %s. Parameters not set.' % filename
+        print('Unable to find SLHA file {file}. Parameters not set.'.format(file=filename))
         raise e
 
     # Find masses
@@ -255,6 +260,9 @@ def import_slha(filename):
     PARAMS['thetab'] = slha.blocks['SBOTMIX'][1, 1]
     PARAMS['thetat'] = slha.blocks['STOPMIX'][1, 1]
 
+    # References to SLHA and pySLHA
+    slharef = ['Skands:2003cj','Buckley:2013jua']
+    utils.REF = list(set(utils.REF+slharef))
 
 def write_xsec(filename):
     """
@@ -266,7 +274,7 @@ def write_xsec(filename):
     try:
         slha = pyslha.read(filename, ignoreblocks=['DCINFO'])
     except IOError as e:
-        print 'Unable to find SLHA file %s. Cross sections not recorded.' % filename
+        print('Unable to find SLHA file {file}. Cross sections not recorded.'.format(name=filename))
         raise e
 
     sqrts = 13000.
@@ -276,4 +284,4 @@ def write_xsec(filename):
     kappa_r = 1.
     pdf_id = 10000 # fake
     value = 5.
-    print 'Not implemented!'
+    print('Not implemented!')

@@ -4,7 +4,7 @@
 Command line interface to xsec
 
 usage: 
-  xsec-myedit [-h] [-g PATH] (-i | -f FILE | -p PAR [PAR ...]) {13000} pid1 pid2
+  xsec [-h] [-g PATH] (-i | -f FILE | -p PAR [PAR ...]) {13000} pid1 pid2
 
 positional arguments:
   {13000}               select centre-of-mass energy in GeV. This is intended
@@ -193,9 +193,9 @@ if input_mode is 'params':
 
 
 
-#
+############
 # Run xsec
-#
+############
 
 # Set directory
 xsec.init(data_dir=args.gppath)  # run with default settings (no caching)
@@ -212,9 +212,10 @@ if input_mode is 'params':
         xsec.set_parameter(feature, args.params_input[i])
 elif input_mode is 'slha':
     xsec.import_slha(args.slha_input)
-    
+xsec.set_parameter('energy',args.energy)
+
 # Calculate cross section
 xsec.eval_xsection()
 
-# *** Clear cache if necessary (inactive otherwise) ***
-xsec.clear_cache()
+# Finalize (clears cache if necessary, inactive otherwise)
+xsec.finalize()

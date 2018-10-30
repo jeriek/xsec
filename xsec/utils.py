@@ -3,6 +3,7 @@ Internal helper functions.
 """
 
 from __future__ import print_function
+
 import parameters
 
 ###############################################
@@ -106,22 +107,13 @@ def get_process_list_str(process_list):
 # Printing                                    #
 ###############################################
 
-# Function to finalize run (currently prints references to file)
-def finalize():
-    ref_file = 'xsec.bib'
-    f = open(ref_file,'w')
-    print_references(f)
-    f.close()
-    print('A list of references that form the basis of the results in this run '
-          'have been written to {file}'.format(file=ref_file))
-
 # Print references (to file if a file handle is supplied)
 def print_references(file_handle = None):
     for reference in REF:
         bibtex = fetch_bibtex(reference)
         if file_handle:
             file_handle.write(bibtex)
-            file_handle.write('\n')
+            file_handle.write('\n\n')
         else:
             print(bibtex)
 
@@ -151,6 +143,10 @@ def fetch_bibtex(ref):
         bibtex = '@article{Beenakker:1997ut,\n        author         = "Beenakker, W. and Kramer, M. and Plehn, T. and Spira, M.\n                          and Zerwas, P. M.",\n        title          = "{Stop production at hadron colliders}",\n        journal        = "Nucl. Phys.",\n        volume         = "B515",\n        year           = "1998",\n        pages          = "3-14",\n        doi            = "10.1016/S0550-3213(98)00014-5",\n        eprint         = "hep-ph/9710451",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        reportNumber   = "DESY-97-214, CERN-TH-97-177, RAL-TR-97-056",\n        SLACcitation   = "%%CITATION = HEP-PH/9710451;%%"\n}'
     elif ref == 'Butterworth:2015oua':
         bibtex = '@article{Butterworth:2015oua,\n        author         = "Butterworth, Jon and others",\n        title          = "{PDF4LHC recommendations for LHC Run II}",\n        journal        = "J. Phys.",\n        volume         = "G43",\n        year           = "2016",\n        pages          = "023001",\n        doi            = "10.1088/0954-3899/43/2/023001",\n        eprint         = "1510.03865",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        reportNumber   = "OUTP-15-17P, SMU-HEP-15-12, TIF-UNIMI-2015-14,\n                          LCTS-2015-27, CERN-PH-TH-2015-249",\n        SLACcitation   = "%%CITATION = ARXIV:1510.03865;%%"\n}'
+    elif ref == 'Buckley:2013jua':
+        bibtex = '@article{Buckley:2013jua,\n    author         = "Buckley, Andy",\n    title          = "{PySLHA: a Pythonic interface to SUSY Les Houches Accord\n                      data}",\n    journal        = "Eur. Phys. J.",\n    volume         = "C75",\n    year           = "2015",\n    umber         = "10",\n    pages          = "467",\n    doi            = "10.1140/epjc/s10052-015-3638-8",\n    eprint         = "1305.4194",\n    archivePrefix  = "arXiv",\n    primaryClass   = "hep-ph",\n    reportNumber   = "MCNET-13-06, GLAS-PPE-2015-02",\n    SLACcitation   = "%%CITATION = ARXIV:1305.4194;%%"\n}'
+    elif ref == 'Skands:2003cj':
+        bibtex = '@article{Skands:2003cj,\n    author         = "Skands, Peter Z. and others",\n    title          = "{SUSY Les Houches accord: Interfacing SUSY spectrum\n                      calculators, decay packages, and event generators}",\n    journal        = "JHEP",\n    volume         = "07",\n    year           = "2004",\n    pages          = "036",\n    doi            = "10.1088/1126-6708/2004/07/036",\n    eprint         = "hep-ph/0311123",\n    archivePrefix  = "arXiv",\n    primaryClass   = "hep-ph",\n    reportNumber   = "LU-TP-03-39, SHEP-03-24, CERN-TH-2003-204, ZU-TH-15-03,\n                      LMU-19-03, DCPT-03-108, IPPP-03-54, CTS-IISC-2003-07,\n                      DESY-03-166, MPP-2003-111",\n    SLACcitation   = "%%CITATION = HEP-PH/0311123;%%"}'
     else:
         bibtex = ''
 

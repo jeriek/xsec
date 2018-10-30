@@ -289,6 +289,26 @@ def load_processes(process_list=PROCESSES):
                 # Loaded GP models are stored in PROCESS_DICT
                 PROCESS_DICT[process_xstype] = (
                     load_single_process(process_xstype))
+        # Add litterature references for process to list
+        utils.get_references(process[0], process[1])
+
+
+###############################################
+# Finalisation                                #
+###############################################
+
+# Function to finalize run
+# Currently clears cache (if used) and prints references to file
+def finalize():
+    # Clear cache. Inactive if cache not used
+    clear_cache()
+    # Write references to file
+    ref_file = 'xsec.bib'
+    f = open(ref_file,'w')
+    utils.print_references(f)
+    f.close()
+    print('A list of references that form the basis of the results in this run '
+          'have been written to {file}'.format(file=ref_file))
 
 
 def clear_cache():
