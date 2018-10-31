@@ -4,7 +4,7 @@
 Command line interface to xsec
 
 usage: 
-  xsec [-h] [-g PATH] (-i | -f FILE | -p PAR [PAR ...]) {13000} pid1 pid2
+  xsec [-h] [-g PATH] [-w FILE] (-i | -r FILE | -p PAR [PAR ...]) {13000} pid1 pid2
 
 positional arguments:
   {13000}               select centre-of-mass energy in GeV. This is intended
@@ -20,8 +20,10 @@ optional arguments:
                         is ./gprocs.
   -i, --show-input      show input parameters and usage examples for the
                         process specified by pid1 and pid2
-  -s FILE, --slha-input FILE
+  -r FILE, --slha-input FILE
                         input SLHA file
+  -w FILE, --slha-output FILE
+  						output SLHA file
   -p PAR [PAR ...], --parameters PAR [PAR ...]
                         list of input parameters. Use the --show-input option
                         to display the relevant input parameters for a process
@@ -37,8 +39,9 @@ Example with SLHA file input:
 from __future__ import print_function
 import os
 import sys
-import xsec
 import argparse
+
+import xsec
 
 
 #
@@ -84,6 +87,16 @@ parser.add_argument(
     help='PDG particle code for the second produced sparticle',
     )
 
+parser.add_argument(
+    '-w', '--slha-output',
+    metavar='FILE', 
+    type=str,
+    action='store',
+    required=False, 
+    help='SLHA file for output in terms of XSECTION blocks (SLHA3)',
+    dest='slha_output'
+    )
+
 # Put the input options --slha-input and --parameters, as well as the --show-input option, 
 # in a group for mutually exclusive arguments. Use required=True since one of these 
 # arguments must be present.
@@ -99,7 +112,7 @@ input_group.add_argument(
     )
 
 input_group.add_argument(
-    '-s', '--slha-input',
+    '-r', '--slha-input',
     metavar='FILE', 
     type=str,
     action='store',
@@ -118,6 +131,7 @@ input_group.add_argument(
     help='list of input parameters. Dimensionful parameters are given in GeV. Use the --show-input option to display the relevant input parameters for a given process.',
     dest='params_input'
     )
+
 
 # Parse the arguments
 args = parser.parse_args()
@@ -190,7 +204,7 @@ if input_mode is 'params':
 # print('DEBUG: args.slha_input =',args.slha_input)
 # print('DEBUG: args.params_input =',args.params_input)
 # print('DEBUG: args.show_input =',args.show_input)
-
+# print('DEBUG: args.slha_output =',args.slha_output)
 
 
 ############
@@ -215,7 +229,11 @@ elif input_mode is 'slha':
 xsec.set_parameter('energy',args.energy)
 
 # Calculate cross section
-xsec.eval_xsection()
+result = xsec.eval_xsection()
 
-# Finalize (clears cache if necessary, inactive otherwise)
+# If SLHA output has been specified, write to file
+if args.slha_output is not None:
+    xsec.write_slha(args.slha_output, result)
+
+# Finalize (clears cache if necessary)
 xsec.finalize()

@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 
 import utils
+import gploader
 
 import pyslha   # Needs v3.2 or later
 
@@ -264,24 +265,66 @@ def import_slha(filename):
     slharef = ['Skands:2003cj','Buckley:2013jua']
     utils.REF = list(set(utils.REF+slharef))
 
-def write_xsec(filename):
+def write_slha(filename, results):
     """
     Write calculated cross sections to already existing SLHA file in
     XSECTION block.
     """
-    # Try to open file (expand any environment variables and ~)
+    # Try to open file for appending (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
     try:
-        slha = pyslha.read(filename, ignoreblocks=['DCINFO'])
+        slha = open(filename,'a')
     except IOError as e:
-        print('Unable to find SLHA file {file}. Cross sections not recorded.'.format(name=filename))
+        print('Unable to find SLHA file {file} for output. Cross sections not'
+              'recorded.'.format(name=filename))
         raise e
 
-    sqrts = 13000.
-    qcd_order = 1
-    ew_order = 0
-    kappa_f = 1.
-    kappa_r = 1.
-    pdf_id = 10000 # fake
-    value = 5.
-    print('Not implemented!')
+    # Set fixed entries
+    # Find CoM energy
+    sqrts = PARAMS['energy']
+    # For the time being we are only doing pp cross sections
+    istate = [2212, 2212]
+    # Calculation currently based on QCD NLO, Prospino uses average mass as scale
+    scale_scheme, qcd_order, ew_order  = 0, 1, 0
+    # We currently use PDF4LHC15 PDFs
+    pdf_id = 90400
+    # Advertise our smoking code
+    # TODO: Get the version number automagically
+    code = ["xsec", "v0.1.0"]
+
+    # Get the processes we have calculated
+    processes = gploader.PROCESSES
+    # Loop over processes
+    for i, process in enumerate(processes):
+        fstate = [process[0], process[1]]
+        # Make process object
+        proc = pyslha.Process(istate, fstate)
+        # Add cross sections to process object
+        # TODO: Handle indexing for more than one process
+        # WARNING: PDF variations break XSECTION standard by adding 1 and 2 to the central PDF set
+        #          for lower and upper 1\sigma variation
+        central_xs = results[0]/1000.   # Convert to pb
+        xs = central_xs
+        # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f, kappa_r, pdf_id, xs, code)
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id, xs, code)    # Central scale
+        xs = central_xs*results[3]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 2.0, 2.0, pdf_id, xs, code)    # Double scale
+        xs = central_xs*results[4]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 0.5, 0.5, pdf_id, xs, code)    # Half scale
+        xs = central_xs*results[5]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+1, xs, code)  # PDF down
+        xs = central_xs*results[6]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+2, xs, code)  # PDF up
+        xs = central_xs*results[7]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+31, xs, code) # \alpha_s down
+        xs = central_xs*results[8]
+        proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+32, xs, code) # \alpha_s up
+
+        # Construct dictionary for writing
+        xsection = { tuple(istate + fstate) : proc }
+
+        # Write cross section for particular process to file
+        #print(pyslha.writeSLHAXSections(xsection))
+        slha.write(pyslha.writeSLHAXSections(xsection,precision=5)+'\n')
+
+    print('XSECTION block writing routine not yet complete! Use at own risk!')
