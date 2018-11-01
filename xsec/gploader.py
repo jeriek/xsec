@@ -207,7 +207,7 @@ def load_single_process(process_xstype):
         'kernel'. These components are all the information needed to
         make the predictions of the expert with GP_predict().
     """
-
+    # TODO: try/except loading
     assert len(process_xstype) == 3
 
     # Construct location of GP models for the specified process and
@@ -217,10 +217,12 @@ def load_single_process(process_xstype):
     process_dir = os.path.join(
         DATA_DIR, utils.get_processdir_name(process_xstype))
 
-    # Collect the GP model file locations for all the experts
-    model_files = [os.path.join(process_dir, f) for f in
-                   os.listdir(process_dir)]
-    #if os.path.isfile(os.path.join(process_dir, f))]
+    # Collect the GP model file locations for all the
+    if os.path.isdir(process_dir):
+        model_files = [os.path.join(process_dir, f) for f in
+                       os.listdir(process_dir)]# if os.path.isfile(f)]
+    else:
+        raise IOError("No valid directory found at {}.".format(process_dir))
 
     # Initialise list of GP model dicts
     model_list = []
