@@ -112,6 +112,13 @@ def set_gluino_mass(mass):
     set_parameter('m1000021', mass)
 
 
+def set_energy(energy):
+    """
+    Set the CoM energy sqrt(s), in GeV.
+    """
+    set_parameter('energy', energy)
+
+
 def clear_parameter(name):
     """
     Clear the value of a parameter.
