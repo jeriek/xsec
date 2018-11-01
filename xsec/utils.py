@@ -31,6 +31,7 @@ REF = []
 # Helper functions                            #
 ###############################################
 
+
 def get_processdir_name(process_xstype):
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
@@ -151,4 +152,3 @@ def fetch_bibtex(ref):
         bibtex = ''
 
     return bibtex
-
