@@ -268,7 +268,11 @@ def import_slha(filename):
 def write_slha(filename, results):
     """
     Write calculated cross sections to already existing SLHA file in
-    XSECTION block.
+    XSECTION blocks.
+    
+    WARNING: PDF variations break XSECTION standard by adding 1 and 2 to the
+             central PDF set for lower and upper 1\sigma variation
+
     """
     # Try to open file for appending (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
@@ -301,8 +305,6 @@ def write_slha(filename, results):
         proc = pyslha.Process(istate, fstate)
         # Add cross sections to process object
         # TODO: Handle indexing for more than one process
-        # WARNING: PDF variations break XSECTION standard by adding 1 and 2 to the central PDF set
-        #          for lower and upper 1\sigma variation
         central_xs = results[0]/1000.   # Convert to pb
         xs = central_xs
         # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f, kappa_r, pdf_id, xs, code)
@@ -327,4 +329,5 @@ def write_slha(filename, results):
         #print(pyslha.writeSLHAXSections(xsection))
         slha.write(pyslha.writeSLHAXSections(xsection,precision=5)+'\n')
 
+    slha.close()
     print('XSECTION block writing routine not yet complete! Use at own risk!')
