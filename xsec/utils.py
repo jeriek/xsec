@@ -4,6 +4,9 @@ Internal helper functions.
 
 from __future__ import print_function
 
+from pkg_resources import get_distribution, DistributionNotFound
+import os.path
+
 import parameters
 
 ###############################################
@@ -26,6 +29,26 @@ XSTYPES = XSTYPE_FILESUFFIX.keys()
 
 # List keeping track of original physics references
 REF = []
+
+
+# Set the module's __version__ by getting the version set in setup.py
+# (which in turn is set by the VERSION file)
+# If this was not installed by pip we try the VERSION file directly
+try:
+    _dist = get_distribution('xsec')
+    # Normalize case for Windows systems
+    dist_loc = os.path.normcase(_dist.location)
+    here = os.path.normcase(__file__)
+    if not here.startswith(os.path.join(dist_loc, 'xsec')):
+        # if not installed, but there is another version that *is*
+        raise DistributionNotFound
+except DistributionNotFound:
+    with open('VERSION') as version_file:
+        __version__ = version_file.read().strip()
+#__version__ = 'Please install this project with pip.'
+else:
+    __version__ = _dist.version
+
 
 ###############################################
 # Helper functions                            #

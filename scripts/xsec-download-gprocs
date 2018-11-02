@@ -27,6 +27,7 @@ except ImportError:  # if python2
 
 import xsec
 
+# Find current version number for correct download
 VERSION = xsec.__version__
 
 # Each download is specified as a (url,file_name) tuple in the list below.
