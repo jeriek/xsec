@@ -302,7 +302,7 @@ def write_slha(filename, results):
     pdf_id = 90400
     # Advertise our smoking code
     # TODO: Get the version number automagically
-    code = ["xsec", "v0.1.0"]
+    code = ["xsec", __version__]
 
     # Get the processes we have calculated
     processes = gploader.PROCESSES
