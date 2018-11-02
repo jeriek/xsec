@@ -73,6 +73,14 @@ def get_process_id_str(process, xstype):
     return process_xstype_str
 
 
+def get_str_from_process_id(process_xstype):
+    assert len(process_xstype) == 3
+    process_xstype_str = (str(process_xstype[0]) + '_' + str(process_xstype[1])
+                          + '_' + process_xstype[2])
+
+    return process_xstype_str
+
+
 def get_process_id_split(process_xstype):
     assert len(process_xstype) == 3
     parton1 = process_xstype[0]
