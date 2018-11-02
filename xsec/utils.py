@@ -43,9 +43,11 @@ try:
         # if not installed, but there is another version that *is*
         raise DistributionNotFound
 except DistributionNotFound:
-    with open('../VERSION') as version_file:
-        __version__ = version_file.read().strip()
-#__version__ = 'Please install this project with pip.'
+    try:
+        version_file = open('../VERSION')
+    except IOError:
+        __version__ = 'Unknown version!'
+    __version__ = version_file.read().strip()
 else:
     __version__ = _dist.version
 
