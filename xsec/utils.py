@@ -43,7 +43,7 @@ try:
         # if not installed, but there is another version that *is*
         raise DistributionNotFound
 except DistributionNotFound:
-    with open('VERSION') as version_file:
+    with open('../VERSION') as version_file:
         __version__ = version_file.read().strip()
 #__version__ = 'Please install this project with pip.'
 else:
