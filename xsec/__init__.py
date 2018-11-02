@@ -1,5 +1,5 @@
 from utils import(
-    __version__
+    print_result, __version__
     )
 from gploader import (
     init, set_processes, load_processes, get_processes,

@@ -147,33 +147,10 @@ def eval_xsection(verbose=True, check_consistency=True):
         ])
     # print(return_array)
 
+    # Print result to screen
     if verbose:
-        print(
-            "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
-            "\t     _/  _/    _/        _/        _/          \n"
-            "\t      _/        _/_/    _/_/_/    _/           \n"
-            "\t   _/  _/          _/  _/        _/            \n"
-            "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
-        )
-        nr_dec = 4
-        np.set_printoptions(precision=nr_dec)
-        print("* Processes requested, in order: \n  ",
-              *utils.get_process_list_str(processes))
-        for process in processes:
-            print("* Input features: \n  ", process, ": ",
-                  zip(get_features(*process),
-                  get_features_dict(gploader.PROCESSES)[process]))
-        print("* xsection_central (fb):", xsection_central)
-        print("* regdown_rel:", regdown_rel)
-        print("* regup_rel:", regup_rel)
-        print("* scaledown_rel:", scaledown_rel)
-        print("* scaleup_rel:", scaleup_rel)
-        print("* pdfdown_rel:", pdfdown_rel)
-        print("* pdfup_rel:", pdfup_rel)
-        print("* alphasdown_rel:", alphasdown_rel)
-        print("* alphasup_rel:", alphasup_rel)
-        print("**************************************************************")
-
+        print_result(return_array)
+    
     return return_array
 
 
