@@ -304,6 +304,7 @@ def write_slha(filename, results):
     # TODO: Get the version number automagically
     code = ["xsec", utils.__version__]
 
+    print(results[0], results[0][0], results[0][1] , results[1][1])
     # Get the processes we have calculated
     processes = gploader.PROCESSES
     # Loop over processes

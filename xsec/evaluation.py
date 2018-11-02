@@ -149,7 +149,7 @@ def eval_xsection(verbose=True, check_consistency=True):
 
     # Print result to screen
     if verbose:
-        print_result(return_array)
+        utils.print_result(return_array)
     
     return return_array
 

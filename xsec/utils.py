@@ -6,8 +6,11 @@ from __future__ import print_function
 
 from pkg_resources import get_distribution, DistributionNotFound
 import os.path
+import numpy as np
 
 import parameters
+import features
+import gploader
 
 ###############################################
 # Global variables                            #
@@ -153,20 +156,20 @@ def print_result(return_array):
     nr_dec = 4
     np.set_printoptions(precision=nr_dec)
     print("* Processes requested, in order: \n  ",
-          *utils.get_process_list_str(processes))
-    for process in processes:
+          get_process_list_str(gploader.PROCESSES))
+    for process in gploader.PROCESSES:
         print("* Input features: \n  ", process, ": ",
-              zip(get_features(*process),
-              get_features_dict(gploader.PROCESSES)[process]))
-    print("* xsection_central (fb):", xsection_central)
-    print("* regdown_rel:", regdown_rel)
-    print("* regup_rel:", regup_rel)
-    print("* scaledown_rel:", scaledown_rel)
-    print("* scaleup_rel:", scaleup_rel)
-    print("* pdfdown_rel:", pdfdown_rel)
-    print("* pdfup_rel:", pdfup_rel)
-    print("* alphasdown_rel:", alphasdown_rel)
-    print("* alphasup_rel:", alphasup_rel)
+              zip(features.get_features(*process),
+              features.get_features_dict(gploader.PROCESSES)[process]))
+    print("* xsection_central (fb):", return_array[0])
+    print("* regdown_rel:", return_array[1])
+    print("* regup_rel:", return_array[2])
+    print("* scaledown_rel:", return_array[3])
+    print("* scaleup_rel:", return_array[4])
+    print("* pdfdown_rel:", return_array[5])
+    print("* pdfup_rel:", return_array[6])
+    print("* alphasdown_rel:", return_array[7])
+    print("* alphasup_rel:", return_array[8])
     print("**************************************************************")
 
 
