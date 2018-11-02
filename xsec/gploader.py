@@ -151,7 +151,7 @@ def set_processes(tuple_list):
     # Immediately load processes already
     # ? Do we want this? Pro: it reduces
     # ? the number of commands to be executed in order.
-    load_processes(PROCESSES)
+    # load_processes(PROCESSES)
 
 
 def get_processes():
