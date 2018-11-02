@@ -44,8 +44,9 @@ MIXING_INDEX = ['thetab', 'thetat']
 # List of sparticle PDG ids
 SQUARK_IDS = [1000001, 1000002, 1000003, 1000004, 1000005, 1000006,
               2000001, 2000002, 2000003, 2000004, 2000005, 2000006]
+ANTISQUARK_IDS = [-id for id in SQUARK_IDS]
 GLUINO_ID = 1000021
-SPARTICLE_IDS = SQUARK_IDS + [GLUINO_ID]
+SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID]
 
 
 ###############################################
@@ -110,6 +111,13 @@ def set_gluino_mass(mass):
     Set the gluino mass to the given value.
     """
     set_parameter('m1000021', mass)
+
+
+def set_energy(energy):
+    """
+    Set the CoM energy sqrt(s), in GeV.
+    """
+    set_parameter('energy', energy)
 
 
 def clear_parameter(name):

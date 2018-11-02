@@ -5,6 +5,7 @@ Initialisation and GP loading functions.
 from __future__ import print_function
 
 import os
+import imp
 import joblib       # Needs v0.12.2 or later
 
 import utils
@@ -27,8 +28,12 @@ DATA_DIR = ''
 PROCESSES = []  # e.g. [(1000021, 1000021), (1000021, 1000002)]
 
 # For each selected process, store trained GP model dictionaries here
-# (or a list of their cache locations):
+# (or a list of their cache locations), with process_xstype as key
 PROCESS_DICT = {}
+
+# Dictionary of transform.py modules for the selected processes, with
+# (process, xstype) as key
+TRANSFORM_MODULES = {}
 
 # Initialise default settings for using Joblib memory caching, can be
 # modified by user with init()
@@ -81,36 +86,6 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
     if data_dir:
         DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
 
-    # If, as default, DATA_DIR was not set manually before init(), nor
-    # with the data_dir keyword inside init(), then the data directory
-    # is the default /data folder within the xsec installation
-    # directory. Fix DATA_DIR to that default location now and import
-    # the inverse_transform function. Else, DATA_DIR is already fixed,
-    # just need to import inverse_transform() now.
-    # TODO: try/except
-    # TODO: all of this will change with the new transform.py structure!
-    if not DATA_DIR:
-        global inverse_transform
-        xsec_dir = os.path.dirname(os.path.realpath(__file__))
-        try:
-            from gprocs.transform import inverse_transform
-            DATA_DIR = os.path.join(xsec_dir, 'gprocs')
-        except ImportError:
-            raise ImportError(
-                'Please check that the /gprocs directory is located inside '
-                '{dir}, and that it contains the file transform.py'.format(
-                    dir=xsec_dir
-                )
-            )
-    else:
-        # Execute the transform module and add its functions to the
-        # global scope
-        transform_file = os.path.join(
-            os.path.abspath(DATA_DIR), 'transform.py')
-        with open(transform_file) as f:
-            transform_code = compile(f.read(), transform_file, 'exec')
-            exec(transform_code, globals(), globals())  # globals(), locals())
-
     # Fix global variables coordinating the use of caching
     global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
     USE_CACHE = use_cache
@@ -156,18 +131,26 @@ def set_processes(tuple_list):
                 continue
             else:
                 raise ValueError(
-                    "One or more particle IDs are not in the allowed set of "
-                    "IDs: \n", parameters.SPARTICLE_IDS
+                    "One or more particle IDs entered ({input}) are not in the"
+                    " allowed set of IDs: \n {ids}".format(
+                        input=tuple_list, ids=parameters.SPARTICLE_IDS
+                    )
                 )
         else:
             raise ValueError(
-                "Each entered process tuple should consist of exactly _two_ "
-                "particle IDs from the following list: \n",
-                parameters.SPARTICLE_IDS
+                "The entered process tuple ({input}) does not consist of "
+                "exactly _two_ particle IDs from the following list: "
+                "\n {ids}".format(
+                    input=tuple_list, ids=parameters.SPARTICLE_IDS
+                )
             )
     # Only set PROCESSES and load the GPs if all checks were passed
     global PROCESSES
     PROCESSES = tuple_list
+
+    # Immediately load processes already
+    # ? Do we want this? Pro: it reduces
+    # ? the number of commands to be executed in order.
     load_processes(PROCESSES)
 
 
@@ -191,7 +174,7 @@ def load_single_process(process_xstype):
 
     Parameters
     ----------
-    process_xstype : tuple of str
+    process_xstype : tuple
         The input argument process_xstype is a 3-tuple
         (process[0], process[1], var) where the first two components
         are integers specifying the process and the last component is a
@@ -207,7 +190,7 @@ def load_single_process(process_xstype):
         'kernel'. These components are all the information needed to
         make the predictions of the expert with GP_predict().
     """
-
+    # TODO: try/except loading
     assert len(process_xstype) == 3
 
     # Construct location of GP models for the specified process and
@@ -217,10 +200,17 @@ def load_single_process(process_xstype):
     process_dir = os.path.join(
         DATA_DIR, utils.get_processdir_name(process_xstype))
 
-    # Collect the GP model file locations for all the experts
-    model_files = [os.path.join(process_dir, f) for f in
-                   os.listdir(process_dir)]
-    #if os.path.isfile(os.path.join(process_dir, f))]
+    # Collect the GP model data file locations (and avoid loading
+    # transform.py or __init__.py from the model directory)
+    if os.path.isdir(process_dir):
+        candidate_model_files = [os.path.join(process_dir, f) for f in
+                                 os.listdir(process_dir)]
+        model_files = [f for f in candidate_model_files if (
+            os.path.isfile(f)
+            and not f.lower().endswith(('.py', '.pyc', '.pyo')))
+            ]
+    else:
+        raise IOError("No valid directory found at {}.".format(process_dir))
 
     # Initialise list of GP model dicts
     model_list = []
@@ -244,6 +234,19 @@ def load_single_process(process_xstype):
 
             model_list.append(gp_reco)
 
+    # Add transform.py file corresponding to the process_xstype to the
+    # modules dictionary (keyword: process, xstype; value: corresponding
+    # transform module)
+    transform_file_path = os.path.join(process_dir, 'transform.py')
+    process = utils.get_process_from_process_id(process_xstype)
+    xstype = utils.get_xstype_from_process_id(process_xstype)
+    try:
+        TRANSFORM_MODULES[(process, xstype)] = imp.load_source(
+            'transform_' + utils.get_str_from_process_id(process_xstype),
+            transform_file_path)
+    except IOError:
+        raise IOError("Could not find transform.py file in {dir}."
+                      .format(dir=process_dir))
     return model_list
 
 
@@ -289,7 +292,8 @@ def load_processes(process_list=PROCESSES):
                 # Loaded GP models are stored in PROCESS_DICT
                 PROCESS_DICT[process_xstype] = (
                     load_single_process(process_xstype))
-        # Add litterature references for process to list
+
+        # Add literature references for process to list
         utils.get_references(process[0], process[1])
 
 

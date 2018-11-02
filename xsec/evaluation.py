@@ -8,7 +8,6 @@ J.V. Sparre, J. Van den Abeele
 """
 
 from __future__ import print_function
-import os
 
 import numpy as np  # Needs v1.14 or later
 
@@ -75,8 +74,10 @@ def eval_xsection(verbose=True, check_consistency=True):
     # Dictionary of PROCESSES-ordered lists
     dgp_results = {
         xstype: [
-            gploader.inverse_transform(process, xstype, params,
-                              *DGP(process, xstype, features[process]))
+            gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
+                process, xstype, params, *DGP(process, xstype,
+                                              features[process])
+                )
             for process in processes
             ]
         for xstype in utils.XSTYPES
@@ -181,36 +182,24 @@ def DGP(process, xstype, features):
         Evaluate a set of distributed Gaussian processes (DGPs)
     """
     assert len(process) == 2
-    process_xstype = (process[0], process[1], xstype)
+    process_xstype = utils.get_process_id(process, xstype)
 
-    # Decide which GP to use depending on xstype
-    processdir_name = utils.get_processdir_name(process_xstype)
-    # print processdir_name
-
-    # List all trained experts in the chosen directory
-    models = os.listdir(os.path.join(gploader.DATA_DIR, processdir_name))
-    n_experts = len(models)
+    # Find the number of trained experts for the given process
+    n_experts = len(gploader.PROCESS_DICT[process_xstype])
 
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
     sigmas = np.zeros(n_experts)
     sigma_priors = np.zeros(n_experts)
 
-    # Loop over GP models/experts
-    for i in range(len(models)):
-        # model = models[i]
+    # Loop over GP experts
+    for i in range(n_experts):
         mu, sigma, sigma_prior = GP_predict(process_xstype, features,
                                             index=i, return_std=True)
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
         # print "-- Resulting mu, sigma, sigma_prior:", mu, sigma, sigma_prior
-
-    ########################################
-    # Assume here that mus, sigmas and
-    # sigma_priors are full arrays
-
-    N = len(mus)
 
     # Find weight (beta) for each expert
     betas = 0.5*(2*np.log(sigma_priors) - 2*np.log(sigmas))
@@ -220,19 +209,16 @@ def DGP(process, xstype, features):
     var_dgp_inv = 0.  # (sigma^2)^-1
 
     # Combine sigmas
-    for i in range(N):
+    for i in range(n_experts):
         var_dgp_inv += (betas[i] * sigmas[i]**(-2)
                         + (1./n_experts - betas[i])
                         * sigma_priors[i]**(-2))
-
     # Combine mus
-    for i in range(N):
+    for i in range(n_experts):
         mu_dgp += var_dgp_inv**(-1) * (betas[i] * sigmas[i]**(-2) * mus[i])
-
 
     # Return mean and std
     return mu_dgp, np.sqrt(var_dgp_inv**(-1))
-
 
 
 def GP_predict(process_xstype, features, index=0, return_std=True,
