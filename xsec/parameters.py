@@ -310,7 +310,6 @@ def write_slha(filename, results):
         fstate = [process[0], process[1]]
         # Indexing of result for more than one process
         result = results[:,i]
-        print(i, result)
         # Make process object
         proc = pyslha.Process(istate, fstate)
         # Add cross sections to process object
