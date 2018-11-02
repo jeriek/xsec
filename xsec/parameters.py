@@ -301,34 +301,34 @@ def write_slha(filename, results):
     # We currently use PDF4LHC15 PDFs
     pdf_id = 90400
     # Advertise our smoking code
-    # TODO: Get the version number automagically
     code = ["xsec", utils.__version__]
 
-    print(results[0], results[0][0], results[0][1] , results[1][1])
     # Get the processes we have calculated
     processes = gploader.PROCESSES
     # Loop over processes
     for i, process in enumerate(processes):
         fstate = [process[0], process[1]]
+        # Indexing of result for more than one process
+        result = results[:,i]
+        print(i, result)
         # Make process object
         proc = pyslha.Process(istate, fstate)
         # Add cross sections to process object
-        # TODO: Handle indexing for more than one process
-        central_xs = results[0]/1000.   # Convert to pb
+        central_xs = result[0]/1000.   # Convert to pb
         xs = central_xs
         # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f, kappa_r, pdf_id, xs, code)
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id, xs, code)    # Central scale
-        xs = central_xs*results[3]
+        xs = central_xs*result[3]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 2.0, 2.0, pdf_id, xs, code)    # Double scale
-        xs = central_xs*results[4]
+        xs = central_xs*result[4]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 0.5, 0.5, pdf_id, xs, code)    # Half scale
-        xs = central_xs*results[5]
+        xs = central_xs*result[5]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+1, xs, code)  # PDF down
-        xs = central_xs*results[6]
+        xs = central_xs*result[6]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+2, xs, code)  # PDF up
-        xs = central_xs*results[7]
+        xs = central_xs*result[7]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+31, xs, code) # \alpha_s down
-        xs = central_xs*results[8]
+        xs = central_xs*result[8]
         proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, 1.0, 1.0, pdf_id+32, xs, code) # \alpha_s up
 
         # Construct dictionary for writing
