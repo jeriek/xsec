@@ -151,7 +151,7 @@ def set_processes(tuple_list):
     # Immediately load processes already
     # ? Do we want this? Pro: it reduces
     # ? the number of commands to be executed in order.
-    load_processes(PROCESSES)
+    # load_processes(PROCESSES)
 
 
 def get_processes():
@@ -250,7 +250,7 @@ def load_single_process(process_xstype):
     return model_list
 
 
-def load_processes(process_list=PROCESSES):
+def load_processes(process_list=None):
     """
     Given a list of sparticle production processes, load all relevant
     trained GP models into memory, or into a cache folder on disk if
@@ -269,8 +269,12 @@ def load_processes(process_list=PROCESSES):
         specifying the process. For example, gluino-gluino production
         corresponds to the tuple (1000021, 1000021).
     """
-    # TODO: Remove process_list argument, just use PROCESSES (and add
-    # set_processes() function)
+    # Load default argument (cannot specify this in function def since
+    # the argument is bound when the method is created and not
+    # re-evaluated later -- and we need the current value of PROCESSES,
+    # not the original empty list)
+    if process_list is None:
+        process_list = PROCESSES
     if USE_CACHE:
         # Decorate load_single_process() such that its output can be
         # cached using the Joblib Memory object

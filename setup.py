@@ -5,6 +5,12 @@ Setup information to allow installation with pip.
 """
 from setuptools import setup  # find_packages
 
+
+def version():
+    with open('VERSION') as version_file:
+        return version_file.read().strip()
+
+
 def readme():
     """
     Define the README text used by PyPI to build the package homepage.
@@ -13,6 +19,7 @@ def readme():
     with open('README.md') as readme_file:
         return readme_file.read()
 
+
 # Add the package metadata and specify which files to include in the
 # distribution. Setting packages=find_packages() would include code in
 # 'xsec.data', but we only want to include the init file (to ensure the
@@ -20,7 +27,7 @@ def readme():
 # (together with the data files). So this is explicitly specified in
 # the py_modules keyword.
 setup(name='xsec',
-      version='0.1.0',
+      version=version(),
       description='Cross-section evaluation code',
       long_description=readme(),
       classifiers=[
@@ -35,7 +42,7 @@ setup(name='xsec',
       maintainer_email='jeriekvda@fys.uio.no',
       license='GPLv3',
       packages=['xsec'],
-      py_modules=['xsec.gprocs.__init__'],
+    #   py_modules=[],
       install_requires=[
           'numpy>=1.14',
           'joblib>=0.12.2',
