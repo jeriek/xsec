@@ -1,0 +1,5 @@
+setuptools>=20.7.0
+numpy>=1.14
+scipy>=1.0.0
+joblib>=0.12.2
+pyslha>=3.2.0

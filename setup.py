@@ -20,6 +20,11 @@ def readme():
         return readme_file.read()
 
 
+def requirements():
+    with open('requirements.txt') as req_file:
+        return req_file.read().splitlines()
+
+
 # Add the package metadata and specify which files to include in the
 # distribution. Full list of available classifiers:
 # https://pypi.org/pypi?%3Aaction=list_classifiers
@@ -43,12 +48,7 @@ setup(name='xsec',
       license='GPLv3',
       packages=['xsec'],
       #   py_modules=[],
-      install_requires=[
-          'numpy>=1.14',
-          'joblib>=0.12.2',
-          'pyslha>=3.2.0',
-        #   'setuptools'
-          ],
+      install_requires=requirements(),
       include_package_data=False,
       scripts=[
           'scripts/xsec-download-gprocs',
