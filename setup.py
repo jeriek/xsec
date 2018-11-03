@@ -3,7 +3,7 @@
 """
 Setup information to allow installation with pip.
 """
-from setuptools import setup  # find_packages
+from setuptools import setup
 
 
 def version():
@@ -21,20 +21,20 @@ def readme():
 
 
 # Add the package metadata and specify which files to include in the
-# distribution. Setting packages=find_packages() would include code in
-# 'xsec.data', but we only want to include the init file (to ensure the
-# folder is created) and not transform.py, which comes separately
-# (together with the data files). So this is explicitly specified in
-# the py_modules keyword.
+# distribution. Full list of available classifiers:
+# https://pypi.org/pypi?%3Aaction=list_classifiers
 setup(name='xsec',
       version=version(),
       description='Cross-section evaluation code',
       long_description=readme(),
       classifiers=[
-          'Development Status :: 1 - Planning',
-          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+          'Development Status :: 3 - Alpha',
+          'License :: OSI Approved :: '
+          'GNU General Public License v3 or later (GPLv3+)',
           'Programming Language :: Python :: 2.7',
+        #   'Programming Language :: Python :: 3',
           'Topic :: Scientific/Engineering:: Physics',
+          'Intended Audience :: Science/Research'
       ],
       keywords='supersymmetry cross-sections machine-learning',
       url='https://github.com/jeriek/xsec',
@@ -42,12 +42,17 @@ setup(name='xsec',
       maintainer_email='jeriekvda@fys.uio.no',
       license='GPLv3',
       packages=['xsec'],
-    #   py_modules=[],
+      #   py_modules=[],
       install_requires=[
           'numpy>=1.14',
           'joblib>=0.12.2',
-          'pyslha>=3.2.0'
-      ],
+          'pyslha>=3.2.0',
+        #   'setuptools'
+          ],
       include_package_data=False,
-      scripts=['scripts/xsec-download-gprocs', 'scripts/xsec-test', 'scripts/xsec'],
+      scripts=[
+          'scripts/xsec-download-gprocs',
+          'scripts/xsec-test',
+          'scripts/xsec'
+          ],
       zip_safe=False)

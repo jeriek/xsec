@@ -4,9 +4,9 @@ Internal helper functions.
 
 from __future__ import print_function
 
-from pkg_resources import get_distribution, DistributionNotFound
 import os.path
 import numpy as np
+from pkg_resources import get_distribution, DistributionNotFound
 
 import parameters
 import features
@@ -33,25 +33,34 @@ XSTYPES = XSTYPE_FILESUFFIX.keys()
 # List keeping track of original physics references
 REF = []
 
-
 # Set the module's __version__ by getting the version set in setup.py
 # (which in turn is set by the VERSION file)
 # If this was not installed by pip we try the VERSION file directly
 try:
     _dist = get_distribution('xsec')
-    # Normalize case for Windows systems
+    # Normalise case for Windows systems
     dist_loc = os.path.normcase(_dist.location)
     here = os.path.normcase(__file__)
     if not here.startswith(os.path.join(dist_loc, 'xsec')):
-        # if not installed, but there is another version that *is*
+        # If not installed, but there is another version that is
+        # (i.e. current __file__ parent dir not in the xsec
+        # distribution location that was detected)
         raise DistributionNotFound
 except DistributionNotFound:
     try:
-        version_file = open('../VERSION')
+        # If not pip-installed, VERSION file is in top xsec directory
+        # Get current xsec/xsec directory
+        xsec_package_dir = os.path.dirname(__file__)
+        # Get parent xsec directory in platform-independent way
+        top_xsec_dir = os.path.abspath(
+            os.path.join(xsec_package_dir, os.pardir))
+        # Read the version file
+        with open(os.path.join(top_xsec_dir, 'VERSION')) as version_file:
+            __version__ = version_file.read().strip()
     except IOError:
         __version__ = 'Unknown version!'
-    __version__ = version_file.read().strip()
 else:
+    # If DistributionNotFound was not raised
     __version__ = _dist.version
 
 
