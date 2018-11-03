@@ -15,7 +15,7 @@ import utils
 import gploader
 import parameters
 import kernels
-from features import get_features, get_feature_list, get_features_dict
+from features import get_feature_list, get_features_dict
 
 # print('Numpy version ' + np.__version__)
 # print('Joblib version ' + joblib.__version__)
@@ -150,7 +150,7 @@ def eval_xsection(verbose=True, check_consistency=True):
     # Print result to screen
     if verbose:
         utils.print_result(return_array)
-    
+
     return return_array
 
 
@@ -234,10 +234,9 @@ def GP_predict(process_xstype, features, index=0, return_std=True,
         K_inv = gp_model['K_inv']
         kernel = kernels.set_kernel(gp_model['kernel'])
 
-    except KeyError, e:
-        print(KeyError, e)
-        print("No trained GP models loaded for: " + str(process_xstype))
-        return None
+    except KeyError:
+        raise KeyError(
+            "No trained GP models loaded for: {id}".format(process_xstype))
 
     X = np.atleast_2d(features)
 
