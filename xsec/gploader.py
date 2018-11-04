@@ -6,7 +6,7 @@ from __future__ import print_function
 
 import os
 import imp
-import joblib       # Needs v0.12.2 or later
+import joblib  # Needs v0.12.2 or later
 
 import utils
 import parameters
@@ -21,7 +21,7 @@ import parameters
 # the run script, either through accessing the DATA_DIR global variable
 # explicitly, or through specifying the data_dir keyword inside init().
 # The latter takes precedence if both methods are used simultaneously.
-DATA_DIR = ''
+DATA_DIR = ""
 
 # List of selected processes (2-tuples of sparticle ids), to be set by
 # the user
@@ -38,7 +38,7 @@ TRANSFORM_MODULES = {}
 # Initialise default settings for using Joblib memory caching, can be
 # modified by user with init()
 USE_CACHE = False
-CACHE_DIR = ''
+CACHE_DIR = ""
 FLUSH_CACHE = True
 USE_MEMMAP = True
 CACHE_MEMORY = None
@@ -49,8 +49,13 @@ CACHE_MEMORY = None
 ###############################################
 
 
-def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
-         use_memmap=True):
+def init(
+    data_dir="",
+    use_cache=False,
+    cache_dir="",
+    flush_cache=True,
+    use_memmap=True,
+):
     """
     Initialise run settings for the program. In particular, whether to
     use a cache, i.e. a temporary disk directory to store loaded GP
@@ -101,20 +106,21 @@ def init(data_dir='', use_cache=False, cache_dir='', flush_cache=True,
         else:
             # Create directory with random name
             from tempfile import mkdtemp
-            cachedir = mkdtemp(prefix='xsec_')
+
+            cachedir = mkdtemp(prefix="xsec_")
         if USE_MEMMAP:
             # Set memmap mode 'copy on write'
-            memmap_mode = 'c'
+            memmap_mode = "c"
         else:
             # Disable memmapping
             memmap_mode = None
 
         # Create a Joblib Memory object managing the cache
         global CACHE_MEMORY
-        CACHE_MEMORY = joblib.Memory(location=cachedir,
-                                     mmap_mode=memmap_mode,
-                                     verbose=0)
-        print("Cache folder: "+str(cachedir))
+        CACHE_MEMORY = joblib.Memory(
+            location=cachedir, mmap_mode=memmap_mode, verbose=0
+        )
+        print("Cache folder: " + str(cachedir))
 
     return 0
 
@@ -198,17 +204,23 @@ def load_single_process(process_xstype):
     # process_dir = os.path.join(os.path.abspath(DATA_DIR),
     #                            get_processdir_name(process_xstype))
     process_dir = os.path.join(
-        DATA_DIR, utils.get_processdir_name(process_xstype))
+        DATA_DIR, utils.get_processdir_name(process_xstype)
+    )
 
     # Collect the GP model data file locations (and avoid loading
     # transform.py or __init__.py from the model directory)
     if os.path.isdir(process_dir):
-        candidate_model_files = [os.path.join(process_dir, f) for f in
-                                 os.listdir(process_dir)]
-        model_files = [f for f in candidate_model_files if (
-            os.path.isfile(f)
-            and not f.lower().endswith(('.py', '.pyc', '.pyo')))
-            ]
+        candidate_model_files = [
+            os.path.join(process_dir, f) for f in os.listdir(process_dir)
+        ]
+        model_files = [
+            f
+            for f in candidate_model_files
+            if (
+                os.path.isfile(f)
+                and not f.lower().endswith((".py", ".pyc", ".pyo"))
+            )
+        ]
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
 
@@ -225,28 +237,32 @@ def load_single_process(process_xstype):
             # Reconvert float32 arrays to float64 for higher-precision
             # computations, filling a new dict gp_reco
             gp_reco = {}
-            gp_reco['X_train'] = gp_model['X_train'].astype('float64')
-            gp_reco['L_inv'] = gp_model['L_inv'].astype('float64')
-            gp_reco['alpha'] = gp_model['alpha'].astype('float64')
-            gp_reco['kernel'] = gp_model['kernel']  # kernel parameters
+            gp_reco["X_train"] = gp_model["X_train"].astype("float64")
+            gp_reco["L_inv"] = gp_model["L_inv"].astype("float64")
+            gp_reco["alpha"] = gp_model["alpha"].astype("float64")
+            gp_reco["kernel"] = gp_model["kernel"]  # kernel parameters
             # Compute K_inv from L_inv and store it in the dict
-            gp_reco['K_inv'] = gp_reco['L_inv'].dot(gp_reco['L_inv'].T)
+            gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 
             model_list.append(gp_reco)
 
     # Add transform.py file corresponding to the process_xstype to the
     # modules dictionary (keyword: process, xstype; value: corresponding
     # transform module)
-    transform_file_path = os.path.join(process_dir, 'transform.py')
+    transform_file_path = os.path.join(process_dir, "transform.py")
     process = utils.get_process_from_process_id(process_xstype)
     xstype = utils.get_xstype_from_process_id(process_xstype)
     try:
         TRANSFORM_MODULES[(process, xstype)] = imp.load_source(
-            'transform_' + utils.get_str_from_process_id(process_xstype),
-            transform_file_path)
+            "transform_" + utils.get_str_from_process_id(process_xstype),
+            transform_file_path,
+        )
     except IOError:
-        raise IOError("Could not find transform.py file in {dir}."
-                      .format(dir=process_dir))
+        raise IOError(
+            "Could not find transform.py file in {dir}.".format(
+                dir=process_dir
+            )
+        )
     return model_list
 
 
@@ -290,33 +306,39 @@ def load_processes(process_list=None):
             if USE_CACHE:
                 # If using cache, PROCESS_DICT only keeps a reference
                 # to the data stored in a disk folder ('shelving')
-                PROCESS_DICT[process_xstype] = (
-                    load_single_process_cache.call_and_shelve(process_xstype))
+                PROCESS_DICT[
+                    process_xstype
+                ] = load_single_process_cache.call_and_shelve(process_xstype)
             else:
                 # Loaded GP models are stored in PROCESS_DICT
-                PROCESS_DICT[process_xstype] = (
-                    load_single_process(process_xstype))
+                PROCESS_DICT[process_xstype] = load_single_process(
+                    process_xstype
+                )
 
         # Add literature references for process to list
-        utils.get_references(process[0], process[1])
+        utils.get_references(*process)
 
 
 ###############################################
 # Finalisation                                #
 ###############################################
 
-# Function to finalize run
-# Currently clears cache (if used) and prints references to file
+
 def finalize():
+    """
+    Function to finalize run.
+    Currently clears cache (if used) and writes references to a file.
+    """
     # Clear cache. Inactive if cache not used
     clear_cache()
-    # Write references to file
-    ref_file = 'xsec.bib'
-    f = open(ref_file,'w')
-    utils.print_references(f)
-    f.close()
-    print('A list of references that form the basis of the results in this run '
-          'have been written to {file}'.format(file=ref_file))
+    # Write references to file (overwrite if existing)
+    ref_file = "xsec.bib"
+    with open(ref_file, "w") as f:
+        utils.print_references(f)
+    print(
+        "A list of references that form the basis of the results in this run "
+        "has been written to {file}.".format(file=ref_file)
+    )
 
 
 def clear_cache():

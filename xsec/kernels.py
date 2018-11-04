@@ -12,9 +12,10 @@ def _check_length_scale(X, length_scale):
     if np.ndim(length_scale) > 1:
         raise ValueError("length_scale cannot be of dimension greater than 1")
     if np.ndim(length_scale) == 1 and X.shape[1] != length_scale.shape[0]:
-        raise ValueError("Anisotropic kernel must have the same number of "
-                         "dimensions as data (%d!=%d)"
-                         % (length_scale.shape[0], X.shape[1]))
+        raise ValueError(
+            "Anisotropic kernel must have the same number of "
+            "dimensions as data (%d!=%d)" % (length_scale.shape[0], X.shape[1])
+        )
     return length_scale
 
 
@@ -44,24 +45,23 @@ def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
     X = np.atleast_2d(X)
     length_scale = _check_length_scale(X, length_scale)
     if Y is None:
-        dists = pdist(X / length_scale, metric='euclidean')
+        dists = pdist(X / length_scale, metric="euclidean")
     else:
-        dists = cdist(X / length_scale, Y / length_scale,
-                      metric='euclidean')
+        dists = cdist(X / length_scale, Y / length_scale, metric="euclidean")
 
     if nu == 0.5:
         K = np.exp(-dists)
     elif nu == 1.5:
         K = dists * math.sqrt(3)
-        K = (1. + K) * np.exp(-K)
+        K = (1.0 + K) * np.exp(-K)
     elif nu == 2.5:
         K = dists * math.sqrt(5)
-        K = (1. + K + K ** 2 / 3.0) * np.exp(-K)
+        K = (1.0 + K + K ** 2 / 3.0) * np.exp(-K)
     else:  # general case; expensive to evaluate
         K = dists
         K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
-        tmp = (math.sqrt(2 * nu) * K)
-        K.fill((2 ** (1. - nu)) / gamma(nu))
+        tmp = math.sqrt(2 * nu) * K
+        K.fill((2 ** (1.0 - nu)) / gamma(nu))
         K *= tmp ** nu
         K *= kv(nu, tmp)
 
@@ -122,20 +122,22 @@ def set_kernel(kernel_params):
         """
 
         # Extract parameters from input dictionary
-        noise_level = kernel_params['whitekernel_noiselevel']
-        prefactor = kernel_params['matern_prefactor']
-        nu = kernel_params['matern_nu']
-        length_scale = kernel_params['matern_lengthscale']
+        noise_level = kernel_params["whitekernel_noiselevel"]
+        prefactor = kernel_params["matern_prefactor"]
+        nu = kernel_params["matern_nu"]
+        length_scale = kernel_params["matern_lengthscale"]
 
         # Return sum of white kernel and (prefactor times) Matern kernel
         if Y is None:
-            kernel_sum = (WhiteKernel(X, noise_level=noise_level)
-                          + prefactor*MaternKernel(
-                              X, length_scale=length_scale, nu=nu))
+            kernel_sum = WhiteKernel(
+                X, noise_level=noise_level
+            ) + prefactor * MaternKernel(X, length_scale=length_scale, nu=nu)
         else:
-            kernel_sum = (WhiteKernel(X, Y, noise_level=noise_level)
-                          + prefactor*MaternKernel(
-                              X, Y, length_scale=length_scale, nu=nu))
+            kernel_sum = WhiteKernel(
+                X, Y, noise_level=noise_level
+            ) + prefactor * MaternKernel(
+                X, Y, length_scale=length_scale, nu=nu
+            )
 
         return kernel_sum
 

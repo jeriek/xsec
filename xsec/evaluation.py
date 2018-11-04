@@ -14,11 +14,8 @@ import numpy as np  # Needs v1.14 or later
 import utils
 import gploader
 import parameters
+import features
 import kernels
-from features import get_feature_list, get_features_dict
-
-# print('Numpy version ' + np.__version__)
-# print('Joblib version ' + joblib.__version__)
 
 
 ###############################################
@@ -29,18 +26,19 @@ from features import get_feature_list, get_features_dict
 def eval_xsection(verbose=True, check_consistency=True):
 
     """
-    Evaluates cross sections for processes in global list PROCESSES using
-    parameter values stored in global dictionary PARAMS.
+    Evaluates cross sections for processes in global list PROCESSES
+    using parameter values stored in global dictionary PARAMS.
 
     The function has two options:
 
     verbose:    Turns on and off printing of values to terminal
 
-    check_consistency:  Forces a consistency check of the parameters in PARAMS.
-                        This function checks that all necessary parameters have
-                        been set, that they are internally consistent and that
-                        the parameters are in a range where the evaluation can
-                        be trusted.
+    check_consistency:  Forces a consistency check of the parameters in
+                        PARAMS. This function checks that all necessary
+                        parameters have been set, that they are
+                        internally consistent and that the parameters
+                        are in a range where the evaluation can be
+                        trusted.
     """
 
     ##################################################
@@ -54,11 +52,11 @@ def eval_xsection(verbose=True, check_consistency=True):
     # Sanity check parameter inputs
     if check_consistency:
         # First make a list of all unique features used for all processes
-        feature_list = get_feature_list(processes)
+        feature_list = features.get_feature_list(processes)
         parameters.check_parameters(feature_list)
 
     # Build feature vectors, depending on production channel
-    features = get_features_dict(processes)
+    process_features = features.get_features_dict(processes)
 
     ###################################################
     # Do DGP evaluation                               #
@@ -75,21 +73,23 @@ def eval_xsection(verbose=True, check_consistency=True):
     dgp_results = {
         xstype: [
             gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
-                process, xstype, params, *DGP(process, xstype,
-                                              features[process])
-                )
+                process,
+                xstype,
+                params,
+                *DGP(process, xstype, process_features[process])
+            )
             for process in processes
-            ]
+        ]
         for xstype in utils.XSTYPES
-        }
+    }
 
     # All returned errors are defined to be deviations from 1
 
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
     xsection_central, reg_err = map(
-        np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results['centr']))
-        )
+        np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"]))
+    )
     # xsection_central, reg_err = map(
     #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
     #                     for mu_sigma_dgp in dgp_results['centr']))
@@ -101,8 +101,8 @@ def eval_xsection(verbose=True, check_consistency=True):
 
     # -- Xsection deviating one (lognormal) regression error away
     #    from the central-scale xsection, relative to the latter.
-    regdown_rel = 1. - reg_err/xsection_central # numpy array
-    regup_rel = 1. + reg_err/xsection_central  # numpy array
+    regdown_rel = 1.0 - reg_err / xsection_central  # numpy array
+    regup_rel = 1.0 + reg_err / xsection_central  # numpy array
 
     # -- Xsection at lower and higher scale (0.5x and 2x central scale),
     #    relative to the central-scale xsection. To prevent that the
@@ -113,8 +113,8 @@ def eval_xsection(verbose=True, check_consistency=True):
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_scldn, _ = np.array(zip(*dgp_results['scldn']))
-    mu_dgp_sclup, _ = np.array(zip(*dgp_results['sclup']))
+    mu_dgp_scldn, _ = np.array(zip(*dgp_results["scldn"]))
+    mu_dgp_sclup, _ = np.array(zip(*dgp_results["sclup"]))
 
     scaledown_rel = np.array(map(np.min, zip(mu_dgp_scldn, mu_dgp_sclup)))
     scaleup_rel = np.array(map(np.max, zip(mu_dgp_scldn, mu_dgp_sclup)))
@@ -122,29 +122,41 @@ def eval_xsection(verbose=True, check_consistency=True):
     # -- Xsection deviating one pdf error away from the
     #    central-scale xsection, relative to the latter.
     # Get the DGP means, discard regression errors on the variations
-    delta_pdf_rel, _ = np.array(zip(*dgp_results['pdf']))
+    delta_pdf_rel, _ = np.array(zip(*dgp_results["pdf"]))
 
-    pdfdown_rel = 1. - delta_pdf_rel
-    pdfup_rel = 1. + delta_pdf_rel
+    pdfdown_rel = 1.0 - delta_pdf_rel
+    pdfup_rel = 1.0 + delta_pdf_rel
 
     # -- Xsection deviating one symmetrised alpha_s error away from
     #    the central-scale xsection, relative to the latter.
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_adn, _ = np.array(zip(*dgp_results['scldn']))
-    mu_dgp_aup, _ = np.array(zip(*dgp_results['sclup']))
+    mu_dgp_adn, _ = np.array(zip(*dgp_results["scldn"]))
+    mu_dgp_aup, _ = np.array(zip(*dgp_results["sclup"]))
 
-    delta_alphas_rel = np.array([0.5*(abs(aup-1.) + abs(1.-adn))
-                                for (aup, adn) in zip(mu_dgp_aup, mu_dgp_adn)])
+    delta_alphas_rel = np.array(
+        [
+            0.5 * (abs(aup - 1.0) + abs(1.0 - adn))
+            for (aup, adn) in zip(mu_dgp_aup, mu_dgp_adn)
+        ]
+    )
 
-    alphasdown_rel = 1. - delta_alphas_rel
-    alphasup_rel = 1. + delta_alphas_rel
+    alphasdown_rel = 1.0 - delta_alphas_rel
+    alphasup_rel = 1.0 + delta_alphas_rel
 
     # Collect values for output in Numpy array
-    return_array = np.array([
-        xsection_central, regdown_rel, regup_rel,
-        scaledown_rel, scaleup_rel, pdfdown_rel,
-        pdfup_rel, alphasdown_rel, alphasup_rel
-        ])
+    return_array = np.array(
+        [
+            xsection_central,
+            regdown_rel,
+            regup_rel,
+            scaledown_rel,
+            scaleup_rel,
+            pdfdown_rel,
+            pdfup_rel,
+            alphasdown_rel,
+            alphasup_rel,
+        ]
+    )
     # print(return_array)
 
     # Print result to screen
@@ -171,35 +183,37 @@ def DGP(process, xstype, features):
 
     # Loop over GP experts
     for i in range(n_experts):
-        mu, sigma, sigma_prior = GP_predict(process_xstype, features,
-                                            index=i, return_std=True)
+        mu, sigma, sigma_prior = GP_predict(
+            process_xstype, features, index=i, return_std=True
+        )
         mus[i] = mu
         sigmas[i] = sigma
         sigma_priors[i] = sigma_prior
         # print "-- Resulting mu, sigma, sigma_prior:", mu, sigma, sigma_prior
 
     # Find weight (beta) for each expert
-    betas = 0.5*(2*np.log(sigma_priors) - 2*np.log(sigmas))
+    betas = 0.5 * (2 * np.log(sigma_priors) - 2 * np.log(sigmas))
 
     # Final mean and variance
-    mu_dgp = 0.
-    var_dgp_inv = 0.  # (sigma^2)^-1
+    mu_dgp = 0.0
+    var_dgp_inv = 0.0  # (sigma^2)^-1
 
     # Combine sigmas
     for i in range(n_experts):
-        var_dgp_inv += (betas[i] * sigmas[i]**(-2)
-                        + (1./n_experts - betas[i])
-                        * sigma_priors[i]**(-2))
+        var_dgp_inv += betas[i] * sigmas[i] ** (-2) + (
+            1.0 / n_experts - betas[i]
+        ) * sigma_priors[i] ** (-2)
     # Combine mus
     for i in range(n_experts):
-        mu_dgp += var_dgp_inv**(-1) * (betas[i] * sigmas[i]**(-2) * mus[i])
+        mu_dgp += var_dgp_inv ** (-1) * (betas[i] * sigmas[i] ** (-2) * mus[i])
 
     # Return mean and std
-    return mu_dgp, np.sqrt(var_dgp_inv**(-1))
+    return mu_dgp, np.sqrt(var_dgp_inv ** (-1))
 
 
-def GP_predict(process_xstype, features, index=0, return_std=True,
-               return_cov=False):
+def GP_predict(
+    process_xstype, features, index=0, return_std=True, return_cov=False
+):
     """
     Gaussian process evaluation for the individual experts. Takes as
     input arguments the produced partons, an array of new test features,
@@ -217,8 +231,9 @@ def GP_predict(process_xstype, features, index=0, return_std=True,
     """
 
     if return_std and return_cov:
-        raise RuntimeError("Cannot return both standard deviation "
-                           "and full covariance.")
+        raise RuntimeError(
+            "Cannot return both standard deviation and full covariance."
+        )
 
     try:
         if gploader.USE_CACHE:
@@ -227,47 +242,49 @@ def GP_predict(process_xstype, features, index=0, return_std=True,
         else:
             gp_model = gploader.PROCESS_DICT[process_xstype][index]
 
-        kernel = gp_model['kernel']
-        X_train = gp_model['X_train']
-        alpha = gp_model['alpha']
-        L_inv = gp_model['L_inv']
-        K_inv = gp_model['K_inv']
-        kernel = kernels.set_kernel(gp_model['kernel'])
+        kernel = gp_model["kernel"]
+        X_train = gp_model["X_train"]
+        alpha = gp_model["alpha"]
+        L_inv = gp_model["L_inv"]
+        K_inv = gp_model["K_inv"]
+        kernel = kernels.set_kernel(gp_model["kernel"])
 
     except KeyError:
         raise KeyError(
-            "No trained GP models loaded for: {id}".format(process_xstype))
+            "No trained GP models loaded for: {id}".format(process_xstype)
+        )
 
     X = np.atleast_2d(features)
 
-    K_trans = kernel(X, X_train) # transpose of K*
-    y_mean = K_trans.dot(alpha) # Line 4 (y_mean = f_star)
+    K_trans = kernel(X, X_train)  # transpose of K*
+    y_mean = K_trans.dot(alpha)  # Line 4 (y_mean = f_star)
 
-    prior_variance = kernel(X) # Note: 1x1 if just 1 new test point!]
+    prior_variance = kernel(X)  # Note: 1x1 if just 1 new test point!]
 
     if return_std:
-        # Compute variance of predictive distribution Note: =
-        # prior_variance if 1x1, deep copy else prior_variance = y_var
-        # alias
+        # Compute variance of predictive distribution. Note: equal to
+        # prior_variance if 1x1, deep copy else prior_variance is y_var
+        # alias.
         y_var = np.diag(prior_variance.copy())
         y_var.setflags(write=True)  # else this array is read-only
-        y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv),
-                           K_trans, optimize=True)
+        y_var -= np.einsum(
+            "ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True
+        )
 
         # Check if any of the variances is negative because of numerical
         # issues. If yes: set the variance to absolute value, to keep
         # the rough order of magnitude right.
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
-            # warnings.warn("Predicted some variance(s) smaller than 0. "
-                        #   "Approximating these with their absolute value.")
+            # warnings.warn("Predicted some variance(s) smaller than 0."
+            #  " Approximating these with their absolute value.")
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
         y_std = np.sqrt(y_var)
         prior_std = np.sqrt(prior_variance.flatten())
         return y_mean, y_std, prior_std
 
     elif return_cov:
-        v = L_inv.dot(K_trans.T) # Line 5
+        v = L_inv.dot(K_trans.T)  # Line 5
         y_cov = prior_variance - K_trans.dot(v)  # Line 6
         return [y_mean, y_cov, prior_variance]
 
