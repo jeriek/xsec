@@ -33,7 +33,7 @@ VERSION = xsec.__version__
 # Each download is specified as a (url, file_name) tuple in this list.
 DOWNLOAD_LIST = [
     (
-        "https://github.com/jeriek/xstest/releases/download/0.1.0/"
+        "https://github.com/jeriek/xstest/releases/download/"+VERSION+"/"
         "xsec-gprocs-" + VERSION + ".tar.gz",
         "xsec-gprocs-" + VERSION + ".tar.gz",
     )
@@ -46,7 +46,8 @@ def main():
     """
 
     # If argument is given, use this as download directory
-    # If no argument, use current working directory as default
+    # If no argument, create 'gprocs' directory in  current working
+    # directory as default
 
     # TODO: check if multiple arguments are given, raise error
 
@@ -57,7 +58,8 @@ def main():
             xsec_data_dir,
         )
     except IndexError:
-        xsec_data_dir = os.getcwd()
+        cwd = os.getcwd()
+        xsec_data_dir = os.path.join(cwd, "gprocs")
         print(
             "Setting download directory for the data to the current working "
             "directory:\n",
@@ -68,7 +70,7 @@ def main():
     # Create data dir and/or init file if not existing
     if not os.path.exists(xsec_data_dir):
         try:
-            # Create data directory and empty init file
+            # Create 'gprocs' data directory and empty init file
             mkdir_p(xsec_data_dir)
             open(data_init_filepath, "a").close()
         except OSError:

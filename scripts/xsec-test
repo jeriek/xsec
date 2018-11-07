@@ -10,8 +10,8 @@ sections.
 
 Use:
     xsec-test <directory-for-xsec-data>
-    If no argument <directory-for-xsec-data> is given, the current
-    working directory is used.
+    If no argument <directory-for-xsec-data> is given, the code looks
+    for a folder called 'gprocs' in the current working directory.
 """
 
 import os
@@ -21,7 +21,9 @@ import xsec
 try:
     input_dir = sys.argv[1]
 except IndexError:
-    input_dir = os.getcwd()
+    # By default, look for './gprocs'
+    cwd = os.getcwd()
+    input_dir = os.path.join(cwd, 'gprocs')
 
 # *** Set directory and cache choices ***
 xsec.init(data_dir=input_dir)  # run with default settings (no caching)
