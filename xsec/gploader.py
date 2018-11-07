@@ -127,8 +127,8 @@ def init(
 
 def set_processes(tuple_list):
     """
-    Set the list of processes to be evaluated, and load the GP models
-    for those processes.
+    Set the global list of processes to be evaluated. Called in
+    load_processes().
     """
     # Check if process exists (right format, known sparticles)
     for process in tuple_list:
@@ -153,11 +153,6 @@ def set_processes(tuple_list):
     # Only set PROCESSES and load the GPs if all checks were passed
     global PROCESSES
     PROCESSES = tuple_list
-
-    # Immediately load processes already
-    # ? Do we want this? Pro: it reduces
-    # ? the number of commands to be executed in order.
-    # load_processes(PROCESSES)
 
 
 def get_processes():
@@ -266,7 +261,7 @@ def load_single_process(process_xstype):
     return model_list
 
 
-def load_processes(process_list=None):
+def load_processes(process_list):
     """
     Given a list of sparticle production processes, load all relevant
     trained GP models into memory, or into a cache folder on disk if
@@ -285,12 +280,13 @@ def load_processes(process_list=None):
         specifying the process. For example, gluino-gluino production
         corresponds to the tuple (1000021, 1000021).
     """
-    # Load default argument (cannot specify this in function def since
-    # the argument is bound when the method is created and not
-    # re-evaluated later -- and we need the current value of PROCESSES,
-    # not the original empty list)
-    if process_list is None:
-        process_list = PROCESSES
+    # Set the global list of processes (fails in case of input errors)
+    if len(process_list) == 0:
+        raise ValueError(
+            "List of processes to be evaluated cannot be empty."
+            )
+    set_processes(process_list)
+
     if USE_CACHE:
         # Decorate load_single_process() such that its output can be
         # cached using the Joblib Memory object
@@ -299,6 +295,7 @@ def load_processes(process_list=None):
     # Loop over specified processes
     for process in process_list:
         assert len(process) == 2
+
         # Search for all directories with same process, accounting for
         # cross-sections calculated at varied parameters
         for xstype in utils.XSTYPES:
@@ -310,7 +307,7 @@ def load_processes(process_list=None):
                     process_xstype
                 ] = load_single_process_cache.call_and_shelve(process_xstype)
             else:
-                # Loaded GP models are stored in PROCESS_DICT
+                # Loaded GP models are stored directly in PROCESS_DICT
                 PROCESS_DICT[process_xstype] = load_single_process(
                     process_xstype
                 )

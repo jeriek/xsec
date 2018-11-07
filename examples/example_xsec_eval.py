@@ -14,11 +14,9 @@ import xsec
 # *** Set directory and cache choices ***
 xsec.init(data_dir="gprocs")  # run with default settings (no caching)
 
-# *** Set processes to load ***
-xsec.set_processes([(1000021, 1000021)])
-
 # *** Load GP models for the specified process(es) ***
-xsec.load_processes()
+processes = [(1000021, 1000021)]
+xsec.load_processes(processes)
 
 # *** Evaluate a cross-section with given input parameters ***
 xsec.set_parameters(
