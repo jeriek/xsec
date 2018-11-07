@@ -256,16 +256,29 @@ def check_parameters(parameters):
         # Compare correct mean computed now to user-specified mean
         if abs(PARAMS["mean"] - mean) > 0.1:
             raise ValueError(
-                "The mean of the user-specified 1st and 2nd generation "
+                "\n The mean of the user-specified 1st and 2nd generation "
                 "squark masses ({mean1}) is not equal to the "
-                "specified 'mean' mass feature ({mean2})!".format(
+                "specified 'mean' mass feature ({mean2})!\n"
+                "Perhaps you may want to clear some parameters from a "
+                "previous evaluation? You can do this by calling "
+                "clear_parameters(<list-of-parameter-names>), or "
+                "clear_parameters() to clear all parameters.\n"
+                "Currently, the parameters have been set to:\n{params}\n"
+                "[This consistency check was performed as the evaluation "
+                "was called with the relevant (default) option:\n\t"
+                "eval_xsection(..., check_consistency=True).]".format(
                     mean1=mean, mean2=PARAMS["mean"]
                 )
             )
 
     # Check energy
     if PARAMS["energy"] != 13000:
-        raise ValueError("Currently the only available energy is 13000 GeV")
+        raise ValueError(
+            "Currently the only available CoM energy is 13000 GeV. (The "
+            "requested CoM energy was {energy} GeV.)".format(
+                energy=PARAMS["energy"]
+                )
+            )
 
 
 ###############################################
