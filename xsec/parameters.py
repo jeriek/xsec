@@ -467,5 +467,6 @@ def write_slha(filename, results):
         # print(pyslha.writeSLHAXSections(xsection))
         slha.write(pyslha.writeSLHAXSections(xsection, precision=5) + "\n")
 
+    # Close file when finished writing
     slha.close()
-    print("XSECTION block writing routine not yet complete! Use at own risk!")
+

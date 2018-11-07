@@ -275,11 +275,8 @@ if input_mode is "params":
 # Set directory
 xsec.init(data_dir=args.gppath)  # run with default settings (no caching)
 
-# Set process
-xsec.set_processes([(args.pid1, args.pid2)])
-
 # Load GP models for the specified process
-xsec.load_processes()
+xsec.load_processes([(args.pid1, args.pid2)])
 
 # Set parameters, either from command line input or from SLHA file
 if input_mode is "params":
