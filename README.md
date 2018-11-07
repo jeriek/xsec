@@ -1,5 +1,14 @@
 # xsec
 
+[![Tag](https://img.shields.io/github/release-pre/jeriek/xstest.svg)]()
+[![Pre-release downloads](https://img.shields.io/github/downloads-pre/jeriek/xstest/latest/total.svg)](./LICENSE)
+[![Python version](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/downloads/release/python-2715/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![License](https://img.shields.io/github/license/jeriek/xstest.svg)](./LICENSE)
+
+
+
+
 Requirements:
 - python 2.7.x
 - numpy v1.14 or later
