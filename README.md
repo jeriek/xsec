@@ -1,7 +1,7 @@
 # xsec
 
 Requirements:
-- Python 2.7.x
+- python 2.7.x
 - numpy v1.14 or later
 - joblib v0.12.2 or later
 - pySLHA v3.2.2 or later
@@ -16,9 +16,7 @@ To uninstall:
 ```
 pip uninstall xsec
 ```
-The `pip` installation doesn't automatically include the data required to run `run_evaluation.py`.
-
-To download data after `pip` installation, ensure `~/.local/bin` is in `$PATH`, and execute the following shell command:
+The `pip` installation doesn't automatically include the data required to run. To download data after `pip` installation, ensure `~/.local/bin` is in `$PATH`, and execute the following shell command:
 ```
 xsec-download-gprocs [<directory-for-xsec-data>]
 ```
