@@ -30,7 +30,7 @@ To install only the requirements:
 pip install -r requirements.txt
 ```
 
-The `pip` installation **doesn't automatically include the data** required to run. To download data after `pip` installation, ensure `~/.local/bin` is in `$PATH`, and execute the following shell command:
+The `pip` installation **doesn't automatically include the data** required to run. To download data after `pip` installation, ensure that the pip install directory for scripts, *e.g.* `~/.local/bin`, is in `$PATH`, and execute the following shell command:
 ```
 xsec-download-gprocs [<directory-for-xsec-data>]
 ```
