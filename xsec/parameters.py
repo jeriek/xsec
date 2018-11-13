@@ -219,7 +219,7 @@ def check_parameter(key):
             )
     # If we get here we have a set mass parameter
     else:
-        if PARAMS[key] > 4000:
+        if PARAMS[key] > 3000:
             raise ValueError(
                 "The mass feature '{feature}' has been set to "
                 "a value ({value}) where the evaluation is an "
