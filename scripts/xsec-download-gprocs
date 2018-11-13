@@ -19,6 +19,8 @@ import sys
 import time
 import errno
 import tarfile
+import argparse
+
 
 try:  # if python3
     from urllib.request import urlretrieve
@@ -45,33 +47,36 @@ def main():
     Download all files in DOWNLOAD_LIST.
     """
 
-    # If argument is given, use this as download directory
-    # If no argument, create 'gprocs' directory in  current working
-    # directory as default
+    # Get the script name
+    prog_name = 'xsec-download-gprocs'
 
-    # TODO: check if multiple arguments are given, raise error
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(
+        prog=prog_name, description="Tool for downloading Gaussian process files for xsec"
+    )
 
-    try:
-        xsec_data_dir = sys.argv[1]
-        print(
-            "Setting download directory for the data as specified:\n",
-            xsec_data_dir,
-        )
-    except IndexError:
-        cwd = os.getcwd()
-        xsec_data_dir = os.path.join(cwd, "gprocs")
-        print(
-            "Setting download directory for the data to the current working "
-            "directory:\n",
-            xsec_data_dir,
-        )
-    data_init_filepath = os.path.join(xsec_data_dir, "__init__.py")
+    # Take the download directory as an optional argument
+    parser.add_argument(
+        "xsec_data_dir",
+        nargs='?',
+        metavar="PATH",
+        type=str,
+        action="store",
+        default=os.path.join(os.getcwd(), "gprocs"),
+        help="set the path where the downloaded files are stored. The default path is %(default)s.",
+    )
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+
+    data_init_filepath = os.path.join(args.xsec_data_dir, "__init__.py")
 
     # Create data dir and/or init file if not existing
-    if not os.path.exists(xsec_data_dir):
+    if not os.path.exists(args.xsec_data_dir):
         try:
-            # Create 'gprocs' data directory and empty init file
-            mkdir_p(xsec_data_dir)
+            # Create gprocs directory and empty init file
+            mkdir_p(args.xsec_data_dir)
             open(data_init_filepath, "a").close()
         except OSError:
             raise
@@ -101,14 +106,14 @@ def main():
         print("  ... starting file extraction (", tmp_filename, ")")
         sys.stdout.flush()
         tar = tarfile.open(tmp_filename, "r:gz")
-        tar.extractall(xsec_data_dir)
+        tar.extractall(args.xsec_data_dir)
         tar.close()
         print("  ... file extraction completed.")
         sys.stdout.flush()
 
     print()
     print(
-        "All downloads completed. Data files stored in", xsec_data_dir, "\b."
+        "All downloads completed. Data files stored in", args.xsec_data_dir, "\b."
     )
     print()
 
