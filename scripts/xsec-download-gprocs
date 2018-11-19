@@ -30,10 +30,13 @@ except ImportError:  # if python2
 # Import xsec, first assume we have pip installed it
 try:
     import xsec
-# Someone is insisting on using our fine programme without pip installing 
+# Someone is insisting on using our fine programme without pip
+# installing
 except ImportError:
-    absdir = os.path.dirname(os.path.abspath(__file__))  # Our current absolute directory
-    parent_dir = os.path.dirname(absdir)                 # Parent directory containing xsec
+    # Our current absolute directory
+    absdir = os.path.dirname(os.path.abspath(__file__))
+    # Parent directory containing xsec
+    parent_dir = os.path.dirname(absdir)
     sys.path.append(parent_dir)
     import xsec
 
@@ -43,7 +46,7 @@ VERSION = xsec.__version__
 # Each download is specified as a (url, file_name) tuple in this list.
 DOWNLOAD_LIST = [
     (
-        "https://github.com/jeriek/xstest/releases/download/"+VERSION+"/"
+        "https://github.com/jeriek/xstest/releases/download/" + VERSION + "/"
         "xsec-gprocs-" + VERSION + ".tar.gz",
         "xsec-gprocs-" + VERSION + ".tar.gz",
     )

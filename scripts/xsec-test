@@ -16,7 +16,19 @@ Use:
 
 import os
 import sys
-import xsec
+
+# Import xsec, first assume we have pip installed it
+try:
+    import xsec
+# Someone is insisting on using our fine programme without pip
+# installing
+except ImportError:
+    # Our current absolute directory
+    absdir = os.path.dirname(os.path.abspath(__file__))
+    # Parent directory containing xsec
+    parent_dir = os.path.dirname(absdir)
+    sys.path.append(parent_dir)
+    import xsec
 
 try:
     input_dir = sys.argv[1]
