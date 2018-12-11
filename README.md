@@ -50,7 +50,7 @@ An example main programme showing how to use the module can be found in the [`ex
 
 xsec: the cross section evaluation code
 
-Copyright (C) 2018  Andy Buckley, Ingrid Angelica Vazquez, Anders Kvellestad, Are Raklev,	Pat Scott, Jon Vegard Sparre, Jeriek Van den Abeele
+Copyright (C) 2018  Andy Buckley, Ingrid Angelica Vazquez Holm, Anders Kvellestad, Are Raklev, Pat Scott, Jon Vegard Sparre, Jeriek Van den Abeele
   
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
