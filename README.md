@@ -9,14 +9,15 @@
 
 ## Installation
 
-The following python libraries are required to run `xsec`:
+The following python libraries are required to run xsec:
 - python 2.7.x
 - setuptools v20.7.0 or later
 - numpy v1.14 or later
 - scipy v1.0.0 or later
 - joblib v0.12.2 or later
-- pySLHA v3.2.2 or later
+- pySLHA v3.2.0 or later
 
+NOTE: Need description of regular pip install and pip-less install.
 Currently: for `pip` installation, clone the repo and `cd` into it, then run
 ```
 pip install --user .
@@ -34,15 +35,13 @@ The `pip` installation **doesn't automatically include the data** required to ru
 ```
 xsec-download-gprocs [<directory-for-xsec-data>]
 ```
-If no argument is given, the data will be extracted in a new `gprocs` directory created in the current working directory, otherwise the user-specified path is used.
+If no argument is given, the data will be extracted in a new `gprocs` directory created in the current working directory, otherwise the user-specified path is used. If you have not pip installed xsec the same script can be executed from the `scripts` folder.
 
 To check whether the xsec installation finds the data correctly, try a test cross-section evaluation:
 ```
 xsec-test [<directory-for-xsec-data>]
 ```
 If no argument is given, the data is assumed to be in a `gprocs` directory in the current working directory, otherwise the user-specified path is used.
-
-NOTE: Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified.
 
 An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file.
 
