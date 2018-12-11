@@ -45,3 +45,20 @@ If no argument is given, the data is assumed to be in a `gprocs` directory in th
 NOTE: Right now, the `init` function does not yet look at the current working directory if the `data_dir` keyword is not specified.
 
 An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file.
+
+# LICENCE
+
+    xsec: the cross section evaluation code
+    Copyright (C) 2018  Andy Buckley, Ingrid Angelica Vazquez, Anders Kvellestad, Are Raklev,	Pat Scott, Jon Vegard Sparre, Jeriek Van den Abeele
+  
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
