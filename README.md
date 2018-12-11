@@ -1,4 +1,4 @@
-# xsec
+## xsec: the cross section evaluation code
 
 [![Tag](https://img.shields.io/github/release-pre/jeriek/xstest.svg)]()
 [![Pre-release downloads](https://img.shields.io/github/downloads-pre/jeriek/xstest/latest/total.svg)](./LICENSE)
@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/github/license/jeriek/xstest.svg)](./LICENSE)
 
 
-
+## Installation
 
 Requirements:
 - python 2.7.x
