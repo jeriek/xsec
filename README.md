@@ -9,13 +9,13 @@
 
 ## Installation
 
-Requirements:
+The following python libraries are required to run `xsec`:
 - python 2.7.x
+- setuptools v20.7.0 or later
 - numpy v1.14 or later
 - scipy v1.0.0 or later
 - joblib v0.12.2 or later
 - pySLHA v3.2.2 or later
-- setuptools v20.7.0 or later
 
 Currently: for `pip` installation, clone the repo and `cd` into it, then run
 ```
@@ -46,7 +46,7 @@ NOTE: Right now, the `init` function does not yet look at the current working di
 
 An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file.
 
-## LICENCE
+## Licence
 
 xsec: the cross section evaluation code
 
