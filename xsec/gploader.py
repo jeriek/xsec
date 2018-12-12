@@ -297,7 +297,7 @@ def load_processes(process_list):
         assert len(process) == 2
 
         # Search for all directories with same process, accounting for
-        # cross-sections calculated at varied parameters
+        # different cross-section types
         for xstype in utils.XSTYPES:
             process_xstype = utils.get_process_id(process, xstype)
             if USE_CACHE:
