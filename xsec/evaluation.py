@@ -2,9 +2,6 @@
 This module evaluates cross-sections for the production of
 supersymmetric particles, using pre-trained Distributed Gaussian
 Processes.
-
-@author: A. Buckley, I.A.V. Holm, A. Kvellestad, A. Raklev, P. Scott,
-J.V. Sparre, J. Van den Abeele
 """
 
 from __future__ import print_function
