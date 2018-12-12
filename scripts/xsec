@@ -79,10 +79,6 @@ parser.add_argument(
     "%(default)s.",
     dest="gppath",
 )
-# TODO: Do we want ./gprocs as default rather than just the cwd? The
-# user is forced to specify their own download directory or have the
-# files downloaded to the cwd anyway. Unless we want to change that and
-# by default create a gprocs directory in the cwd.
 
 parser.add_argument(
     "energy",
