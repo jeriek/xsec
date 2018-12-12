@@ -32,8 +32,8 @@ xsec.set_parameters(
         "m2000004": 500.0,
         "m2000005": 500.0,
         "m2000006": 500.0,
-        "thetab": 0.0,
-        "thetat": 0.0,
+        "sbotmix11": 0.0,
+        "stopmix11": 0.0,
         "mean": 500.0,
         "energy": 13000,
     }
