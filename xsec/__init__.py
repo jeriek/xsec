@@ -2,7 +2,7 @@
 Public interface for xsec.
 """
 
-from utils import __version__, print_result
+from utils import __version__
 from gploader import (
     init,
     set_processes,
@@ -14,7 +14,6 @@ from parameters import (
     set_parameter,
     set_parameters,
     set_common_squark_mass,
-    calc_mean_squark_mass,
     set_gluino_mass,
     clear_parameter,
     clear_parameters,
