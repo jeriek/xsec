@@ -7,7 +7,7 @@ from setuptools import setup
 
 
 def version():
-    with open("VERSION") as version_file:
+    with open("VERSION", encoding="utf-8") as version_file:
         return version_file.read().strip()
 
 
@@ -15,8 +15,7 @@ def readme():
     """
     Define the README text used by PyPI to build the package homepage.
     """
-    # Set to use the text in README.md
-    with open("README.md") as readme_file:
+    with open("README.md", encoding="utf-8") as readme_file:
         return readme_file.read()
 
 
@@ -31,24 +30,25 @@ def requirements():
 setup(
     name="xsec",
     version=version(),
-    description="Cross-section evaluation code",
+    description="xsec: the cross section evaluation code",
     long_description=readme(),
+    long_description_content_type="text/markdown",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status:: 5 - Production/Stable",
         "License :: OSI Approved :: "
         "GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 2.7",
         #   'Programming Language :: Python :: 3',
-        "Topic :: Scientific/Engineering:: Physics",
+        "Topic :: Scientific/Engineering :: Physics",
         "Intended Audience :: Science/Research",
     ],
-    keywords="supersymmetry cross-sections machine-learning",
+    keywords="gaussian processes, supersymmetry, particle, physics, HEP, "
+             "cross sections, machine learning",
     url="https://github.com/jeriek/xsec",
     maintainer="Jeriek Van den Abeele",
     maintainer_email="jeriekvda@fys.uio.no",
-    license="GPLv3",
+    license="GPLv3+",
     packages=["xsec"],
-    #   py_modules=[],
     install_requires=requirements(),
     include_package_data=False,
     scripts=[
@@ -56,5 +56,4 @@ setup(
         "scripts/xsec-test",
         "scripts/xsec",
     ],
-    zip_safe=False,
 )
