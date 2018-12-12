@@ -49,7 +49,7 @@ def eval_xsection(verbose=True, check_consistency=True):
     # Sanity check parameter inputs
     if check_consistency:
         # First make a list of all unique features used for all processes
-        feature_list = features.get_feature_list(processes)
+        feature_list = features.get_unique_features(processes)
         parameters.check_parameters(feature_list)
 
     # Build feature vectors, depending on production channel

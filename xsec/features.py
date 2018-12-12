@@ -124,8 +124,11 @@ FEATURES_LIST = {
 
 
 def get_features(pid1, pid2):
-    # Function that provides features for a tuple pid pair. Order of pids
-    # irrelevant. The function will raise errors when keys are not found.
+    """
+    Function that provides features for a PID pair. The order of the
+    PIDs is irrelevant. The function will raise errors when keys are not
+    found.
+    """
     try:
         return FEATURES_LIST[(pid1, pid2)]
     except KeyError:
@@ -138,44 +141,29 @@ def get_features(pid1, pid2):
             )
 
 
-def get_feature_list(process_list):
-    """
-    Return a list of required (unique) features for a list of processes.
-    """
-    feature_list = []
-    for process in process_list:
-        assert len(process) == 2
-        features = get_features(process[0], process[1])
-        # Add to feature list without duplicates
-        feature_list = list(set(feature_list + features))
-    return feature_list
-
-
 def get_features_dict(process_list):
     """
     Produce a dictionary of processes and values for their features, for
     each process in process_list.
     """
-    # Dictionary {process : [feature values list]}
+    # Dictionary {process : [ordered feature values list]}
     all_features_dict = {}
 
-    # process_list has a list of proxesses we want features for so loop
-    for i in range(len(process_list)):
-
-        # Extract current process
-        process = process_list[i]
-
-        # Find features for this process and add their names to the set
-        features_index = get_features(process[0], process[1])
+    # Loop over list of processes we want features for
+    for process in process_list:
+        assert len(process) == 2
+        # Find features for this process (Note: the features in this
+        # list have a specific order, which must be the same as used
+        # during training ... the X_train data are ordered!)
+        features_index = get_features(*process)
 
         # Make a feature dictionary
-        # TODO: try/except KeyError!
         # features_dict = {key : PARAMS[key] for key in features_index}
         features_dict = collections.OrderedDict()
-        for key in features_index:
-            features_dict[key] = parameters.PARAMS[key]
+        for param in features_index:
+            features_dict[param] = parameters.get_parameter(param)
 
-        # Ordered list! Needed since X_train data from NIMBUS is ordered!
+        # Ordered list since derived from ordered dict!
         features = features_dict.values()
 
         # Add features to feature array
@@ -183,3 +171,21 @@ def get_features_dict(process_list):
 
     # Return feature dict for all processes
     return all_features_dict
+
+
+def get_unique_features(process_list):
+    """
+    Return a list of required, unique features for a list of processes.
+    The features in the returned list have no specific order, so the
+    function should only be used when the order is of no importance,
+    e.g. when checking the consistency of each parameter individually.
+    """
+    # List to be filled with (non-duplicate) features
+    feature_list = []
+    # Loop over list of processes we want features for
+    for process in process_list:
+        assert len(process) == 2
+        features = get_features(*process)
+        # Add to feature list without duplicates
+        feature_list = list(set(feature_list + features))
+    return feature_list
