@@ -7,7 +7,7 @@ from setuptools import setup
 
 
 def version():
-    with open("VERSION", encoding="utf-8") as version_file:
+    with open("VERSION") as version_file:
         return version_file.read().strip()
 
 
@@ -15,7 +15,7 @@ def readme():
     """
     Define the README text used by PyPI to build the package homepage.
     """
-    with open("README.md", encoding="utf-8") as readme_file:
+    with open("README.md") as readme_file:
         return readme_file.read()
 
 
