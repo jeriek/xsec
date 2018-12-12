@@ -8,27 +8,25 @@ import gploader
 
 import pyslha  # Needs v3.2 or later
 
-# TODO: Make compatible with Python 3
-
 # Dictionary of all parameters and their values
 PARAMS = {
-    "m1000001": None,
-    "m1000002": None,
-    "m1000003": None,
-    "m1000004": None,
-    "m1000005": None,
-    "m1000006": None,
-    "m2000001": None,
-    "m2000002": None,
-    "m2000003": None,
-    "m2000004": None,
-    "m2000005": None,
-    "m2000006": None,
-    "m1000021": None,
-    "mean": None,
-    "thetab": None,
-    "thetat": None,
-    "energy": None,  # CoM energy sqrt(s) in GeV
+    "m1000001": None,  # squark mass [GeV]
+    "m1000002": None,  # squark mass [GeV]
+    "m1000003": None,  # squark mass [GeV]
+    "m1000004": None,  # squark mass [GeV]
+    "m1000005": None,  # squark mass [GeV]
+    "m1000006": None,  # squark mass [GeV]
+    "m2000001": None,  # squark mass [GeV]
+    "m2000002": None,  # squark mass [GeV]
+    "m2000003": None,  # squark mass [GeV]
+    "m2000004": None,  # squark mass [GeV]
+    "m2000005": None,  # squark mass [GeV]
+    "m2000006": None,  # squark mass [GeV]
+    "m1000021": None,  # gluino mass [GeV]
+    "mean": None,  # mean mass of 1st and 2nd gen. squarks [GeV]
+    "sbotmix11": None,
+    "stopmix11": None,
+    "energy": None,  # CoM energy sqrt(s) [GeV]
 }
 
 # List of all parameter names
@@ -47,7 +45,7 @@ MEAN_INDEX = [
 ]
 
 # List of mixing angle parameters
-MIXING_INDEX = ["thetab", "thetat"]
+MIXING_INDEX = ["sbotmix11", "stopmix11"]
 
 # List of sparticle PDG ids
 SQUARK_IDS = [
@@ -107,7 +105,6 @@ def calc_mean_squark_mass():
     """
     m = sum([PARAMS[key] for key in MEAN_INDEX]) / float(len(MEAN_INDEX))
     PARAMS["mean"] = m
-    # return m
 
 
 def set_common_squark_mass(mass):
@@ -323,8 +320,8 @@ def import_slha(filename):
     calc_mean_squark_mass()
 
     # Find mixing angles
-    PARAMS["thetab"] = slha.blocks["SBOTMIX"][1, 1]
-    PARAMS["thetat"] = slha.blocks["STOPMIX"][1, 1]
+    PARAMS["sbotmix11"] = slha.blocks["SBOTMIX"][1, 1]
+    PARAMS["stopmix11"] = slha.blocks["STOPMIX"][1, 1]
 
     # References to SLHA and pySLHA
     slharef = ["Skands:2003cj", "Buckley:2013jua"]
@@ -356,7 +353,8 @@ def write_slha(filename, results):
     sqrts = PARAMS["energy"]
     # For the time being we are only doing pp cross sections
     istate = [2212, 2212]
-    # Calculation currently based on QCD NLO, Prospino uses average mass as scale
+    # Calculation currently based on QCD NLO, Prospino uses average mass
+    # as scale
     scale_scheme, qcd_order, ew_order = 0, 1, 0
     # We currently use PDF4LHC15 PDFs
     pdf_id = 90400
@@ -464,7 +462,6 @@ def write_slha(filename, results):
         xsection = {tuple(istate + fstate): proc}
 
         # Write cross section for particular process to file
-        # print(pyslha.writeSLHAXSections(xsection))
         slha.write(pyslha.writeSLHAXSections(xsection, precision=5) + "\n")
 
     # Close file when finished writing
