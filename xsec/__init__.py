@@ -22,5 +22,5 @@ from parameters import (
     import_slha,
     write_slha,
 )
-from features import get_features, get_feature_list, get_features_dict
+from features import get_features, get_unique_features, get_features_dict
 from evaluation import eval_xsection
