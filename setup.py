@@ -25,8 +25,7 @@ def requirements():
 
 
 # Add the package metadata and specify which files to include in the
-# distribution. Full list of available classifiers:
-# https://pypi.org/pypi?%3Aaction=list_classifiers
+# distribution.
 setup(
     name="xsec",
     version=version(),
