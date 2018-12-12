@@ -59,7 +59,7 @@ def main():
     """
 
     # Get the script name
-    prog_name = 'xsec-download-gprocs'
+    prog_name = "xsec-download-gprocs"
 
     # Set up the argument parser
     parser = argparse.ArgumentParser(
@@ -69,7 +69,7 @@ def main():
     # Take the download directory as an optional argument
     parser.add_argument(
         "xsec_data_dir",
-        nargs='?',
+        nargs="?",
         metavar="PATH",
         type=str,
         action="store",
