@@ -63,7 +63,7 @@ def main():
 
     # Set up the argument parser
     parser = argparse.ArgumentParser(
-        prog=prog_name, 
+        prog=prog_name,
         description="Tool for downloading Gaussian process files for xsec"
     )
 
@@ -82,7 +82,6 @@ def main():
     # Parse the arguments
     args = parser.parse_args()
 
-
     data_init_filepath = os.path.join(args.xsec_data_dir, "__init__.py")
 
     # Create data dir and/or init file if not existing
@@ -100,7 +99,7 @@ def main():
         except OSError:
             raise
         except IOError as exc:
-            if exc.errno==errno.EACCES:
+            if exc.errno == errno.EACCES:
                 print(
                     "Permission denied when trying to write the "
                     "file {f}. Do you have write permission for the "
@@ -147,7 +146,7 @@ def main():
 
     print()
     print(
-        "All downloads completed. Data files stored in", args.xsec_data_dir, 
+        "All downloads completed. Data files stored in", args.xsec_data_dir,
         "\b."
     )
     print()
