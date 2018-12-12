@@ -92,7 +92,7 @@ def get_processdir_name(process_xstype):
         processdir_name += XSTYPE_FILESUFFIX[xstype]
     except KeyError:
         raise KeyError(
-            "Error: {xstype}  is not a valid variation parameter!".format(
+            "Error: {xstype} is not a valid variation parameter!".format(
                 xstype=xstype
             )
         )

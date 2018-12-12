@@ -63,7 +63,8 @@ def main():
 
     # Set up the argument parser
     parser = argparse.ArgumentParser(
-        prog=prog_name, description="Tool for downloading Gaussian process files for xsec"
+        prog=prog_name, 
+        description="Tool for downloading Gaussian process files for xsec"
     )
 
     # Take the download directory as an optional argument
@@ -74,7 +75,8 @@ def main():
         type=str,
         action="store",
         default=os.path.join(os.getcwd(), "gprocs"),
-        help="set the path where the downloaded files are stored. The default path is %(default)s.",
+        help="set the path where the downloaded files are stored. "
+             "The default path is %(default)s.",
     )
 
     # Parse the arguments
@@ -97,6 +99,20 @@ def main():
             open(data_init_filepath, "a").close()
         except OSError:
             raise
+        except IOError as exc:
+            if exc.errno==errno.EACCES:
+                print(
+                    "Permission denied when trying to write the "
+                    "file {f}. Do you have write permission for the "
+                    "directory {dir}?".format(
+                        f=data_init_filepath,
+                        dir=args.xsec_data_dir
+                    )
+                )
+                print()
+                raise
+            else:
+                raise
 
     # Print a new line
     print()
@@ -108,10 +124,17 @@ def main():
 
         # Download compressed file to a temporary location (since
         # filename=None)
-        # @todo Put this in a try,except block to catch download errors
-        tmp_filename, _ = urlretrieve(
-            url, filename=None, reporthook=download_progress_hook
-        )
+        try:
+            tmp_filename, _ = urlretrieve(
+                url, filename=None, reporthook=download_progress_hook
+            )
+        except IOError:
+            print(
+                "Download failed. Are you sure you're connected to "
+                "the internet?"
+            )
+            print()
+            raise
 
         print("\n\n  ... download completed")
         print("  ... starting file extraction (", tmp_filename, ")")
@@ -124,7 +147,8 @@ def main():
 
     print()
     print(
-        "All downloads completed. Data files stored in", args.xsec_data_dir, "\b."
+        "All downloads completed. Data files stored in", args.xsec_data_dir, 
+        "\b."
     )
     print()
 
