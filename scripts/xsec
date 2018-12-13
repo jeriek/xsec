@@ -4,7 +4,7 @@
 Command line interface to xsec
 
 usage:
-  xsec [-h] [-g PATH] [-w FILE] (-i | -r FILE | -p PAR [PAR ...]) {13000} pid1 pid2
+  xsec [-h] {13000} pid1 pid2 (-i | -r FILE | -p PAR [PAR ...]) [-g PATH] [-w FILE]
 
 positional arguments:
   {13000}               select centre-of-mass energy in GeV. This is intended
