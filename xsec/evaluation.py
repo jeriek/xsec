@@ -6,7 +6,7 @@ Processes.
 
 from __future__ import print_function
 
-import numpy as np  # Needs v1.14 or later
+import numpy as np
 
 import utils
 import gploader
@@ -19,9 +19,7 @@ import kernels
 # Evaluation functions                        #
 ###############################################
 
-# Evaluation of cross sections
 def eval_xsection(verbose=True, check_consistency=True):
-
     """
     Evaluates cross sections for processes in global list PROCESSES
     using parameter values stored in global dictionary PARAMS.
@@ -56,15 +54,14 @@ def eval_xsection(verbose=True, check_consistency=True):
     process_features = features.get_features_dict(processes)
 
     ###################################################
-    # Do DGP evaluation                               #
+    # Do DGP evaluation  (all hard work happens here) #
     ###################################################
 
     # Call a DGP for each process_xstype, store results as lists of
     # (mu_dgp, sigma_dgp) in dictionary with key xstype; i-th element of
     # list dgp_results[xstype] gives DGP result for
     # process = processes[i] and the specified xstype.
-    # Immediately corrected for any data transformation during training
-    #  with Nimbus.
+    # Immediately corrected for any data transformation during training.
 
     # Dictionary of PROCESSES-ordered lists
     dgp_results = {
@@ -79,6 +76,10 @@ def eval_xsection(verbose=True, check_consistency=True):
         ]
         for xstype in utils.XSTYPES
     }
+
+    ###################################################
+    # Constructing the right output                   #
+    ###################################################
 
     # All returned errors are defined to be deviations from 1
 
@@ -154,7 +155,6 @@ def eval_xsection(verbose=True, check_consistency=True):
             alphasup_rel,
         ]
     )
-    # print(return_array)
 
     # Print result to screen
     if verbose:
@@ -222,9 +222,10 @@ def GP_predict(
     covariance matrix), and the square root of the prior variance on the
     test features.
 
-    Based on GaussianProcessRegressor.predict() from scikit-learn
-    v0.19.2 and algorithm 2.1 of Gaussian Processes for Machine Learning
-    by Rasmussen and Williams.
+    Based on Algorithm 2.1 of Gaussian Processes for Machine Learning by
+    Rasmussen and Williams (MIT Press, 2006). The structure of this
+    function is inspired by GaussianProcessRegressor.predict() from
+    scikit-learn v0.19.2.
     """
 
     if return_std and return_cov:
