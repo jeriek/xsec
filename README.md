@@ -23,7 +23,7 @@ pip install xsec
 ```
 optionally with the `--user` flag if your IT-department is mean.
 
-Optionally, you can clone the repo from GitHub, `cd` into it, and then run
+Alternatively, you can clone the repo from GitHub, `cd` into it, and then run
 ```
 pip install --user .
 ```
