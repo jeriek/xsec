@@ -208,14 +208,11 @@ def load_single_process(process_xstype):
         candidate_model_files = [
             os.path.join(process_dir, f) for f in os.listdir(process_dir)
         ]
-        model_files = [
-            f
-            for f in candidate_model_files
-            if (
-                os.path.isfile(f)
-                and not f.lower().endswith((".py", ".pyc", ".pyo"))
-            )
-        ]
+        model_files = []
+        for f in candidate_model_files:
+            if os.path.isfile(f):
+                if not f.lower().endswith((".py", ".pyc", ".pyo")):
+                    model_files.append(f)
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
 
