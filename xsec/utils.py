@@ -17,7 +17,7 @@ import gploader
 ###############################################
 
 # Link internal cross-section type (xstype) identifiers to the
-# corresponding Nimbus file suffixes for each pre-trained xstype
+# corresponding training file suffixes for each pre-trained xstype
 XSTYPE_FILESUFFIX = {
     "centr": "",  # xsection @ central scale
     "sclup": "_2",  # xsection @ higher scale (2 x central scale)
@@ -86,7 +86,7 @@ def get_processdir_name(process_xstype):
     elif abs(parton1) < abs(parton2):
         processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
 
-    # Add scale like '05','2' or other variation parameter like 'aup'
+    # Add training file suffixes depending on the xstype
     try:
         processdir_name += XSTYPE_FILESUFFIX[xstype]
     except KeyError:
