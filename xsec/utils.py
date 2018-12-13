@@ -38,9 +38,8 @@ REF = []
 # If this was not installed by pip we try the VERSION file directly
 try:
     _dist = get_distribution("xsec")
-    # Normalise case for Windows systems
-    dist_loc = os.path.normcase(_dist.location)
-    here = os.path.normcase(__file__)
+    dist_loc = _dist.location
+    here = __file__
     if not here.startswith(os.path.join(dist_loc, "xsec")):
         # If not installed, but there is another version that is
         # (i.e. current __file__ parent dir not in the xsec
