@@ -21,7 +21,7 @@ xsec can be installed from PyPI using regular pip commands, *e.g.*
 ```
 pip install xsec
 ```
-optionally with the `--user` flag if your IT-deparment is mean.
+optionally with the `--user` flag if your IT-department is mean.
 
 Optionally, you can clone the repo from GitHub, `cd` into it, and then run
 ```
