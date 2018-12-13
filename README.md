@@ -50,7 +50,7 @@ xsec-test [<directory-for-xsec-data>]
 ```
 If no argument is given, the data is assumed to be in a `gprocs` directory in the current working directory, otherwise the user-specified path is used.
 
-An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file. An example showing a simple loop over parameters can be found as [`example_xsec_loop.py`](examples/example_xsec_loop.py)
+An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing an SLHA file. An example showing a simple loop over parameters can be found as [`example_xsec_loop.py`](examples/example_xsec_loop.py)
 
 ## Licence
 
