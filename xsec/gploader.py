@@ -321,9 +321,9 @@ def load_processes(process_list):
 ###############################################
 
 
-def finalize():
+def finalise():
     """
-    Function to finalize run.
+    Function to finalise run.
     Currently clears cache (if used) and writes references to a file.
     """
     # Clear cache. Inactive if cache not used

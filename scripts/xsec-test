@@ -67,4 +67,4 @@ xsec.set_parameters(
 xsec.eval_xsection()
 
 # *** Finalise the evaluation procedure ***
-xsec.finalize()
+xsec.finalise()

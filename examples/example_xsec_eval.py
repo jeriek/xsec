@@ -51,4 +51,4 @@ xsec.set_parameter("energy", 13000)
 xsec.eval_xsection()
 
 # *** Finalise the evaluation procedure ***
-xsec.finalize()
+xsec.finalise()

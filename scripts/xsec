@@ -304,5 +304,5 @@ result = xsec.eval_xsection()
 if args.slha_output is not None:
     xsec.write_slha(args.slha_output, result)
 
-# Finalize (clears cache if necessary)
-xsec.finalize()
+# Finalise (clears cache if necessary)
+xsec.finalise()

@@ -8,7 +8,7 @@ from gploader import (
     set_processes,
     load_processes,
     get_processes,
-    finalize,
+    finalise,
 )
 from parameters import (
     set_parameter,
