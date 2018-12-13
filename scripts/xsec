@@ -34,6 +34,9 @@ Example with parameter input:
 
 Example with SLHA file input:
   xsec 13000 1000021 1000001 --slha-input PATH-TO-SLHA-FILE --gppath ./gprocs
+
+Note that the command line interface can only be used for a single production
+process at a time.
 """
 
 from __future__ import print_function
@@ -194,6 +197,7 @@ n_features = len(features)
 if args.show_input:
     example_masses = [str(1000.0) for i in range(n_features)]
 
+    # Some formatting to show the required input in a neat way
     # features_list = xsec.features.get_features(args.pid1, args.pid2)
     print("Selected process:")
     print("  ", process_str, sep="")
