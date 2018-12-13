@@ -107,9 +107,10 @@ def calc_mean_squark_mass():
     PARAMS["mean"] = m
 
 
-def set_common_squark_mass(mass):
+def set_all_squark_masses(mass):
     """
-    Set all squark masses to the given common value.
+    Set all squark masses to the given common value, and set the mean
+    squark mass to that value too.
     """
     set_parameters(
         {
@@ -125,6 +126,26 @@ def set_common_squark_mass(mass):
             "m2000004": mass,
             "m2000005": mass,
             "m2000006": mass,
+            "mean": mass,
+        }
+    )
+
+
+def set_1_2_gen_squark_masses(mass):
+    """
+    Set 1st and 2nd generation squark masses to the given common value,
+    and set the mean squark mass to that value too.
+    """
+    set_parameters(
+        {
+            "m1000001": mass,
+            "m1000002": mass,
+            "m1000003": mass,
+            "m1000004": mass,
+            "m2000001": mass,
+            "m2000002": mass,
+            "m2000003": mass,
+            "m2000004": mass,
             "mean": mass,
         }
     )
