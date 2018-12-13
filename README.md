@@ -17,11 +17,18 @@ The following python libraries are required to run xsec:
 - joblib v0.12.2 or later
 - pySLHA v3.2.0 or later
 
-NOTE: Need description of regular pip install and pip-less install.
-Currently: for `pip` installation, clone the repo and `cd` into it, then run
+xsec can be installed from PyPI using regular pip commands, *e.g.*
+```
+pip install xsec
+```
+optionally with the `--user` flag if your IT-department is mean.
+
+Alternatively, you can clone the repo from GitHub, `cd` into it, and then run
 ```
 pip install --user .
 ```
+It is also possible to use the content of the cloned repo as a module without installing.
+
 To uninstall: 
 ```
 pip uninstall xsec
@@ -31,11 +38,11 @@ To install only the requirements:
 pip install -r requirements.txt
 ```
 
-The `pip` installation **doesn't automatically include the data** required to run. To download data after `pip` installation, ensure that the pip install directory for scripts, *e.g.* `~/.local/bin`, is in `$PATH`, and execute the following shell command:
+The `pip` installation **doesn't automatically include the data** required to run. To download data after pip installation, ensure that the pip install directory for scripts, *e.g.* `~/.local/bin`, is in `$PATH`, and execute the following shell command:
 ```
 xsec-download-gprocs [<directory-for-xsec-data>]
 ```
-If no argument is given, the data will be extracted in a new `gprocs` directory created in the current working directory, otherwise the user-specified path is used. If you have not pip installed xsec the same script can be executed from the `scripts` folder.
+If no argument is given, the data will be extracted in a new `gprocs` directory created in the current working directory, otherwise the user-specified path is used. If you have not pip installed xsec, the same script can be executed from the `scripts` folder.
 
 To check whether the xsec installation finds the data correctly, try a test cross-section evaluation:
 ```
@@ -43,7 +50,7 @@ xsec-test [<directory-for-xsec-data>]
 ```
 If no argument is given, the data is assumed to be in a `gprocs` directory in the current working directory, otherwise the user-specified path is used.
 
-An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing a SLHA file.
+An example main programme showing how to use the module can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing an SLHA file. An example showing a simple loop over parameters can be found as [`example_xsec_loop.py`](examples/example_xsec_loop.py)
 
 ## Licence
 
