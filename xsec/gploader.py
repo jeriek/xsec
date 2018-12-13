@@ -125,13 +125,13 @@ def init(
     return 0
 
 
-def set_processes(tuple_list):
+def set_processes(process_tuple_list):
     """
     Set the global list of processes to be evaluated. Called in
     load_processes().
     """
     # Check if process exists (right format, known sparticles)
-    for process in tuple_list:
+    for process in process_tuple_list:
         if len(process) == 2:
             if all((pid in parameters.SPARTICLE_IDS) for pid in process):
                 continue
@@ -139,7 +139,7 @@ def set_processes(tuple_list):
                 raise ValueError(
                     "One or more particle IDs entered ({input}) are not in the"
                     " allowed set of IDs: \n {ids}".format(
-                        input=tuple_list, ids=parameters.SPARTICLE_IDS
+                        input=process_tuple_list, ids=parameters.SPARTICLE_IDS
                     )
                 )
         else:
@@ -147,12 +147,12 @@ def set_processes(tuple_list):
                 "The entered process tuple ({input}) does not consist of "
                 "exactly _two_ particle IDs from the following list: "
                 "\n {ids}".format(
-                    input=tuple_list, ids=parameters.SPARTICLE_IDS
+                    input=process_tuple_list, ids=parameters.SPARTICLE_IDS
                 )
             )
     # Only set PROCESSES and load the GPs if all checks were passed
     global PROCESSES
-    PROCESSES = tuple_list
+    PROCESSES = process_tuple_list
 
 
 def get_processes():
@@ -191,13 +191,10 @@ def load_single_process(process_xstype):
         'kernel'. These components are all the information needed to
         make the predictions of the expert with GP_predict().
     """
-    # TODO: try/except loading
     assert len(process_xstype) == 3
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
-    # process_dir = os.path.join(os.path.abspath(DATA_DIR),
-    #                            get_processdir_name(process_xstype))
     process_dir = os.path.join(
         DATA_DIR, utils.get_processdir_name(process_xstype)
     )
