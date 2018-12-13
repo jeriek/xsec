@@ -131,7 +131,7 @@ def set_all_squark_masses(mass):
     )
 
 
-def set_1_2_gen_squark_masses(mass):
+def set_12gen_squark_masses(mass):
     """
     Set 1st and 2nd generation squark masses to the given common value,
     and set the mean squark mass to that value too.

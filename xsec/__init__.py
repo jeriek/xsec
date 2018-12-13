@@ -14,7 +14,7 @@ from parameters import (
     set_parameter,
     set_parameters,
     set_gluino_mass,
-    set_1_2_gen_squark_masses,
+    set_12gen_squark_masses,
     set_all_squark_masses,
     clear_parameter,
     clear_parameters,
