@@ -354,10 +354,12 @@ def write_slha(filename, results):
     Write calculated cross sections to already existing SLHA file in
     XSECTION blocks.
 
-    WARNING: PDF variations break XSECTION standard by adding 1 and 2 to the
-             central PDF set for lower and upper 1\sigma variation
-
+    WARNING: Our treatment of PDF errors breaks the XSECTION standard 
+             by adding 1 and 2 to the central PDF set index to give the 
+             lower and upper 1\sigma uncertainty in cross section from the 
+             PDF variation sets following PDF4LHC guidelines.
     """
+    
     # Try to open file for appending (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
     try:
