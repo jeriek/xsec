@@ -48,7 +48,10 @@ xsec.clear_parameters()
 # *** Evaluate the cross section with input parameters from a SLHA file ***
 xsec.import_slha("sps1a.slha")
 xsec.set_parameter("energy", 13000)
-xsec.eval_xsection()
+result = xsec.eval_xsection()
+
+# *** Write result back to SLHA file in XSECTION block ***
+xsec.write_slha('sps1a.slha', result)
 
 # *** Finalise the evaluation procedure ***
 xsec.finalise()
