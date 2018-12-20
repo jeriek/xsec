@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 
 """
-Run a simple test instance of the evaluation module.
+Example of an evaluation which loops over parameter values.
 
-This script can be used as a basis for a more complete routine to
-evaluate cross sections.
 """
 
 import xsec
@@ -16,7 +14,7 @@ xsec.init(data_dir="gprocs")  # run with default settings (no caching)
 processes = [(1000021, 1000021)]
 xsec.load_processes(processes)
 
-# *** Enter parameter values ***
+# *** Set parameter values ***
 xsec.set_parameters(
     {
         "m1000021": 1000,
@@ -39,19 +37,16 @@ xsec.set_parameters(
     }
 )
 
-# *** Evaluate the cross section with the given input parameters ***
-xsec.eval_xsection()
+# *** Evaluate in loop over gluino mass ***
+for mgluino in range(50,3000,50):
+  
+    # *** Set gluino mass ***
+    xsec.set_parameter("m1000021", mgluino)
+  
+    # *** Evaluate the cross section printing only one line per point ***
+    # The output format is PID1 PID2 central regdown regup scaledown scaleup pdfdown pdfup alphasdown alphasup
+    xsec.eval_xsection( verbose=1 )
 
-# *** Clear all parameter values ***
-xsec.clear_parameters()
-
-# *** Evaluate the cross section with input parameters from a SLHA file ***
-xsec.import_slha("sps1a.slha")
-xsec.set_parameter("energy", 13000)
-result = xsec.eval_xsection()
-
-# *** Write result back to SLHA file in XSECTION block ***
-xsec.write_slha('sps1a.slha', result)
 
 # *** Finalise the evaluation procedure ***
 xsec.finalise()
