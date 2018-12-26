@@ -165,7 +165,10 @@ def eval_xsection(verbose=True, check_consistency=True):
 
 def DGP(process, xstype, features):
     """
-        Evaluate a set of distributed Gaussian processes (DGPs)
+        Evaluate a set of distributed Gaussian processes (DGPs).
+        The DGP 'experts' are combined according to the 
+        Generalized Robust Bayesian Committee Machine algoritm,
+        arxiv:1806.00720.
     """
     assert len(process) == 2
     process_xstype = utils.get_process_id(process, xstype)
@@ -176,7 +179,6 @@ def DGP(process, xstype, features):
     # Empty arrays where all predicted numbers are stored
     mus = np.zeros(n_experts)
     sigmas = np.zeros(n_experts)
-    sigma_priors = np.zeros(n_experts)
 
     # Loop over GP experts
     for i in range(n_experts):
@@ -185,25 +187,27 @@ def DGP(process, xstype, features):
         )
         mus[i] = mu
         sigmas[i] = sigma
-        sigma_priors[i] = sigma_prior
-        # print "-- Resulting mu, sigma, sigma_prior:", mu, sigma, sigma_prior
+
+    # Shorthand variables for the 'communication expert' (i=0)
+    muc = mus[0]
+    sigmac = sigmas[0]
 
     # Find weight (beta) for each expert
-    betas = 0.5 * (2 * np.log(sigma_priors) - 2 * np.log(sigmas))
-
-    # Final mean and variance
-    mu_dgp = 0.0
-    var_dgp_inv = 0.0  # (sigma^2)^-1
-
-    # Combine sigmas
+    betas = np.ones(n_experts)
     for i in range(n_experts):
-        var_dgp_inv += betas[i] * sigmas[i] ** (-2) + (
-            1.0 / n_experts - betas[i]
-        ) * sigma_priors[i] ** (-2)
-    # Combine mus
-    for i in range(n_experts):
-        mu_dgp += var_dgp_inv ** (-1) * (betas[i] * sigmas[i] ** (-2) * mus[i])
+        if i < 2:
+            betas[i] = 1.
+        else:
+            betas[i] = 0.5 * (2 * np.log(sigmac) - 2 * np.log(sigmas[i]))
 
+    # Final mean and variance:
+    if n_experts==1:
+        var_dgp_inv = sigmac ** (-2)
+        mu_dgp = muc
+    else:
+        var_dgp_inv = np.sum(betas[1:] * sigmas[1:] ** (-2)) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2)
+        mu_dgp = var_dgp_inv ** (-1) * ( np.sum(betas[1:] * sigmas[1:] ** (-2) * mus[1:]) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2) * muc )
+    
     # Return mean and std
     return mu_dgp, np.sqrt(var_dgp_inv ** (-1))
 
