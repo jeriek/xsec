@@ -19,21 +19,53 @@ import kernels
 # Evaluation functions                        #
 ###############################################
 
-def eval_xsection(verbose=True, check_consistency=True):
+def eval_xsection(verbose=2, check_consistency=True):
     """
     Evaluates cross sections for processes in global list PROCESSES
     using parameter values stored in global dictionary PARAMS.
 
-    The function has two options:
+    Parameters
+    ----------
+    verbose : int, optional
+         Degree of verbosity when printing results to screen:
+        - verbose=0 : prints nothing
+        - verbose=1 : prints a single line per process (no header),
+            in the following format:
+              PID1 PID2 xsection_central regdown_rel regup_rel scaledown_rel
+              scaleup_rel pdfdown_rel pdfup_rel alphasdown_rel alphasup_rel
+        - verbose=2 : prints full description of the result (default)
+    check_consistency : bool, optional
+        If True (default), forces a consistency check of the parameters
+        in PARAMS. This function checks that all necessary parameters
+        have been set, that they are internally consistent and that the
+        parameters are in a range where the evaluation can be trusted.
 
-    verbose:    Turns on and off printing of values to terminal
+    Returns
+    -------
+    return_array : array, shape (9, n_processes)
+        Numpy array containing results of the evaluation, with format
+          [xsection_central, regdown_rel, regup_rel, scaledown_rel,
+           scaleup_rel, pdfdown_rel, pdfup_rel, alphasdown_rel, alphasup_rel]
+        where each component is an array with one number for each process;
+        the order of the processes is that in the global list PROCESSES.
 
-    check_consistency:  Forces a consistency check of the parameters in
-                        PARAMS. This function checks that all necessary
-                        parameters have been set, that they are
-                        internally consistent and that the parameters
-                        are in a range where the evaluation can be
-                        trusted.
+        The returned quantities are defined as follows:
+        - xsection_central :
+            central-scale xsection in femtobarn (fb)
+        - regdown_rel, regup_rel:
+            xsection deviating one (lognormal) regression error down/up
+            from the central-scale xsection, relative to the latter
+        - scaledown_rel, scaleup_rel :
+            lower/higher xsection from varying the scale (to 0.5x and 2x
+            the central scale), relative to the central-scale xsection
+        - pdfdown_rel, pdfup_rel :
+            xsection deviating one PDF error down/up from the
+            central-scale xsection, relative to the latter
+        - alphasdown_rel, alphasup_rel :
+            xsection deviating one (symmetrised) alpha_s error down/up
+            from the central-scale xsection, relative to the latter
+
+        Note: All returned errors are defined to be deviations from 1.
     """
 
     ##################################################
@@ -117,7 +149,7 @@ def eval_xsection(verbose=True, check_consistency=True):
     scaledown_rel = np.array(map(np.min, zip(mu_dgp_scldn, mu_dgp_sclup)))
     scaleup_rel = np.array(map(np.max, zip(mu_dgp_scldn, mu_dgp_sclup)))
 
-    # -- Xsection deviating one pdf error away from the
+    # -- Xsection deviating one PDF error away from the
     #    central-scale xsection, relative to the latter.
     # Get the DGP means, discard regression errors on the variations
     delta_pdf_rel, _ = np.array(zip(*dgp_results["pdf"]))
@@ -156,19 +188,17 @@ def eval_xsection(verbose=True, check_consistency=True):
         ]
     )
 
-    # Print result to screen
-    if verbose:
-        utils.print_result(return_array)
+    # Print result to screen, depending on verbosity level
+    utils.print_result(return_array, verbose)
 
     return return_array
 
 
 def DGP(process, xstype, features):
     """
-        Evaluate a set of distributed Gaussian processes (DGPs).
-        The DGP 'experts' are combined according to the 
-        Generalized Robust Bayesian Committee Machine algoritm,
-        arxiv:1806.00720.
+        Evaluate a set of distributed Gaussian processes (DGPs). The DGP
+        'experts' are combined according to the Generalized Robust
+        Bayesian Committee Machine algoritm, arxiv:1806.00720.
     """
     assert len(process) == 2
     process_xstype = utils.get_process_id(process, xstype)
@@ -201,13 +231,13 @@ def DGP(process, xstype, features):
             betas[i] = 0.5 * (2 * np.log(sigmac) - 2 * np.log(sigmas[i]))
 
     # Final mean and variance:
-    if n_experts==1:
+    if n_experts == 1:
         var_dgp_inv = sigmac ** (-2)
         mu_dgp = muc
     else:
         var_dgp_inv = np.sum(betas[1:] * sigmas[1:] ** (-2)) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2)
         mu_dgp = var_dgp_inv ** (-1) * ( np.sum(betas[1:] * sigmas[1:] ** (-2) * mus[1:]) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2) * muc )
-    
+
     # Return mean and std
     return mu_dgp, np.sqrt(var_dgp_inv ** (-1))
 
