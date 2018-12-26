@@ -3,7 +3,7 @@ Definitions of the Gaussian process kernel functions. Large parts
 adapted from the scikit-learn v0.19.2 source code, under the New BSD
 License:
 
-Copyright (c) 2007–2018 The scikit-learn developers.
+Copyright (c) 2007--2018 The scikit-learn developers.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
