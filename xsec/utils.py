@@ -3,10 +3,11 @@ Internal helper functions.
 """
 
 from __future__ import print_function
-
+import sys
 import os.path
+import pkg_resources
+
 import numpy as np
-from pkg_resources import get_distribution, DistributionNotFound
 
 import parameters
 import features
@@ -34,20 +35,21 @@ XSTYPES = XSTYPE_FILESUFFIX.keys()
 REF = []
 
 # Set the module's __version__ by getting the version set in setup.py
-# (which in turn is set by the VERSION file)
-# If this was not installed by pip we try the VERSION file directly
+# (which in turn is set by the VERSION file). After a pip installation,
+# the VERSION file is no longer accessible.  If xsec was not installed
+# by pip, instead we try to find the VERSION file directly.
 try:
-    _dist = get_distribution("xsec")
+    _dist = pkg_resources.get_distribution("xsec")
     dist_loc = _dist.location
     here = __file__
     if not here.startswith(os.path.join(dist_loc, "xsec")):
-        # If not installed, but there is another version that is
-        # (i.e. current __file__ parent dir not in the xsec
-        # distribution location that was detected)
-        raise DistributionNotFound
-except DistributionNotFound:
+        # If this xsec is not installed, but there is another version
+        # that is, i.e. the current __file__ parent dir is not in the
+        # xsec distribution location that was auto-detected.
+        raise pkg_resources.DistributionNotFound
+except pkg_resources.DistributionNotFound:
     try:
-        # If not pip-installed, VERSION file is in top xsec directory
+        # If not pip-installed, VERSION file is in top xsec directory.
         # Get current xsec/xsec directory
         xsec_package_dir = os.path.dirname(__file__)
         # Get parent xsec directory in platform-independent way
@@ -162,44 +164,102 @@ def get_process_list_str(process_list):
 ###############################################
 
 # Print result of run
-def print_result(return_array):
-    print(
-        "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
-        "\t     _/  _/    _/        _/        _/          \n"
-        "\t      _/        _/_/    _/_/_/    _/           \n"
-        "\t   _/  _/          _/  _/        _/            \n"
-        "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
-    )
-    nr_dec = 4
-    np.set_printoptions(precision=nr_dec)
-    print(
-        "* Processes requested, in order: \n  ",
-        get_process_list_str(gploader.PROCESSES),
-    )
-    for process in gploader.PROCESSES:
+def print_result(return_array, verbose=2):
+    """
+    Output an evaluation result to screen. The given amount of detail
+    can be adjusted.
+
+    Parameters
+    ----------
+    return_array : array
+        Evaluation result as returned by evaluation.eval_xsection().
+
+    verbose : int, optional
+        Degree of verbosity when printing results to screen:
+        - verbose=0 : prints nothing
+        - verbose=1 : prints a single line per process (no header),
+            in the following format:
+              PID1 PID2 xsection_central regdown_rel regup_rel scaledown_rel
+              scaleup_rel pdfdown_rel pdfup_rel alphasdown_rel alphasup_rel
+        - verbose=2 : prints full description of the result (default)
+
+    """
+
+    # Verbose level 0: print no description at all
+    if not verbose:  # handles verbose=0 and verbose=False
+        pass
+    # Verbose level 1: print single-line description of each process
+    elif verbose == 1:
+        nr_dec = 4
+        process_list = gploader.PROCESSES
+        for i, process in enumerate(process_list):
+            pid1 = process[0]
+            pid2 = process[1]
+
+            xsection_central = np.round(return_array[0][i], decimals=nr_dec)
+            regdown_rel = np.round(return_array[1][i], decimals=nr_dec)
+            regup_rel = np.round(return_array[2][i], decimals=nr_dec)
+            scaledown_rel = np.round(return_array[3][i], decimals=nr_dec)
+            scaleup_rel = np.round(return_array[4][i], decimals=nr_dec)
+            pdfdown_rel = np.round(return_array[5][i], decimals=nr_dec)
+            pdfup_rel = np.round(return_array[6][i], decimals=nr_dec)
+            alphasdown_rel = np.round(return_array[7][i], decimals=nr_dec)
+            alphasup_rel = np.round(return_array[8][i], decimals=nr_dec)
+
+            print(pid1, pid2, xsection_central,
+                  regdown_rel, regup_rel, scaledown_rel, scaleup_rel,
+                  pdfdown_rel, pdfup_rel, alphasdown_rel, alphasup_rel)
+            sys.stdout.flush()
+
+    # Verbose level 2: print full description of the result
+    elif verbose == 2 or verbose:  # can handle verbose=True
         print(
-            "* Input features: \n  ",
-            process,
-            ": ",
-            zip(
-                features.get_features(*process),
-                features.get_features_dict(gploader.PROCESSES)[process],
-            ),
+            "\n"
+            "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
+            "\t     _/  _/    _/        _/        _/          \n"
+            "\t      _/        _/_/    _/_/_/    _/           \n"
+            "\t   _/  _/          _/  _/        _/            \n"
+            "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
         )
-    print("* xsection_central (fb):", return_array[0])
-    print("* regdown_rel:", return_array[1])
-    print("* regup_rel:", return_array[2])
-    print("* scaledown_rel:", return_array[3])
-    print("* scaleup_rel:", return_array[4])
-    print("* pdfdown_rel:", return_array[5])
-    print("* pdfup_rel:", return_array[6])
-    print("* alphasdown_rel:", return_array[7])
-    print("* alphasup_rel:", return_array[8])
-    print("**************************************************************")
+        sys.stdout.flush()
+        nr_dec = 4
+        np.set_printoptions(precision=nr_dec)
+        process_list = gploader.PROCESSES
+        print("* Requested processes, in order:\n   ", end="")
+        for process in process_list:
+            print(process, " ", end="")
+        print()
+        print("* Input features:")
+        for process in process_list:
+            feature_names = features.get_features(*process)
+            feature_values = features.get_features_dict(process_list)[process]
+            print("  ", process, ": \n      [", end="")
+            for i, feature in enumerate(feature_names):
+                print(
+                    feature, "=",
+                    str(np.round(feature_values[i], decimals=nr_dec)),
+                    "\b, ", end=""
+                    )
+            print("\b\b]")
+
+        print("* xsection_central (fb):", return_array[0])
+        print("* regdown_rel:   ", return_array[1])
+        print("* regup_rel:     ", return_array[2])
+        print("* scaledown_rel: ", return_array[3])
+        print("* scaleup_rel:   ", return_array[4])
+        print("* pdfdown_rel:   ", return_array[5])
+        print("* pdfup_rel:     ", return_array[6])
+        print("* alphasdown_rel:", return_array[7])
+        print("* alphasup_rel:  ", return_array[8])
+        print("**************************************************************")
+        sys.stdout.flush()
 
 
-# Print references (to file if a file handle is supplied)
 def print_references(file_handle=None):
+    """"
+    Print references to screen, or to a file if a file handle is
+    supplied.
+    """
     for reference in REF:
         bibtex = fetch_bibtex(reference)
         if file_handle:
