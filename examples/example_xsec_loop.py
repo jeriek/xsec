@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
 """
-Example of an evaluation which loops over parameter values.
-
+Example of an xsec evaluation which loops over parameter values.
 """
 
 import xsec
@@ -43,8 +42,10 @@ for mgluino in range(50, 3000, 50):
     # *** Set gluino mass ***
     xsec.set_gluino_mass(mgluino)
 
-    # *** Evaluate the cross section printing only one line per point ***
-    # The output format is PID1 PID2 central regdown regup scaledown scaleup pdfdown pdfup alphasdown alphasup
+    # *** Evaluate the cross section, printing only one line per point ***
+    # The output format:
+    #   PID1 PID2 xsection_central regdown_rel regup_rel scaledown_rel
+    #   scaleup_rel pdfdown_rel pdfup_rel alphasdown_rel alphasup_rel
     xsec.eval_xsection(verbose=1)
 
 
