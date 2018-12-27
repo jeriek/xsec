@@ -108,13 +108,6 @@ def get_process_id(process, xstype):
     return process_xstype
 
 
-def get_process_id_str(process, xstype):
-    assert len(process) == 2
-    process_xstype_str = str(process[0]) + "_" + str(process[1]) + "_" + xstype
-
-    return process_xstype_str
-
-
 def get_str_from_process_id(process_xstype):
     assert len(process_xstype) == 3
     process_xstype_str = (
@@ -148,15 +141,6 @@ def get_xstype_from_process_id(process_xstype):
     xstype = process_xstype[-1]
 
     return xstype
-
-
-def get_process_list_str(process_list):
-    process_str_list = []
-    for process in process_list:
-        process_str = str(process[0]) + "_" + str(process[1])
-        process_str_list.append(process_str)
-
-    return process_str_list
 
 
 ###############################################
