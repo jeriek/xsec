@@ -15,12 +15,13 @@ import parameters
 # Global variables                            #
 ###############################################
 
-# Reset the GP model data directory. By default, DATA_DIR gets set to
-# the /data directory inside the xsec installation folder when init() is
-# executed. This can be overwritten by manually specifying DATA_DIR in
-# the run script, either through accessing the DATA_DIR global variable
-# explicitly, or through specifying the data_dir keyword inside init().
-# The latter takes precedence if both methods are used simultaneously.
+# The GP model data directory. By default, DATA_DIR gets set to "gprocs"
+# when init() is executed, such that xsec looks for a directory called
+# "gprocs" in the current working directory. This can be overwritten by
+# directly accessing DATA_DIR in the run script (before loading any
+# processes), or, preferably, by specifying the data_dir keyword inside
+# init(). If DATA_DIR was already modified directly, this value is used,
+# instead of the data_dir value.
 DATA_DIR = ""
 
 # List of selected processes (2-tuples of sparticle ids), to be set by
@@ -35,7 +36,7 @@ PROCESS_DICT = {}
 # (process, xstype) as key
 TRANSFORM_MODULES = {}
 
-# Initialise default settings for using Joblib memory caching, can be
+# Default settings for using Joblib memory caching, can be
 # modified by user with init()
 USE_CACHE = False
 CACHE_DIR = ""
@@ -50,7 +51,7 @@ CACHE_MEMORY = None
 
 
 def init(
-    data_dir="",
+    data_dir="gprocs",
     use_cache=False,
     cache_dir="",
     flush_cache=True,
@@ -66,12 +67,13 @@ def init(
     ----------
     data_dir : str, optional
         Specify the path of the top directory containing all of the GP
-        model data directories. (default '')
+        model data directories. By default, init() tries to find a
+        directory called "gprocs" in the current working directory.
     use_cache : bool, optional
         Specify whether to cache data on disk (default False).
     cache_dir: str, optional
         Specify a disk directory for the cache. Inactive if use_cache is
-        False. If '', a random directory is created. (default '')
+        False. If "", a random directory is created. (default "")
     flush_cache: bool, optional
         Specify whether to clear disk cache after completing the
         program. Inactive if use_cache is False. Warning: if False,
@@ -85,13 +87,34 @@ def init(
         (default True)
     """
 
-    # Reset the data directory, if the given string isn't empty
-    # TODO: try/except
+    # --- Setting the data directory
     global DATA_DIR
-    if data_dir:
+    # If the global variable was already directly modified by the user,
+    # don't overwrite but search for that path (this manual override of
+    # DATA_DIR takes precedence, use with caution!)
+    if DATA_DIR:
+        DATA_DIR = os.path.expandvars(os.path.expanduser(DATA_DIR))
+    # If the DATA_DIR variable was untouched, use the given data_dir
+    # (by default "gprocs", such that ./gprocs in the current working
+    # directory is set as GP directory)
+    elif data_dir:
         DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
+    # Else, if the user set both DATA_DIR and data_dir to ""
+    else:
+        raise IOError(
+            "The path to the Gaussian process data directories cannot "
+            "be empty. Please ensure that the right path is entered with the "
+            "data_dir keyword in init()."
+            )
+    # Check whether the given path is an existing directory
+    if not os.path.isdir(DATA_DIR):
+        raise IOError(
+            "The Gaussian process data directories could not be found "
+            "at {dir}. Please ensure that the right path is entered with the "
+            "data_dir keyword in init().".format(dir=DATA_DIR)
+        )
 
-    # Fix global variables coordinating the use of caching
+    # --- Fixing global variables coordinating the use of caching
     global USE_CACHE, CACHE_DIR, FLUSH_CACHE, USE_MEMMAP
     USE_CACHE = use_cache
     CACHE_DIR = cache_dir
