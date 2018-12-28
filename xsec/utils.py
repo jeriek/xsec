@@ -165,12 +165,12 @@ def print_result(return_array, verbose=2):
             in the following format:
               PID1 PID2 xsection_central regdown_rel regup_rel scaledown_rel
               scaleup_rel pdfdown_rel pdfup_rel alphasdown_rel alphasup_rel
-        - verbose=2 : prints full description of the result (default)
+        - verbose=2 : prints full description of the results (default)
 
     """
 
     # Verbose level 0: print no description at all
-    if not verbose:  # handles verbose=0 and verbose=False
+    if verbose == 0:
         pass
     # Verbose level 1: print single-line description of each process
     elif verbose == 1:
@@ -196,7 +196,7 @@ def print_result(return_array, verbose=2):
             sys.stdout.flush()
 
     # Verbose level 2: print full description of the result
-    elif verbose == 2 or verbose:  # can handle verbose=True
+    elif verbose == 2:
         print(
             "\n"
             "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
@@ -237,6 +237,13 @@ def print_result(return_array, verbose=2):
         print("* alphasup_rel:  ", return_array[8])
         print("**************************************************************")
         sys.stdout.flush()
+    else:
+        raise ValueError(
+            "The verbosity level can only be set to one of these options:\n"
+            "\t - verbose=0 (print nothing to screen)\n"
+            "\t - verbose=1 (print single line per process)\n"
+            "\t - verbose=2 (default, print full description of results)\n"
+            )
 
 
 def print_references(file_handle=None):
