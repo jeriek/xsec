@@ -170,10 +170,10 @@ def print_result(return_array, verbose=2):
     """
 
     # Verbose level 0: print no description at all
-    if verbose == 0:
+    if verbose is 0:
         pass
     # Verbose level 1: print single-line description of each process
-    elif verbose == 1:
+    elif verbose is 1:
         nr_dec = 4
         process_list = gploader.PROCESSES
         for i, process in enumerate(process_list):
@@ -196,7 +196,7 @@ def print_result(return_array, verbose=2):
             sys.stdout.flush()
 
     # Verbose level 2: print full description of the result
-    elif verbose == 2:
+    elif verbose is 2:
         print(
             "\n"
             "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
