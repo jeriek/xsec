@@ -231,7 +231,7 @@ def load_single_process(process_xstype):
         model_files = []
         for f in candidate_model_files:
             if os.path.isfile(f):
-                if not f.lower().endswith((".py", ".pyc", ".pyo")):
+                if f.lower().endswith((".gproc")):
                     model_files.append(f)
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
