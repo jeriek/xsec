@@ -231,8 +231,14 @@ def load_single_process(process_xstype):
         model_files = []
         for f in candidate_model_files:
             if os.path.isfile(f):
+                # Require .gproc extension for GP model files
                 if f.lower().endswith((".gproc")):
                     model_files.append(f)
+        # Raise error if list of GP model files stays empty
+        if not model_files:
+            raise IOError(
+                "No GP data files (*.gproc) found at {}.".format(process_dir)
+                )
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
 
