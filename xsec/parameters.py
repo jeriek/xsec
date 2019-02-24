@@ -245,10 +245,12 @@ def check_parameter(key):
                     feature=key, value=PARAMS[key]
                 )
             )
-        elif PARAMS[key] < 0:
+        elif PARAMS[key] < 50:
             raise ValueError(
-                "The mass feature '{feature}' has been set to "
-                "a negative value!".format(feature=key)
+                "The mass feature '{feature}' has been set close to "
+                "half the Z-mass. Cross section predictions here "
+                "may be unreliable!".format(feature=key, value=PARAMS[key]
+                )
             )
 
 
