@@ -19,6 +19,7 @@ import kernels
 # Evaluation functions                        #
 ###############################################
 
+
 def eval_xsection(verbose=2, check_consistency=True):
     """
     Evaluates cross sections for processes in global list PROCESSES
@@ -219,27 +220,34 @@ def dgp_predict(process, xstype, features):
         sigmas[i] = sigma
 
     # Shorthand variables for the 'communication expert' (i=0)
-    muc = mus[0]
-    sigmac = sigmas[0]
+    mu_c = mus[0]
+    sigma_c = sigmas[0]
 
     # Find weight (beta) for each expert
     betas = np.ones(n_experts)
     for i in range(n_experts):
         if i < 2:
-            betas[i] = 1.
+            betas[i] = 1.0
         else:
-            betas[i] = 0.5 * (2 * np.log(sigmac) - 2 * np.log(sigmas[i]))
+            betas[i] = 0.5 * (2 * np.log(sigma_c) - 2 * np.log(sigmas[i]))
 
     # Final mean and variance:
     if n_experts == 1:
-        var_dgp_inv = sigmac ** (-2)
-        mu_dgp = muc
+        var_dgp_inv = sigma_c ** (-2)
+        mu_dgp = mu_c
     else:
-        var_dgp_inv = np.sum(betas[1:] * sigmas[1:] ** (-2)) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2)
-        mu_dgp = var_dgp_inv ** (-1) * ( np.sum(betas[1:] * sigmas[1:] ** (-2) * mus[1:]) - (np.sum(betas[1:]) - 1.) * sigmac ** (-2) * muc )
+        var_dgp_inv = np.sum(betas[1:] * sigmas[1:] ** (-2)) - (
+            np.sum(betas[1:]) - 1.0
+        ) * sigma_c ** (-2)
+        mu_dgp = var_dgp_inv ** (-1) * (
+            np.sum(betas[1:] * sigmas[1:] ** (-2) * mus[1:])
+            - (np.sum(betas[1:]) - 1.0) * sigma_c ** (-2) * mu_c
+        )
 
-    # Return mean and std
-    return mu_dgp, np.sqrt(var_dgp_inv ** (-1))
+    # Return mean and std (_not_ variance!)
+    sigma_dgp = np.sqrt(var_dgp_inv ** (-1))
+
+    return mu_dgp, sigma_dgp
 
 
 def gp_predict(
