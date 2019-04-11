@@ -154,22 +154,28 @@ def get_kernel(kernel_params):
         """
 
         # Extract parameters from input dictionary
-        noise_level = kernel_params["whitekernel_noiselevel"]
+        # noise_level = kernel_params["whitekernel_noiselevel"]
         prefactor = kernel_params["matern_prefactor"]
         nu = kernel_params["matern_nu"]
         length_scale = kernel_params["matern_lengthscale"]
 
         # Return sum of white kernel and (prefactor times) Matern kernel
         if Y is None:
-            kernel_sum = WhiteKernel(
-                X, noise_level=noise_level
-            ) + prefactor * MaternKernel(X, length_scale=length_scale, nu=nu)
+            kernel_sum = prefactor * MaternKernel(
+                X, length_scale=length_scale, nu=nu
+                )
+            # kernel_sum = WhiteKernel(
+            #     X, noise_level=noise_level
+            # ) + prefactor * MaternKernel(X, length_scale=length_scale, nu=nu)
         else:
-            kernel_sum = WhiteKernel(
-                X, Y, noise_level=noise_level
-            ) + prefactor * MaternKernel(
+            kernel_sum = prefactor * MaternKernel(
                 X, Y, length_scale=length_scale, nu=nu
             )
+            # kernel_sum = WhiteKernel(
+            #     X, Y, noise_level=noise_level
+            # ) + prefactor * MaternKernel(
+            #     X, Y, length_scale=length_scale, nu=nu
+            # )
 
         return kernel_sum
 
