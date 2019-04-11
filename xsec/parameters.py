@@ -1,12 +1,14 @@
 # Module containing dictionary of parameters and input output methods
 
 from __future__ import print_function
+
 import os
 
-import utils
-import gploader
+import pyslha
 
-import pyslha  # Needs v3.2 or later
+import xsec.utils as utils
+import xsec.gploader as gploader
+
 
 # Dictionary of all parameters and their values
 PARAMS = {

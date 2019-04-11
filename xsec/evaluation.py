@@ -8,11 +8,11 @@ from __future__ import print_function
 
 import numpy as np
 
-import utils
-import gploader
-import parameters
-import features
-import kernels
+import xsec.utils as utils
+import xsec.gploader as gploader
+import xsec.parameters as parameters
+import xsec.features as features
+import xsec.kernels as kernels
 
 
 ###############################################

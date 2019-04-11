@@ -4,9 +4,10 @@ tuple pairs.
 """
 
 from __future__ import print_function
+
 import collections
 
-import parameters
+import xsec.parameters as parameters
 
 ###############################################
 # Global variables                            #

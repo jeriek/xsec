@@ -3,15 +3,16 @@ Internal helper functions.
 """
 
 from __future__ import print_function
+
 import sys
 import os.path
 import pkg_resources
 
 import numpy as np
 
-import parameters
-import features
-import gploader
+import xsec.parameters as parameters
+import xsec.features as features
+import xsec.gploader as gploader
 
 ###############################################
 # Global variables                            #

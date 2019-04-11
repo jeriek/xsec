@@ -8,8 +8,8 @@ import os
 import imp
 import joblib  # Needs v0.12.2 or later
 
-import utils
-import parameters
+import xsec.utils as utils
+import xsec.parameters as parameters
 
 ###############################################
 # Global variables                            #
