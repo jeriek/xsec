@@ -110,33 +110,28 @@ def get_kernel(kernel_params):
     Construct a kernel function from its parameters. In particular, the
     returned functions are functions of X and Y (optional), and have the
     form
-        k(X, Y) = WhiteKernel(X, Y, noise_level) +
-                  prefactor*MaternKernel(X, Y, length_scale, nu).
+        k(X, Y) = prefactor*MaternKernel(X, Y, length_scale, nu).
 
     Parameters
     ----------
     kernel_params : dict
         Parameter dictionary with keys 'matern_prefactor',
-        'matern_lengthscale', 'matern_nu', and 'whitekernel_noiselevel',
-        with corresponding double-precision numerical values.
-        This input format corresponds to the output from the NIMBUS
-        training routines.
+        'matern_lengthscale', and 'matern_nu', with corresponding
+        double-precision numerical values. This input format corresponds
+        to the output from the NIMBUS training routines.
 
     Returns
     -------
     kernel_function(X, Y=None) : function
-        Kernel function that is a linear combination of a white kernel
-        and a Matern kernel. If Y = None, kernel_function(X, X) is
+        Matern kernel function. If Y = None, kernel_function(X, X) is
         returned.
     """
 
-    # Define a function object to return (requires loading 'kernels'
-    # module for kernel definitions)
+    # Define a function object to return
     def kernel_function(X, Y=None):
         """
-        Return the Gaussian Process kernel k(X, Y), a linear combination
-        of a white kernel and a Matern kernel. The implementation is
-        based on scikit-learn v0.19.2.
+        Return the Matern kernel value k(X, Y). The
+        implementation is based on scikit-learn v0.19.2.
 
         Parameters
         ----------
@@ -150,33 +145,24 @@ def get_kernel(kernel_params):
         Returns
         -------
         K : array, shape (n_samples_X, n_samples_Y)
-            Kernel k(X, Y).
+            Kernel value k(X, Y).
         """
 
         # Extract parameters from input dictionary
-        # noise_level = kernel_params["whitekernel_noiselevel"]
         prefactor = kernel_params["matern_prefactor"]
         nu = kernel_params["matern_nu"]
         length_scale = kernel_params["matern_lengthscale"]
 
-        # Return sum of white kernel and (prefactor times) Matern kernel
+        # Return prefactor times Matern kernel value
         if Y is None:
-            kernel_sum = prefactor * MaternKernel(
+            kernel_val = prefactor * MaternKernel(
                 X, length_scale=length_scale, nu=nu
-                )
-            # kernel_sum = WhiteKernel(
-            #     X, noise_level=noise_level
-            # ) + prefactor * MaternKernel(X, length_scale=length_scale, nu=nu)
+            )
         else:
-            kernel_sum = prefactor * MaternKernel(
+            kernel_val = prefactor * MaternKernel(
                 X, Y, length_scale=length_scale, nu=nu
             )
-            # kernel_sum = WhiteKernel(
-            #     X, Y, noise_level=noise_level
-            # ) + prefactor * MaternKernel(
-            #     X, Y, length_scale=length_scale, nu=nu
-            # )
 
-        return kernel_sum
+        return kernel_val
 
     return kernel_function
