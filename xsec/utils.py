@@ -74,16 +74,15 @@ def get_processdir_name(process_xstype):
     and cross-section type are stored.
     """
 
-    import xsec.parameters as parameters
-
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
 
     # Decide process name
     # Check if one of the partons is a gluino
-    if parton1 == parameters.GLUINO_ID:
+    gluino_id = 1000021
+    if parton1 == gluino_id:
         processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-    elif parton2 == parameters.GLUINO_ID:
+    elif parton2 == gluino_id:
         processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
 
     # Otherwise name starts with the largest parton PID
