@@ -195,7 +195,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     return return_array
 
 
-def dgp_predict(process, xstype, features):
+def dgp_predict(process, xstype, new_features):
     """
         Evaluate a set of distributed Gaussian processes (DGPs). The DGP
         'experts' are combined according to the Generalized Robust
@@ -213,8 +213,8 @@ def dgp_predict(process, xstype, features):
 
     # Loop over GP experts
     for i in range(n_experts):
-        mu, sigma, sigma_prior = gp_predict(
-            process_xstype, features, index=i, return_std=True
+        mu, sigma, _ = gp_predict(
+            process_xstype, new_features, index=i, return_std=True
         )
         mus[i] = mu
         sigmas[i] = sigma
@@ -251,7 +251,7 @@ def dgp_predict(process, xstype, features):
 
 
 def gp_predict(
-    process_xstype, features, index=0, return_std=True, return_cov=False
+    process_xstype, new_features, index=0, return_std=True, return_cov=False
 ):
     """
     Gaussian process evaluation for the individual experts. Takes as
@@ -291,10 +291,10 @@ def gp_predict(
 
     except KeyError:
         raise KeyError(
-            "No trained GP models loaded for: {id}".format(process_xstype)
+            "No trained GP models loaded for: {id}".format(id=process_xstype)
         )
 
-    X = np.atleast_2d(features)
+    X = np.atleast_2d(new_features)
 
     K_trans = kernel(X, X_train)  # transpose of K*
     y_mean = K_trans.dot(alpha)  # Line 4 (y_mean = f_star)
@@ -326,7 +326,7 @@ def gp_predict(
     elif return_cov:
         v = L_inv.dot(K_trans.T)  # Line 5
         y_cov = prior_variance - K_trans.dot(v)  # Line 6
-        return [y_mean, y_cov, prior_variance]
+        return y_mean, y_cov, prior_variance
 
     else:
         return y_mean

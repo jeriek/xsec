@@ -229,11 +229,11 @@ def load_single_process(process_xstype):
             os.path.join(process_dir, f) for f in os.listdir(process_dir)
         ]
         model_files = []
-        for f in candidate_model_files:
-            if os.path.isfile(f):
+        for a_file in candidate_model_files:
+            if os.path.isfile(a_file):
                 # Require .gproc extension for GP model files
-                if f.lower().endswith((".gproc")):
-                    model_files.append(f)
+                if a_file.lower().endswith((".gproc")):
+                    model_files.append(a_file)
         # Raise error if list of GP model files stays empty
         if not model_files:
             raise IOError(
@@ -249,9 +249,9 @@ def load_single_process(process_xstype):
     # model_list
     for model_file in model_files:
         # Open the stored GP model file of a single expert
-        with open(model_file, "rb") as fo:
+        with open(model_file, "rb") as file_object:
             # Unzip the binary file with Joblib, yielding dict
-            gp_model = joblib.load(fo)
+            gp_model = joblib.load(file_object)
             # Reconvert float32 arrays to float64 for higher-precision
             # computations, filling a new dict gp_reco
             gp_reco = {}
@@ -304,7 +304,7 @@ def load_processes(process_list):
         corresponds to the tuple (1000021, 1000021).
     """
     # Set the global list of processes (fails in case of input errors)
-    if len(process_list) == 0:
+    if not process_list:
         raise ValueError(
             "List of processes to be evaluated cannot be empty."
             )
@@ -346,15 +346,15 @@ def load_processes(process_list):
 
 def finalise():
     """
-    Function to finalise run.
+    Function to finalise a run.
     Currently clears cache (if used) and writes references to a file.
     """
     # Clear cache. Inactive if cache not used
     clear_cache()
     # Write references to file (overwrite if existing)
     ref_file = "xsec.bib"
-    with open(ref_file, "w") as f:
-        utils.print_references(f)
+    with open(ref_file, "w") as file_object:
+        utils.print_references(file_object)
     print(
         "A list of references that form the basis of the results in this run "
         "has been written to {file}.".format(file=ref_file)
@@ -362,6 +362,10 @@ def finalise():
 
 
 def clear_cache():
+    """
+    Clear cache memory if it was used.
+    """
+
     if USE_CACHE and FLUSH_CACHE:
         # Flush the cache completely
         CACHE_MEMORY.clear(warn=False)

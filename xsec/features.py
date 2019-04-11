@@ -1,6 +1,6 @@
 """
-Module containing a dictionary of features for processes keyed by pid
-tuple pairs.
+Module containing a dictionary of features for processes keyed by
+particle ID (PID) tuple pairs.
 """
 
 from __future__ import print_function

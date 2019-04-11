@@ -73,6 +73,11 @@ else:
 
 
 def get_processdir_name(process_xstype):
+    """
+    Get the name of the directory where the GPs for a specific process
+    and cross-section type are stored.
+    """
+
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
 
@@ -103,6 +108,11 @@ def get_processdir_name(process_xstype):
 
 
 def get_process_id(process, xstype):
+    """
+    Get a 3-tuple specifying the particles in a process and a
+    cross-section type.
+    """
+
     assert len(process) == 2
     process_xstype = (process[0], process[1], xstype)
 
@@ -110,6 +120,11 @@ def get_process_id(process, xstype):
 
 
 def get_str_from_process_id(process_xstype):
+    """
+    Get a single string specifying the particles in a process and a
+    cross-section type.
+    """
+
     assert len(process_xstype) == 3
     process_xstype_str = (
         str(process_xstype[0])
@@ -123,6 +138,11 @@ def get_str_from_process_id(process_xstype):
 
 
 def get_process_id_split(process_xstype):
+    """
+    Get the three individual elements of a 3-tuple specifying a process
+    and a cross-section type.
+    """
+
     assert len(process_xstype) == 3
     parton1 = process_xstype[0]
     parton2 = process_xstype[1]
@@ -132,6 +152,11 @@ def get_process_id_split(process_xstype):
 
 
 def get_process_from_process_id(process_xstype):
+    """
+    Get a 2-tuple with the PIDs in the process from a 3-tuple specifying
+    a process and a cross-section type.
+    """
+
     parton1 = process_xstype[0]
     parton2 = process_xstype[1]
 
@@ -139,6 +164,10 @@ def get_process_from_process_id(process_xstype):
 
 
 def get_xstype_from_process_id(process_xstype):
+    """
+    Get the cross-section type from a 3-tuple specifying a process and a
+    cross-section type.
+    """
     xstype = process_xstype[-1]
 
     return xstype

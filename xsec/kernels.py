@@ -51,7 +51,7 @@ def _check_length_scale(X, length_scale):
     return length_scale
 
 
-def WhiteKernel(X, Y=None, noise_level=1.0):
+def white_kernel(X, Y=None, noise_level=1.0):
     """
     Mainly used as part of a sum-kernel where it explains the
     noise-component of the signal.
@@ -65,11 +65,11 @@ def WhiteKernel(X, Y=None, noise_level=1.0):
     if Y is None:
         K = noise_level * np.eye(X.shape[0])
         return K
-    else:
-        return np.zeros((X.shape[0], Y.shape[0]))
+    # Else, if Y is not None:
+    return np.zeros((X.shape[0], Y.shape[0]))
 
 
-def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
+def matern_kernel(X, Y=None, length_scale=1.0, nu=1.5):
     """
     Standard Matern kernel implementation, parametrised as in
     scikit-learn.
@@ -82,7 +82,7 @@ def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
         dists = cdist(X / length_scale, Y / length_scale, metric="euclidean")
 
     if nu == 0.5:
-        K = np.exp(-dists)
+        K = np.exp((-1.0)*dists)
     elif nu == 1.5:
         K = dists * math.sqrt(3)
         K = (1.0 + K) * np.exp(-K)
@@ -110,7 +110,7 @@ def get_kernel(kernel_params):
     Construct a kernel function from its parameters. In particular, the
     returned functions are functions of X and Y (optional), and have the
     form
-        k(X, Y) = prefactor*MaternKernel(X, Y, length_scale, nu).
+        k(X, Y) = prefactor*matern_kernel(X, Y, length_scale, nu).
 
     Parameters
     ----------
@@ -155,11 +155,11 @@ def get_kernel(kernel_params):
 
         # Return prefactor times Matern kernel value
         if Y is None:
-            kernel_val = prefactor * MaternKernel(
+            kernel_val = prefactor * matern_kernel(
                 X, length_scale=length_scale, nu=nu
             )
         else:
-            kernel_val = prefactor * MaternKernel(
+            kernel_val = prefactor * matern_kernel(
                 X, Y, length_scale=length_scale, nu=nu
             )
 

@@ -1,4 +1,6 @@
-# Module containing dictionary of parameters and input output methods
+"""
+Module containing a dictionary of parameters and input/output methods.
+"""
 
 from __future__ import print_function
 
@@ -64,7 +66,7 @@ SQUARK_IDS = [
     2000005,
     2000006,
 ]
-ANTISQUARK_IDS = [-id for id in SQUARK_IDS]
+ANTISQUARK_IDS = [-squark_id for squark_id in SQUARK_IDS]
 GLUINO_ID = 1000021
 SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID]
 
@@ -105,8 +107,10 @@ def calc_mean_squark_mass():
     Calculate mean (first and second generation) squark mass and set the
     'mean' parameter.
     """
-    m = sum([PARAMS[key] for key in MEAN_INDEX]) / float(len(MEAN_INDEX))
-    PARAMS["mean"] = m
+    mean_mass = sum([PARAMS[key] for key in MEAN_INDEX]) / float(
+        len(MEAN_INDEX)
+    )
+    PARAMS["mean"] = mean_mass
 
 
 def set_all_squark_masses(mass):
@@ -210,8 +214,8 @@ def get_parameters(name_list=None):
     """
     if name_list is None:
         return PARAMS
-    else:
-        return [PARAMS[name] for name in name_list]
+    # Else, if a specific parameter list ist requested:
+    return [PARAMS[name] for name in name_list]
 
 
 ###############################################
@@ -249,9 +253,10 @@ def check_parameter(key):
             )
         elif PARAMS[key] < 50:
             raise ValueError(
-                "The mass feature '{feature}' has been set close to "
-                "half the Z-mass. Cross section predictions here "
-                "may be unreliable!".format(feature=key, value=PARAMS[key]
+                "The mass feature '{feature}' has been set to {value}, "
+                "which is close to half the Z mass. Cross section "
+                "predictions here may be unreliable!".format(
+                    feature=key, value=PARAMS[key]
                 )
             )
 
@@ -289,7 +294,7 @@ def check_parameters(parameters):
                 "[This consistency check was performed as the evaluation "
                 "was called with the relevant (default) option:\n\t"
                 "eval_xsection(..., check_consistency=True).]".format(
-                    mean1=mean, mean2=PARAMS["mean"]
+                    mean1=mean, mean2=PARAMS["mean"], params=PARAMS
                 )
             )
 
@@ -299,8 +304,8 @@ def check_parameters(parameters):
             "Currently the only available CoM energy is 13000 GeV. (The "
             "requested CoM energy was {energy} GeV.)".format(
                 energy=PARAMS["energy"]
-                )
             )
+        )
 
 
 ###############################################
@@ -318,13 +323,12 @@ def import_slha(filename):
     try:
         slha = pyslha.read(filename, ignoreblocks=["DCINFO"])
         # TODO: More checking of reasonable file?
-    except IOError as e:
-        print(
+    except IOError:
+        raise IOError(
             "Unable to find SLHA file {file}. Parameters not set.".format(
                 file=filename
             )
         )
-        raise e
 
     # Find masses
     PARAMS["m1000001"] = slha.blocks["MASS"][1000001]
@@ -358,22 +362,21 @@ def write_slha(filename, results):
     Write calculated cross sections to already existing SLHA file in
     XSECTION blocks.
 
-    WARNING: Our treatment of PDF errors breaks the XSECTION standard 
-             by adding 1 and 2 to the central PDF set index to give the 
-             lower and upper 1\sigma uncertainty in cross section from the 
-             PDF variation sets following PDF4LHC guidelines.
+    WARNING: Our treatment of PDF errors breaks the XSECTION standard
+             by adding 1 and 2 to the central PDF set index to give the
+             lower and upper 1/sigma uncertainty in cross section from
+             the PDF variation sets, following PDF4LHC guidelines.
     """
-    
+
     # Try to open file for appending (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
     try:
         slha = open(filename, "a")
-    except IOError as e:
-        print(
+    except IOError:
+        raise IOError(
             "Unable to find SLHA file {file} for output. Cross sections not"
-            "recorded.".format(name=filename)
+            "recorded.".format(file=filename)
         )
-        raise e
 
     # Set fixed entries
     # Find CoM energy
@@ -400,7 +403,8 @@ def write_slha(filename, results):
         # Add cross sections to process object
         central_xs = result[0] / 1000.0  # Convert to pb
         xs = central_xs
-        # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f, kappa_r, pdf_id, xs, code)
+        # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f,
+        # kappa_r, pdf_id, xs, code)
         proc.add_xsec(
             sqrts,
             scale_scheme,
@@ -493,4 +497,3 @@ def write_slha(filename, results):
 
     # Close file when finished writing
     slha.close()
-
