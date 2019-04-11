@@ -10,10 +10,6 @@ import pkg_resources
 
 import numpy as np
 
-import xsec.parameters as parameters
-import xsec.features as features
-import xsec.gploader as gploader
-
 ###############################################
 # Global variables                            #
 ###############################################
@@ -77,6 +73,8 @@ def get_processdir_name(process_xstype):
     Get the name of the directory where the GPs for a specific process
     and cross-section type are stored.
     """
+
+    import xsec.parameters as parameters
 
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
@@ -198,6 +196,9 @@ def print_result(return_array, verbose=2):
         - verbose=2 : prints full description of the results (default)
 
     """
+
+    import xsec.gploader as gploader
+    import xsec.features as features
 
     # Verbose level 0: print no description at all
     if verbose is 0:

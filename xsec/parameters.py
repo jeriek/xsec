@@ -9,7 +9,6 @@ import os
 import pyslha
 
 import xsec.utils as utils
-import xsec.gploader as gploader
 
 
 # Dictionary of all parameters and their values
@@ -367,6 +366,8 @@ def write_slha(filename, results):
              lower and upper 1/sigma uncertainty in cross section from
              the PDF variation sets, following PDF4LHC guidelines.
     """
+
+    import xsec.gploader as gploader
 
     # Try to open file for appending (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
