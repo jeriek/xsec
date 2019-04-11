@@ -102,7 +102,7 @@ def eval_xsection(verbose=2, check_consistency=True):
                 process,
                 xstype,
                 params,
-                *DGP(process, xstype, process_features[process])
+                *dgp_predict(process, xstype, process_features[process])
             )
             for process in processes
         ]
@@ -194,7 +194,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     return return_array
 
 
-def DGP(process, xstype, features):
+def dgp_predict(process, xstype, features):
     """
         Evaluate a set of distributed Gaussian processes (DGPs). The DGP
         'experts' are combined according to the Generalized Robust
@@ -212,7 +212,7 @@ def DGP(process, xstype, features):
 
     # Loop over GP experts
     for i in range(n_experts):
-        mu, sigma, sigma_prior = GP_predict(
+        mu, sigma, sigma_prior = gp_predict(
             process_xstype, features, index=i, return_std=True
         )
         mus[i] = mu
@@ -242,7 +242,7 @@ def DGP(process, xstype, features):
     return mu_dgp, np.sqrt(var_dgp_inv ** (-1))
 
 
-def GP_predict(
+def gp_predict(
     process_xstype, features, index=0, return_std=True, return_cov=False
 ):
     """
