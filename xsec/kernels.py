@@ -51,7 +51,7 @@ def _check_length_scale(X, length_scale):
     return length_scale
 
 
-def white_kernel(X, Y=None, noise_level=1.0):
+def WhiteKernel(X, Y=None, noise_level=1.0):
     """
     Mainly used as part of a sum-kernel where it explains the
     noise-component of the signal.
@@ -65,11 +65,11 @@ def white_kernel(X, Y=None, noise_level=1.0):
     if Y is None:
         K = noise_level * np.eye(X.shape[0])
         return K
-    # Else, if Y is not None:
-    return np.zeros((X.shape[0], Y.shape[0]))
+    else:
+        return np.zeros((X.shape[0], Y.shape[0]))
 
 
-def matern_kernel(X, Y=None, length_scale=1.0, nu=1.5):
+def MaternKernel(X, Y=None, length_scale=1.0, nu=1.5):
     """
     Standard Matern kernel implementation, parametrised as in
     scikit-learn.
@@ -82,7 +82,7 @@ def matern_kernel(X, Y=None, length_scale=1.0, nu=1.5):
         dists = cdist(X / length_scale, Y / length_scale, metric="euclidean")
 
     if nu == 0.5:
-        K = np.exp((-1.0)*dists)
+        K = np.exp(-dists)
     elif nu == 1.5:
         K = dists * math.sqrt(3)
         K = (1.0 + K) * np.exp(-K)
@@ -110,28 +110,33 @@ def get_kernel(kernel_params):
     Construct a kernel function from its parameters. In particular, the
     returned functions are functions of X and Y (optional), and have the
     form
-        k(X, Y) = prefactor*matern_kernel(X, Y, length_scale, nu).
+        k(X, Y) = WhiteKernel(X, Y, noise_level) +
+                  prefactor*MaternKernel(X, Y, length_scale, nu).
 
     Parameters
     ----------
     kernel_params : dict
         Parameter dictionary with keys 'matern_prefactor',
-        'matern_lengthscale', and 'matern_nu', with corresponding
-        double-precision numerical values. This input format corresponds
-        to the output from the NIMBUS training routines.
+        'matern_lengthscale', 'matern_nu', and 'whitekernel_noiselevel',
+        with corresponding double-precision numerical values.
+        This input format corresponds to the output from the NIMBUS
+        training routines.
 
     Returns
     -------
     kernel_function(X, Y=None) : function
-        Matern kernel function. If Y = None, kernel_function(X, X) is
+        Kernel function that is a linear combination of a white kernel
+        and a Matern kernel. If Y = None, kernel_function(X, X) is
         returned.
     """
 
-    # Define a function object to return
+    # Define a function object to return (requires loading 'kernels'
+    # module for kernel definitions)
     def kernel_function(X, Y=None):
         """
-        Return the Matern kernel value k(X, Y). The
-        implementation is based on scikit-learn v0.19.2.
+        Return the Gaussian Process kernel k(X, Y), a linear combination
+        of a white kernel and a Matern kernel. The implementation is
+        based on scikit-learn v0.19.2.
 
         Parameters
         ----------
@@ -145,24 +150,27 @@ def get_kernel(kernel_params):
         Returns
         -------
         K : array, shape (n_samples_X, n_samples_Y)
-            Kernel value k(X, Y).
+            Kernel k(X, Y).
         """
 
         # Extract parameters from input dictionary
+        noise_level = kernel_params["whitekernel_noiselevel"]
         prefactor = kernel_params["matern_prefactor"]
         nu = kernel_params["matern_nu"]
         length_scale = kernel_params["matern_lengthscale"]
 
-        # Return prefactor times Matern kernel value
+        # Return sum of white kernel and (prefactor times) Matern kernel
         if Y is None:
-            kernel_val = prefactor * matern_kernel(
-                X, length_scale=length_scale, nu=nu
-            )
+            kernel_sum = WhiteKernel(
+                X, noise_level=noise_level
+            ) + prefactor * MaternKernel(X, length_scale=length_scale, nu=nu)
         else:
-            kernel_val = prefactor * matern_kernel(
+            kernel_sum = WhiteKernel(
+                X, Y, noise_level=noise_level
+            ) + prefactor * MaternKernel(
                 X, Y, length_scale=length_scale, nu=nu
             )
 
-        return kernel_val
+        return kernel_sum
 
     return kernel_function
