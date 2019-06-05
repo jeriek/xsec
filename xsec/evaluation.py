@@ -116,11 +116,39 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     # All returned errors are defined to be deviations from 1
 
+    # -- Means and uncertainties from all individual GP experts
+    # Not very efficient since recomputes the DGP results!
+    # Consistency within central xsection fixed now
+    process = processes[0]
+    xstype = "centr"
+    dgp_results = dgp_predict(process, xstype, process_features[process])
+    n_experts = len(dgp_results) - 1  # first element is DGP combination
+    expert_xsection_central = np.zeros(n_experts)
+    expert_reg_err = np.zeros(n_experts)
+    for i in range(n_experts+1):
+        expert_xsection_central[i], expert_reg_err[i] = (
+            gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
+                process,
+                xstype,
+                params,
+                *dgp_results[i]
+            )
+        )
+    expert_regdown_rel = 1.0 - expert_reg_err / expert_xsection_central
+    expert_regup_rel = 1.0 + expert_reg_err / expert_xsection_central
+
+    xsection_central, reg_err = map(
+        np.array, zip(expert_xsection_central[0], expert_reg_err[0])
+    )
+    expert_xsection_central = expert_xsection_central[1:n_experts+1]
+    expert_reg_err = expert_reg_err[1:n_experts+1]
+
+
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
-    xsection_central, reg_err = map(
-        np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"]))
-    )
+    # xsection_central, reg_err = map(
+    #     np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"]))
+    # )
     # xsection_central, reg_err = map(
     #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
     #                     for mu_sigma_dgp in dgp_results['centr']))
@@ -134,27 +162,6 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    from the central-scale xsection, relative to the latter.
     regdown_rel = 1.0 - reg_err / xsection_central  # numpy array
     regup_rel = 1.0 + reg_err / xsection_central  # numpy array
-
-    # -- Means and uncertainties from all individual GP experts
-    # Not very efficient since recomputes the DGP results!
-    process = processes[0]
-    xstype = "centr"
-    dgp_results = dgp_predict(process, xstype, process_features[process])
-    n_experts = len(dgp_results) - 1  # first element is DGP combination
-    expert_xsection_central = np.zeros(n_experts)
-    expert_reg_err = np.zeros(n_experts)
-    for i in range(n_experts):
-        expert_xsection_central[i], expert_reg_err[i-1] = (
-            gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
-                process,
-                xstype,
-                params,
-                *dgp_results[i+1]
-            )
-        )
-    expert_regdown_rel = 1.0 - expert_reg_err / expert_xsection_central
-    expert_regup_rel = 1.0 + expert_reg_err / expert_xsection_central
-
 
     # -- Xsection at lower and higher scale (0.5x and 2x central scale),
     #    relative to the central-scale xsection. To prevent that the
