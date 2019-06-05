@@ -137,10 +137,10 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     # -- Means and uncertainties from all individual GP experts
     # Not very efficient since recomputes the DGP results!
-    n_experts = len(x) - 1  # first element is DGP combination
     process = processes[0]
     xstype = "centr"
     dgp_results = dgp_predict(process, xstype, process_features[process])
+    n_experts = len(dgp_results) - 1  # first element is DGP combination
     expert_mean = np.zeros(n_experts)
     expert_sigma = np.zeros(n_experts)
     for i in range(n_experts):
