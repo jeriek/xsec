@@ -211,7 +211,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     # Print result to screen, depending on verbosity level
     utils.print_result(return_array, verbose)
 
-    return return_array
+    return return_array, expert_mean, expert_sigma
 
 
 def dgp_predict(process, xstype, new_features):
