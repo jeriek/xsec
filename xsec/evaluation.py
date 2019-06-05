@@ -103,7 +103,7 @@ def eval_xsection(verbose=2, check_consistency=True):
                 process,
                 xstype,
                 params,
-                *dgp_predict(process, xstype, process_features[process])
+                *dgp_predict(process, xstype, process_features[process])[0]
             )
             for process in processes
         ]
@@ -134,6 +134,25 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    from the central-scale xsection, relative to the latter.
     regdown_rel = 1.0 - reg_err / xsection_central  # numpy array
     regup_rel = 1.0 + reg_err / xsection_central  # numpy array
+
+    # -- Means and uncertainties from all individual GP experts
+    # Not very efficient since recomputes the DGP results!
+    n_experts = len(x) - 1  # first element is DGP combination
+    process = processes[0]
+    xstype = "centr"
+    dgp_results = dgp_predict(process, xstype, process_features[process])
+    expert_mean = np.zeros(n_experts)
+    expert_sigma = np.zeros(n_experts)
+    for i in range(n_experts):
+        expert_mean[i], expert_sigma[i-1] = (
+            gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
+                process,
+                xstype,
+                params,
+                *dgp_results[i+1]
+            )
+        )
+
 
     # -- Xsection at lower and higher scale (0.5x and 2x central scale),
     #    relative to the central-scale xsection. To prevent that the
@@ -247,7 +266,14 @@ def dgp_predict(process, xstype, new_features):
     # Return mean and std (_not_ variance!)
     sigma_dgp = np.sqrt(var_dgp_inv ** (-1))
 
-    return mu_dgp, sigma_dgp
+    full_return = np.column_stack(
+        (
+            np.concatenate(([mu_dgp], mus)),
+            np.concatenate(([sigma_dgp], sigmas))
+        )
+    )
+
+    return full_return
 
 
 def gp_predict(
