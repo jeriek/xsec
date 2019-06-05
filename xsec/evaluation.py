@@ -141,10 +141,10 @@ def eval_xsection(verbose=2, check_consistency=True):
     xstype = "centr"
     dgp_results = dgp_predict(process, xstype, process_features[process])
     n_experts = len(dgp_results) - 1  # first element is DGP combination
-    expert_mean = np.zeros(n_experts)
-    expert_sigma = np.zeros(n_experts)
+    expert_xsection_central = np.zeros(n_experts)
+    expert_reg_err = np.zeros(n_experts)
     for i in range(n_experts):
-        expert_mean[i], expert_sigma[i-1] = (
+        expert_xsection_central[i], expert_reg_err[i-1] = (
             gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
                 process,
                 xstype,
@@ -152,6 +152,8 @@ def eval_xsection(verbose=2, check_consistency=True):
                 *dgp_results[i+1]
             )
         )
+    expert_regdown_rel = 1.0 - expert_reg_err / expert_xsection_central
+    expert_regup_rel = 1.0 + expert_reg_err / expert_xsection_central
 
 
     # -- Xsection at lower and higher scale (0.5x and 2x central scale),
@@ -211,7 +213,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     # Print result to screen, depending on verbosity level
     utils.print_result(return_array, verbose)
 
-    return return_array, expert_mean, expert_sigma
+    return return_array, expert_xsection_central, expert_regdown_rel, expert_regup_rel
 
 
 def dgp_predict(process, xstype, new_features):
