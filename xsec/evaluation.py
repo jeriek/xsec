@@ -121,28 +121,27 @@ def eval_xsection(verbose=2, check_consistency=True):
     # Consistency within central xsection fixed now
     process = processes[0]
     xstype = "centr"
-    dgp_results = dgp_predict(process, xstype, process_features[process])
-    n_experts = len(dgp_results) - 1  # first element is DGP combination
-    expert_xsection_central = np.zeros(n_experts)
-    expert_reg_err = np.zeros(n_experts)
+    dgp_res = dgp_predict(process, xstype, process_features[process])
+    n_experts = len(dgp_res) - 1  # first element is DGP combination
+    expert_xsection_central = np.zeros(n_experts+1)
+    expert_reg_err = np.zeros(n_experts+1)
     for i in range(n_experts+1):
         expert_xsection_central[i], expert_reg_err[i] = (
             gploader.TRANSFORM_MODULES[(process, xstype)].inverse_transform(
                 process,
                 xstype,
                 params,
-                *dgp_results[i]
+                *dgp_res[i]
             )
         )
+
+    xsection_central = np.array(expert_xsection_central[0])
+    reg_err = np.array(expert_reg_err[0])
+    expert_xsection_central = expert_xsection_central[1:]
+    expert_reg_err = expert_reg_err[1:]
+
     expert_regdown_rel = 1.0 - expert_reg_err / expert_xsection_central
     expert_regup_rel = 1.0 + expert_reg_err / expert_xsection_central
-
-    xsection_central, reg_err = map(
-        np.array, zip(expert_xsection_central[0], expert_reg_err[0])
-    )
-    expert_xsection_central = expert_xsection_central[1:n_experts+1]
-    expert_reg_err = expert_reg_err[1:n_experts+1]
-
 
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
@@ -219,7 +218,6 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     # Print result to screen, depending on verbosity level
     utils.print_result(return_array, verbose)
-
     return return_array, expert_xsection_central, expert_regdown_rel, expert_regup_rel
 
 
