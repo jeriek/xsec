@@ -218,6 +218,8 @@ def dgp_predict(process, xstype, new_features):
         )
         mus[i] = mu
         sigmas[i] = sigma
+        # Regularize errors below the intrinsic Prospino numerical integration error
+        sigmas[i] = max(sigma,1.0E-3*mu)
 
     # Shorthand variables for the 'communication expert' (i=0)
     mu_c = mus[0]
