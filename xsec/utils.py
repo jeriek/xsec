@@ -295,14 +295,19 @@ def get_references(pid1, pid2):
     Collect references for a particular process (stored in global
     REFERENCES).
     """
-    # Prospino and PDF4LHC references currently common to all processes
-    newref = ["Beenakker:1996ed", "Butterworth:2015oua"]
+    
+    from xsec.parameters import EWINO_IDS
+
+    # Prospino, PDF4LHC and LHAPDF references currently common to all processes
+    newref = ["Beenakker:1996ed", "Buckley:2014ana", "Butterworth:2015oua"]
 
     # Add process specific papers to reference list
     if (pid1 == 1000006 and pid2 == -1000006) or (
         pid1 == 1000005 and pid2 == -1000005
     ):
         newref.append("Beenakker:1997ut")
+    elif (pid1 in EWINO_IDS and pid2 in EWINO_IDS):
+        newref.append("Beenakker:1999xh")
     else:
         newref.append("Beenakker:1996ch")
 
@@ -321,12 +326,16 @@ def fetch_bibtex(ref):
         bibtex = '@article{Beenakker:1996ed,\n        author         = "Beenakker, W. and Hopker, R. and Spira, M.",\n        title          = "{PROSPINO: A Program for the production of supersymmetric\n                          particles in next-to-leading order QCD}",\n        year           = "1996",\n        eprint         = "hep-ph/9611232",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        SLACcitation   = "%%CITATION = HEP-PH/9611232;%%"\n}'
     elif ref == "Beenakker:1997ut":
         bibtex = '@article{Beenakker:1997ut,\n        author         = "Beenakker, W. and Kramer, M. and Plehn, T. and Spira, M.\n                          and Zerwas, P. M.",\n        title          = "{Stop production at hadron colliders}",\n        journal        = "Nucl. Phys.",\n        volume         = "B515",\n        year           = "1998",\n        pages          = "3-14",\n        doi            = "10.1016/S0550-3213(98)00014-5",\n        eprint         = "hep-ph/9710451",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        reportNumber   = "DESY-97-214, CERN-TH-97-177, RAL-TR-97-056",\n        SLACcitation   = "%%CITATION = HEP-PH/9710451;%%"\n}'
+    elif ref == "Beenakker:1999xh":
+        bibtex = '@article{Beenakker:1999xh,\n        author         = "Beenakker, W. and Klasen, M. and Kramer, M. and Plehn, T. and Spira, M. and Zerwas, P. M.",\n        title          = "{The Production of charginos / neutralinos and sleptons at hadron colliders}",\n        journal        = "Phys. Rev. Lett.",\n        volume         = "83",\n        year           = "1999",\n        pages          = "3780-3783",\n        doi            = "10.1103/PhysRevLett.100.029901, 10.1103/PhysRevLett.83.3780",\n        note           = "[Erratum: Phys. Rev. Lett.100,029901(2008)]",\n        eprint         = "hep-ph/9906298",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        reportNumber   = "CERN-TH-99-159, DESY-99-055, DTP-99-44, MADPH-99-1114, ANL-HEP-PR-99-71",\n        SLACcitation   = "%%CITATION = HEP-PH/9906298;%%"\n}'
     elif ref == "Butterworth:2015oua":
         bibtex = '@article{Butterworth:2015oua,\n        author         = "Butterworth, Jon and others",\n        title          = "{PDF4LHC recommendations for LHC Run II}",\n        journal        = "J. Phys.",\n        volume         = "G43",\n        year           = "2016",\n        pages          = "023001",\n        doi            = "10.1088/0954-3899/43/2/023001",\n        eprint         = "1510.03865",\n        archivePrefix  = "arXiv",\n        primaryClass   = "hep-ph",\n        reportNumber   = "OUTP-15-17P, SMU-HEP-15-12, TIF-UNIMI-2015-14,\n                          LCTS-2015-27, CERN-PH-TH-2015-249",\n        SLACcitation   = "%%CITATION = ARXIV:1510.03865;%%"\n}'
     elif ref == "Buckley:2013jua":
         bibtex = '@article{Buckley:2013jua,\n    author         = "Buckley, Andy",\n    title          = "{PySLHA: a Pythonic interface to SUSY Les Houches Accord\n                      data}",\n    journal        = "Eur. Phys. J.",\n    volume         = "C75",\n    year           = "2015",\n    umber         = "10",\n    pages          = "467",\n    doi            = "10.1140/epjc/s10052-015-3638-8",\n    eprint         = "1305.4194",\n    archivePrefix  = "arXiv",\n    primaryClass   = "hep-ph",\n    reportNumber   = "MCNET-13-06, GLAS-PPE-2015-02",\n    SLACcitation   = "%%CITATION = ARXIV:1305.4194;%%"\n}'
     elif ref == "Skands:2003cj":
         bibtex = '@article{Skands:2003cj,\n    author         = "Skands, Peter Z. and others",\n    title          = "{SUSY Les Houches accord: Interfacing SUSY spectrum\n                      calculators, decay packages, and event generators}",\n    journal        = "JHEP",\n    volume         = "07",\n    year           = "2004",\n    pages          = "036",\n    doi            = "10.1088/1126-6708/2004/07/036",\n    eprint         = "hep-ph/0311123",\n    archivePrefix  = "arXiv",\n    primaryClass   = "hep-ph",\n    reportNumber   = "LU-TP-03-39, SHEP-03-24, CERN-TH-2003-204, ZU-TH-15-03,\n                      LMU-19-03, DCPT-03-108, IPPP-03-54, CTS-IISC-2003-07,\n                      DESY-03-166, MPP-2003-111",\n    SLACcitation   = "%%CITATION = HEP-PH/0311123;%%"}'
+    elif ref == "Buckley:2014ana":
+        bibbtex = '@article{Buckley:2014ana,\n    author         = "Buckley, Andy and Ferrando, James and Lloyd, Stephen and Nordström, Karl and Page, Ben and Rüfenacht, Martin and Schönherr, Marek and Watt, Graeme",\n    title          = "{LHAPDF6: parton density access in the LHC precision era}",\n    journal        = "Eur. Phys. J.",\n    volume         = "C75",\n    year           = "2015",\n    pages          = "132",\n    doi            = "10.1140/epjc/s10052-015-3318-8",\n    eprint         = "1412.7420",\n    archivePrefix  = "arXiv",\n    primaryClass   = "hep-ph",\n    reportNumber   = "GLAS-PPE-2014-05, MCNET-14-29, IPPP-14-111, DCPT-14-222",\n    SLACcitation   = "%%CITATION = ARXIV:1412.7420;%%"\n}'
     else:
         bibtex = ""
 

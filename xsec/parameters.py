@@ -26,9 +26,19 @@ PARAMS = {
     "m2000005": None,  # squark mass [GeV]
     "m2000006": None,  # squark mass [GeV]
     "m1000021": None,  # gluino mass [GeV]
+    "m1000022": None,  # gluino mass [GeV]
+    "m1000023": None,  # gluino mass [GeV]
     "mean": None,  # mean mass of 1st and 2nd gen. squarks [GeV]
     "sbotmix11": None,
     "stopmix11": None,
+    "nmix11": None,
+    "nmix12": None,
+    "nmix13": None,
+    "nmix14": None,
+    "nmix21": None,
+    "nmix22": None,
+    "nmix23": None,
+    "nmix24": None,
     "energy": None,  # CoM energy sqrt(s) [GeV]
 }
 
@@ -67,7 +77,10 @@ SQUARK_IDS = [
 ]
 ANTISQUARK_IDS = [-squark_id for squark_id in SQUARK_IDS]
 GLUINO_ID = 1000021
-SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID]
+NEUTRALINO_IDS = [1000022, 1000023, 1000025, 1000035]
+CHARGINO_IDS = [1000024, 1000037, -1000024, -1000037]
+EWINO_IDS = NEUTRALINO_IDS + CHARGINO_IDS
+SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID] + EWINO_IDS
 
 
 ###############################################

@@ -20,8 +20,7 @@ import xsec.parameters as parameters
 # "gprocs" in the current working directory. This can be overwritten by
 # directly accessing DATA_DIR in the run script (before loading any
 # processes), or, preferably, by specifying the data_dir keyword inside
-# init(). If DATA_DIR was already modified directly, this value is used,
-# instead of the data_dir value.
+# init().
 DATA_DIR = ""
 
 # List of selected processes (2-tuples of sparticle ids), to be set by
@@ -90,14 +89,13 @@ def init(
     # --- Setting the data directory
     global DATA_DIR
     # If the global variable was already directly modified by the user,
-    # don't overwrite but search for that path (this manual override of
-    # DATA_DIR takes precedence, use with caution!)
+    # don't overwrite but search for that path
     if DATA_DIR:
         DATA_DIR = os.path.expandvars(os.path.expanduser(DATA_DIR))
     # If the DATA_DIR variable was untouched, use the given data_dir
     # (by default "gprocs", such that ./gprocs in the current working
     # directory is set as GP directory)
-    elif data_dir:
+    if data_dir:
         DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
     # Else, if the user set both DATA_DIR and data_dir to ""
     else:
@@ -359,7 +357,6 @@ def finalise():
         "A list of references that form the basis of the results in this run "
         "has been written to {file}.".format(file=ref_file)
     )
-
 
 def clear_cache():
     """
