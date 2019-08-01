@@ -289,7 +289,7 @@ def gp_predict(
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
-        kernel = kernels.get_kernel(gp_model["kernel"])
+        kernel = kernels.get_kernel(gp_model["kernel_name"], gp_model["kernel"])
 
     except KeyError:
         raise KeyError(

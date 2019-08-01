@@ -45,7 +45,7 @@ PARAMS = {
 # List of all parameter names
 PARAM_NAMES = PARAMS.keys()
 
-# List of mass parameters considered when taking the mean squark mass
+# List of mass parameters considered for the mean squark mass
 MEAN_INDEX = [
     "m1000004",
     "m1000003",
@@ -255,19 +255,11 @@ def check_parameter(key):
             )
     # If we get here we have a set mass parameter
     else:
-        if PARAMS[key] > 3000:
+        if (PARAMS[key] > 3000) or (PARAMS[key] < 200 and key in MEAN_INDEX+"m1000021") or (PARAMS[key] < 100):
             raise ValueError(
                 "The mass feature '{feature}' has been set to "
                 "a value ({value}) where the evaluation is an "
                 "extrapolation outside of training data.".format(
-                    feature=key, value=PARAMS[key]
-                )
-            )
-        elif PARAMS[key] < 50:
-            raise ValueError(
-                "The mass feature '{feature}' has been set to {value}, "
-                "which is close to half the Z mass. Cross section "
-                "predictions here may be unreliable!".format(
                     feature=key, value=PARAMS[key]
                 )
             )

@@ -88,13 +88,13 @@ def init(
 
     # --- Setting the data directory
     global DATA_DIR
-    # If the global variable was already directly modified by the user,
-    # don't overwrite but search for that path
+    # If the global variable was directly set by the user, search for that path
     if DATA_DIR:
         DATA_DIR = os.path.expandvars(os.path.expanduser(DATA_DIR))
-    # If the DATA_DIR variable was untouched, use the given data_dir
+    # If set, use the given data_dir
     # (by default "gprocs", such that ./gprocs in the current working
     # directory is set as GP directory)
+    # This will override the direct setting of DATA_DIR.
     if data_dir:
         DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
     # Else, if the user set both DATA_DIR and data_dir to ""
@@ -257,6 +257,7 @@ def load_single_process(process_xstype):
             gp_reco["L_inv"] = gp_model["L_inv"].astype("float64")
             gp_reco["alpha"] = gp_model["alpha"].astype("float64")
             gp_reco["kernel"] = gp_model["kernel"]  # kernel parameters
+            gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 

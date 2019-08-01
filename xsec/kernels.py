@@ -105,7 +105,7 @@ def matern_kernel(X, Y=None, length_scale=1.0, nu=1.5):
     return K
 
 
-def get_kernel(kernel_params):
+def get_kernel(kernel, kernel_params):
     """
     Construct a kernel function from its parameters. In particular, the
     returned functions are functions of X and Y (optional), and have the
@@ -158,6 +158,8 @@ def get_kernel(kernel_params):
         prefactor = kernel_params["matern_prefactor"]
         nu = kernel_params["matern_nu"]
         length_scale = kernel_params["matern_lengthscale"]
+        
+        print('I was given the following kernel: ', kernel)
 
         # Return sum of white kernel and (prefactor times) Matern kernel value
         if Y is None:
