@@ -26,8 +26,8 @@ PARAMS = {
     "m2000005": None,  # squark mass [GeV]
     "m2000006": None,  # squark mass [GeV]
     "m1000021": None,  # gluino mass [GeV]
-    "m1000022": None,  # gluino mass [GeV]
-    "m1000023": None,  # gluino mass [GeV]
+    "m1000022": None,  # chi_1^0 mass [GeV]
+    "m1000023": None,  # chi_2^0 mass [GeV]
     "mean": None,  # mean mass of 1st and 2nd gen. squarks [GeV]
     "sbotmix11": None,
     "stopmix11": None,
@@ -45,6 +45,38 @@ PARAMS = {
 # List of all parameter names
 PARAM_NAMES = PARAMS.keys()
 
+# Dictionary of all parameter domains
+PARAMS_DOM = {
+    "m1000001": [200,3000],  # squark mass [GeV]
+    "m1000002": [200,3000],  # squark mass [GeV]
+    "m1000003": [200,3000],  # squark mass [GeV]
+    "m1000004": [200,3000],  # squark mass [GeV]
+    "m1000005": [100,3000],  # squark mass [GeV]
+    "m1000006": [100,3000],  # squark mass [GeV]
+    "m2000001": [200,3000],  # squark mass [GeV]
+    "m2000002": [200,3000],  # squark mass [GeV]
+    "m2000003": [200,3000],  # squark mass [GeV]
+    "m2000004": [200,3000],  # squark mass [GeV]
+    "m2000005": [100,3000],  # squark mass [GeV]
+    "m2000006": [100,3000],  # squark mass [GeV]
+    "m1000021": [200,3000],  # gluino mass [GeV]
+    "m1000022": [100,1500],  # chi_1^0  mass [GeV]
+    "m1000023": [100,1500],  # chi_2^0  mass [GeV]
+    "mean": [200,3000],  # mean mass of 1st and 2nd gen. squarks [GeV]
+    "sbotmix11": [-1,1],
+    "stopmix11": [-1,1],
+    "nmix11": [-1,1],
+    "nmix12": [-1,1],
+    "nmix13": [-1,1],
+    "nmix14": [-1,1],
+    "nmix21": [-1,1],
+    "nmix22": [-1,1],
+    "nmix23": [-1,1],
+    "nmix24": [-1,1],
+    "energy": None,  # CoM energy sqrt(s) [GeV]
+}
+
+
 # List of mass parameters considered for the mean squark mass
 MEAN_INDEX = [
     "m1000004",
@@ -56,9 +88,6 @@ MEAN_INDEX = [
     "m2000003",
     "m2000004",
 ]
-
-# List of mixing angle parameters
-MIXING_INDEX = ["sbotmix11", "stopmix11"]
 
 # List of sparticle PDG ids
 SQUARK_IDS = [
@@ -245,24 +274,15 @@ def check_parameter(key):
             "The feature '{feature}' used in this cross-section"
             " evaluation has not been set!".format(feature=key)
         )
-    # Check that the value is sensible
-    # First check if we have a mixing parameter
-    elif key in MIXING_INDEX:
-        if abs(PARAMS[key]) > 1.0:
-            raise ValueError(
-                "The absolute value of the mixing angle "
-                "'{feature}' is greater than one!".format(feature=key)
-            )
-    # If we get here we have a set mass parameter
-    else:
-        if (PARAMS[key] > 3000) or (PARAMS[key] < 200 and key in MEAN_INDEX+"m1000021") or (PARAMS[key] < 100):
-            raise ValueError(
-                "The mass feature '{feature}' has been set to "
-                "a value ({value}) where the evaluation is an "
-                "extrapolation outside of training data.".format(
-                    feature=key, value=PARAMS[key]
-                )
-            )
+    
+    # Check that the value is in the domain of validity of the GPs
+    elif (PARAMS[key] < PARAMS_DOM[key][0]) or (PARAMS[key] > PARAMS_DOM[key][1]):
+        raise ValueError(
+            "The mass feature '{feature}' has been set to "
+            "a value ({value}) where the evaluation is an "
+            "extrapolation outside of the validity of the "
+            "training.".format(feature=key, value=PARAMS[key])
+        )
 
 
 def check_parameters(parameters):

@@ -257,7 +257,11 @@ def load_single_process(process_xstype):
             gp_reco["L_inv"] = gp_model["L_inv"].astype("float64")
             gp_reco["alpha"] = gp_model["alpha"].astype("float64")
             gp_reco["kernel"] = gp_model["kernel"]  # kernel parameters
-            gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
+            # TODO: remove try block when gps ready
+            try:
+                gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
+            except:
+                print("Using old GPs...")
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 
