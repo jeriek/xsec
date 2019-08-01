@@ -159,7 +159,7 @@ def get_kernel(kernel, kernel_params):
         nu = kernel_params["matern_nu"]
         length_scale = kernel_params["matern_lengthscale"]
         
-        print('I was given the following kernel: ', kernel)
+        #print('I was given the following kernel: ', kernel)
 
         # Return sum of white kernel and (prefactor times) Matern kernel value
         if Y is None:

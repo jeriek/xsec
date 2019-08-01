@@ -262,6 +262,7 @@ def load_single_process(process_xstype):
                 gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
             except:
                 print("Using old GPs...")
+                gp_reco["kernel_name"] = "default"
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 
