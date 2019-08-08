@@ -13,6 +13,7 @@ import xsec.parameters as parameters
 # Global variables                            #
 ###############################################
 
+# fmt: off
 FEATURES_LIST = {
     # --- Gluino--gluino
     (1000021, 1000021): [
@@ -110,14 +111,14 @@ FEATURES_LIST = {
     (2000003, -2000003): ["m1000021", "m2000003", "mean"],
     (2000003, -2000004): ["m1000021", "m2000003", "m2000004", "mean"],
     (2000004, -2000004): ["m1000021", "m2000004", "mean"],
-    # Sbottom--anti-sbottom
+    # --- Sbottom--anti-sbottom
     (1000005, -1000005): ["m1000021", "m1000005", "sbotmix11", "mean"],
     (2000005, -2000005): ["m1000021", "m2000005", "sbotmix11", "mean"],
-    # Stop--anti-stop
+    # --- Stop--anti-stop
     (1000006, -1000006): ["m1000021", "m1000006", "stopmix11", "mean"],
     (2000006, -2000006): ["m1000021", "m2000006", "stopmix11", "mean"],
 
-    # Neutralino and chargino production
+    # --- Neutralino and chargino production
     (1000022, 1000022): ["m1000022",
                          "nmix11", "nmix12", "nmix13", "nmix14",
                          "m1000021", "mean",
@@ -136,7 +137,7 @@ FEATURES_LIST = {
                          "m2000001", "m2000002", "m2000003", "m2000004"],
 
 }
-
+# fmt: on
 
 ###############################################
 # Get functions                               #
@@ -148,7 +149,7 @@ def get_features(pid1, pid2):
     Function that provides features for a PID pair. The order of the
     PIDs is irrelevant, and will return the charge conjugate process if that
     exists instead.
-    
+
     The function will raise an error if the key is not found.
     """
     try:
@@ -166,7 +167,7 @@ def get_features(pid1, pid2):
                     raise KeyError(
                         "The entered process ({pid1}, {pid2}) is not in the list"
                         "of allowed processes!".format(pid1=pid1, pid2=pid2)
-                                   )
+                    )
 
 
 def get_features_dict(process_list):
@@ -218,14 +219,15 @@ def get_unique_features(process_list):
         feature_list = list(set(feature_list + features))
     return feature_list
 
+
 def get_cc(pid):
     """
     Returns the charge conjugate of a PID code or the same code if no charge
     conjugate exists.
     """
-    if(abs(pid) in parameters.SQUARK_IDS) :
+    if abs(pid) in parameters.SQUARK_IDS:
         return -pid
-    elif(pid in parameters.CHARGINO_IDS):
+    elif pid in parameters.CHARGINO_IDS:
         return -pid
     else:
         return pid
