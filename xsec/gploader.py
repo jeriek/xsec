@@ -260,9 +260,11 @@ def load_single_process(process_xstype):
             # TODO: remove try block when gps ready
             try:
                 gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
+                gp_reco["kernel_parameters"] = gp_model["kernel_parameters"] # parameters of kernel
             except:
                 print("Using old GPs...")
                 gp_reco["kernel_name"] = "default"
+                gp_reco["kernel_parameters"] = "default"
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 

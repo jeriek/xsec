@@ -69,6 +69,31 @@ def white_kernel(X, Y=None, noise_level=1.0):
     return np.zeros((X.shape[0], Y.shape[0]))
 
 
+def linear_kernel(X, Y=None, c=1.0):
+    """
+    Implementation of a linear kernel.
+        
+    The linear kernel is non-stationary. The parameters c of the linear
+    kernel specify the origin. The kernel is given by:
+        
+    k(x_i, x_j) = ((x_i - c) \cdot (x_j - c))
+    
+    """
+    
+    X = np.atleast_2d(X)
+    c = _check_length_scale(X, c)
+    
+    # Rescale X
+    Xsub = X - c
+
+    if Y is None:
+        K = np.inner(Xsub, Xsub)
+    else:
+        K = np.inner(Xsub, Y - c)
+    
+    return K
+
+
 def matern_kernel(X, Y=None, length_scale=1.0, nu=1.5):
     """
     Standard Matern kernel implementation, parametrised as in
