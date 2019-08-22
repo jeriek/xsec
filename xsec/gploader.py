@@ -9,7 +9,9 @@ import imp
 import joblib  # Needs v0.12.2 or later
 
 import xsec.utils as utils
+import xsec.kernels as kernels
 import xsec.parameters as parameters
+
 
 ###############################################
 # Global variables                            #
@@ -256,15 +258,7 @@ def load_single_process(process_xstype):
             gp_reco["X_train"] = gp_model["X_train"].astype("float64")
             gp_reco["L_inv"] = gp_model["L_inv"].astype("float64")
             gp_reco["alpha"] = gp_model["alpha"].astype("float64")
-            gp_reco["kernel"] = gp_model["kernel"]  # kernel parameters
-            # TODO: remove try block when gps ready
-            try:
-                gp_reco["kernel_name"] = gp_model["kernel_name"] # structure of kernel
-                gp_reco["kernel_parameters"] = gp_model["kernel_parameters"] # parameters of kernel
-            except:
-                print("Using old GPs...")
-                gp_reco["kernel_name"] = "default"
-                gp_reco["kernel_parameters"] = "default"
+            gp_reco["kernel"] = kernels.get_kernel(gp_model["kernel_string"])
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
 

@@ -12,7 +12,6 @@ import xsec.utils as utils
 import xsec.gploader as gploader
 import xsec.parameters as parameters
 import xsec.features as features
-import xsec.kernels as kernels
 
 
 ###############################################
@@ -284,12 +283,11 @@ def gp_predict(
         else:
             gp_model = gploader.PROCESS_DICT[process_xstype][index]
 
-        kernel = gp_model["kernel"]
         X_train = gp_model["X_train"]
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
-        kernel = kernels.get_kernel(gp_model["kernel_name"], gp_model["kernel"])
+        kernel = gp_model["kernel"]
 
     except KeyError:
         raise KeyError(
