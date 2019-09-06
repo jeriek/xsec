@@ -71,25 +71,29 @@ else:
 def get_processdir_name(process_xstype):
     """
     Get the name of the directory where the GPs for a specific process
-    and cross-section type are stored.
+    and cross-section type are stored. The PIDs in the process tuple
+    should already match those of the trained process, in the right
+    order, as provided by gploader.get_trained_process().
     """
 
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
 
     # Decide process name
-    # Check if one of the partons is a gluino
-    gluino_id = 1000021
-    if parton1 == gluino_id:
-        processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-    elif parton2 == gluino_id:
-        processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
+    processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
 
-    # Otherwise name starts with the largest parton PID
-    elif abs(parton1) >= abs(parton2):
-        processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-    elif abs(parton1) < abs(parton2):
-        processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
+    # TODO: remove
+    # Check if one of the partons is a gluino
+    # gluino_id = 1000021
+    # if parton1 == gluino_id:
+    #     processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
+    # elif parton2 == gluino_id:
+    #     processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
+
+    # # Otherwise name starts with the largest parton PID
+    # elif abs(parton1) >= abs(parton2):
+    #     processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
+
 
     # Add training file suffixes depending on the xstype
     try:
@@ -168,6 +172,17 @@ def get_xstype_from_process_id(process_xstype):
     xstype = process_xstype[-1]
 
     return xstype
+
+
+def unknown_process_error(pid1, pid2):
+    """
+    Raise an error noting that there is no training data for the
+    process requested.
+    """
+    return KeyError("Unknown process requested: ({pid1}, {pid2}) "
+                   "is not in the list of allowed processes!".format(
+                       pid1=pid1, pid2=pid2
+                   ))
 
 
 ###############################################

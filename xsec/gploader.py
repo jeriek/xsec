@@ -153,11 +153,12 @@ def set_processes(process_tuple_list):
     Set the global list of processes to be evaluated. Called in
     load_processes().
     """
+    trained_process_list = []
     # Check if process exists (right format, known sparticles)
     for process in process_tuple_list:
         if len(process) == 2:
             if all((pid in parameters.SPARTICLE_IDS) for pid in process):
-                continue
+                trained_process_list.append(get_trained_process(*process))
             else:
                 raise ValueError(
                     "One or more particle IDs entered ({input}) are not in the"
@@ -175,7 +176,7 @@ def set_processes(process_tuple_list):
             )
     # Only set PROCESSES and load the GPs if all checks were passed
     global PROCESSES
-    PROCESSES = process_tuple_list
+    PROCESSES = trained_process_list
 
 
 def get_processes():

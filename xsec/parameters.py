@@ -105,6 +105,10 @@ SQUARK_IDS = [
     2000006,
 ]
 ANTISQUARK_IDS = [-squark_id for squark_id in SQUARK_IDS]
+ALL_SQUARK_IDS = SQUARK_IDS + ANTISQUARK_IDS
+GEN3_SQUARK_IDS = [1000005, 1000006, 2000005, 2000006]
+GEN3_ANTISQUARK_IDS = [-squark_id for squark_id in GEN3_SQUARK_IDS]
+ALL_GEN3_IDS = GEN3_SQUARK_IDS + GEN3_ANTISQUARK_IDS
 GLUINO_ID = 1000021
 NEUTRALINO_IDS = [1000022, 1000023, 1000025, 1000035]
 CHARGINO_IDS = [1000024, 1000037, -1000024, -1000037]
@@ -274,7 +278,7 @@ def check_parameter(key):
             "The feature '{feature}' used in this cross-section"
             " evaluation has not been set!".format(feature=key)
         )
-    
+
     # Check that the value is in the domain of validity of the GPs
     elif (PARAMS[key] < PARAMS_DOM[key][0]) or (PARAMS[key] > PARAMS_DOM[key][1]):
         raise ValueError(
@@ -388,7 +392,7 @@ def write_slha(filename, results):
 
     WARNING: Our treatment of PDF errors breaks the XSECTION standard
              by adding 1 and 2 to the central PDF set index to give the
-             lower and upper 1/sigma uncertainty in cross section from
+             lower and upper 1-sigma uncertainty in cross section from
              the PDF variation sets, following PDF4LHC guidelines.
     """
 
