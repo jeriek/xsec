@@ -73,7 +73,7 @@ def get_processdir_name(process_xstype):
     Get the name of the directory where the GPs for a specific process
     and cross-section type are stored. The PIDs in the process tuple
     should already match those of the trained process, in the right
-    order, as provided by gploader.get_trained_process().
+    order, as provided by features.get_trained_process().
     """
 
     # Get the partons of the process
