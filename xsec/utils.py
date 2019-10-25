@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Internal helper functions.
 """
@@ -292,7 +293,7 @@ def print_result(return_array, verbose=2):
 
 
 def print_references(file_handle=None):
-    """"
+    """
     Print references to screen, or to a file if a file handle is
     supplied.
     """
@@ -310,16 +311,14 @@ def get_references(pid1, pid2):
     Collect references for a particular process (stored in global
     REFERENCES).
     """
-    
-    from xsec.parameters import EWINO_IDS
+
+    from xsec.parameters import EWINO_IDS, ALL_GEN3_IDS
 
     # Prospino, PDF4LHC and LHAPDF references currently common to all processes
     newref = ["Beenakker:1996ed", "Buckley:2014ana", "Butterworth:2015oua"]
 
     # Add process specific papers to reference list
-    if (pid1 == 1000006 and pid2 == -1000006) or (
-        pid1 == 1000005 and pid2 == -1000005
-    ):
+    if pid1 in ALL_GEN3_IDS and pid2 == -pid1:
         newref.append("Beenakker:1997ut")
     elif (pid1 in EWINO_IDS and pid2 in EWINO_IDS):
         newref.append("Beenakker:1999xh")
