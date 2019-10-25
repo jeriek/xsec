@@ -426,98 +426,46 @@ def write_slha(filename, results):
     # Loop over processes
     for i, process in enumerate(processes):
         fstate = [process[0], process[1]]
-        # Indexing of result for more than one process
-        result = results[:, i]
+        # Unpacking of result for more than one process
+        (
+            central,
+            regdown_rel,
+            regup_rel,
+            scaledown_rel,
+            scaleup_rel,
+            pdfdown_rel,
+            pdfup_rel,
+            alphasdown_rel,
+            alphasup_rel,
+        ) = results[:, i]
         # Make process object
         proc = pyslha.Process(istate, fstate)
+
         # Add cross sections to process object
-        central_xs = result[0] / 1000.0  # Convert to pb
-        xs = central_xs
         # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f,
         # kappa_r, pdf_id, xs, code)
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            1.0,
-            1.0,
-            pdf_id,
-            xs,
-            code,
-        )  # Central scale
-        xs = central_xs * result[3]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            2.0,
-            2.0,
-            pdf_id,
-            xs,
-            code,
-        )  # Double scale
-        xs = central_xs * result[4]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            0.5,
-            0.5,
-            pdf_id,
-            xs,
-            code,
-        )  # Half scale
-        xs = central_xs * result[5]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            1.0,
-            1.0,
-            pdf_id + 1,
-            xs,
-            code,
-        )  # PDF down
-        xs = central_xs * result[6]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            1.0,
-            1.0,
-            pdf_id + 2,
-            xs,
-            code,
-        )  # PDF up
-        xs = central_xs * result[7]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            1.0,
-            1.0,
-            pdf_id + 31,
-            xs,
-            code,
-        )  # \alpha_s down
-        xs = central_xs * result[8]
-        proc.add_xsec(
-            sqrts,
-            scale_scheme,
-            qcd_order,
-            ew_order,
-            1.0,
-            1.0,
-            pdf_id + 32,
-            xs,
-            code,
-        )  # \alpha_s up
+        def_args = (sqrts, scale_scheme, qcd_order, ew_order)
+        # Central scale
+        central_xs = central / 1000.0  # Convert to pb
+        proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id, central_xs, code)))
+        # Half scale
+        scaledown_xs = central_xs * scaledown_rel
+        proc.add_xsec(*(def_args + (0.5, 0.5, pdf_id, scaledown_xs, code)))
+        # Double scale
+        scaleup_xs = central_xs * scaleup_rel
+        proc.add_xsec(*(def_args + (2.0, 2.0, pdf_id, scaleup_xs, code)))
+        # PDF down
+        pdfdown_xs = central_xs * pdfdown_rel
+        proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 1, pdfdown_xs, code)))
+        # PDF up
+        pdfup_xs = central_xs * pdfup_rel
+        proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 2, pdfup_xs, code)))
+        # \alpha_s
+        asdown_xs = central_xs * alphasdown_rel
+        proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 31, asdown_xs, code)))
+        # \alpha_s up
+        asup_xs = central_xs * alphasup_rel
+        proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 32, asup_xs, code)))
 
         # Construct dictionary for writing
         xsection = {tuple(istate + fstate): proc}
