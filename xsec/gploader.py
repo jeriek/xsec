@@ -11,6 +11,7 @@ import joblib  # Needs v0.12.2 or later
 import xsec.utils as utils
 import xsec.kernels as kernels
 import xsec.parameters as parameters
+import xsec.features as features
 
 
 ###############################################
@@ -158,7 +159,7 @@ def set_processes(process_tuple_list):
     for process in process_tuple_list:
         if len(process) == 2:
             if all((pid in parameters.SPARTICLE_IDS) for pid in process):
-                trained_process_list.append(get_trained_process(*process))
+                trained_process_list.append(features.get_trained_process(*process))
             else:
                 raise ValueError(
                     "One or more particle IDs entered ({input}) are not in the"
