@@ -343,9 +343,15 @@ def check_parameters(parameters):
 
 def import_slha(filename):
     """
-    Import parameters from SLHA-file.
+    Import parameters from SLHA file.
     This also calculates a mean squark mass for the first two generations.
+
+    Parameters
+    ----------
+    filename : string
+        Filename of SLHA file to import
     """
+
     # Try to open file (expand any environment variables and ~)
     filename = os.path.expandvars(os.path.expanduser(filename))
     try:
@@ -357,6 +363,39 @@ def import_slha(filename):
                 file=filename
             )
         )
+
+    # Send the slha.Doc object to the import_slha_doc function
+    import_slha_doc(slha)
+
+
+def import_slha_string(slha_string):
+    """
+    Import parameters from a string in SLHA format.
+    This also calculates a mean squark mass for the first two generations.
+
+    Parameters
+    ----------
+    slha_string : string
+        SLHA content to import
+    """
+
+    # Parse the SLHA content with pyslha
+    slha = pyslha.readSLHA(slha_string, ignoreblocks=["DCINFO"])
+
+    # Send the slha.Doc object to the import_slha_doc function
+    import_slha_doc(slha)
+
+
+def import_slha_doc(slha):
+    """
+    Import parameters from a pyslha.Doc object.
+    This also calculates a mean squark mass for the first two generations.
+
+    Parameters
+    ----------
+    slha : pyslha.Doc
+        SLHA content to import
+    """
 
     # Find masses
     PARAMS["m1000001"] = slha.blocks["MASS"][1000001]
