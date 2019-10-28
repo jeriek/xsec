@@ -220,8 +220,12 @@ def load_single_process(process_xstype):
 
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
+    trained_process = features.get_trained_process(
+        *utils.get_process_from_process_id(process_xstype))
+    xstype = utils.get_xstype_from_process_id(process_xstype)
     process_dir = os.path.join(
-        DATA_DIR, utils.get_processdir_name(process_xstype)
+        DATA_DIR, utils.get_processdir_name(
+            utils.get_process_id(trained_process, xstype))
     )
 
     # Collect the GP model data file locations (and avoid loading
