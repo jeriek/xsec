@@ -16,7 +16,9 @@ import xsec.parameters as parameters
 
 # fmt: off
 FEATURES_LIST = {
-    # Process identification key: PID tuple (sorted in ascending order)
+    # Process identification key: PID tuple
+    # - sorted in ascending order
+    # - start with most negative PID if ~q~q*: (-1000004, 1000003)
     # --- Gluino--gluino
     # [Order: gluino, squarks (ascending PID), mean 1st/2nd gen. squark mass]
     (1000021, 1000021): [
