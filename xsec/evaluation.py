@@ -118,7 +118,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
     xsection_central, reg_err = map(
-        np.array, zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"]))
+        np.array, list(zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
     )
     # xsection_central, reg_err = map(
     #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
@@ -143,16 +143,16 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_scldn, _ = np.array(zip(*dgp_results["scldn"]))
-    mu_dgp_sclup, _ = np.array(zip(*dgp_results["sclup"]))
+    mu_dgp_scldn, _ = np.array(list(zip(*dgp_results["scldn"])))
+    mu_dgp_sclup, _ = np.array(list(zip(*dgp_results["sclup"])))
 
-    scaledown_rel = np.array(map(np.min, zip(mu_dgp_scldn, mu_dgp_sclup)))
-    scaleup_rel = np.array(map(np.max, zip(mu_dgp_scldn, mu_dgp_sclup)))
+    scaledown_rel = np.array(list(map(np.min, list(zip(mu_dgp_scldn, mu_dgp_sclup)))))
+    scaleup_rel = np.array(list(map(np.max, list(zip(mu_dgp_scldn, mu_dgp_sclup)))))
 
     # -- Xsection deviating one PDF error away from the
     #    central-scale xsection, relative to the latter.
     # Get the DGP means, discard regression errors on the variations
-    delta_pdf_rel, _ = np.array(zip(*dgp_results["pdf"]))
+    delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
 
     pdfdown_rel = 1.0 - delta_pdf_rel
     pdfup_rel = 1.0 + delta_pdf_rel
@@ -160,13 +160,13 @@ def eval_xsection(verbose=2, check_consistency=True):
     # -- Xsection deviating one symmetrised alpha_s error away from
     #    the central-scale xsection, relative to the latter.
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_adn, _ = np.array(zip(*dgp_results["scldn"]))
-    mu_dgp_aup, _ = np.array(zip(*dgp_results["sclup"]))
+    mu_dgp_adn, _ = np.array(list(zip(*dgp_results["scldn"])))
+    mu_dgp_aup, _ = np.array(list(zip(*dgp_results["sclup"])))
 
     delta_alphas_rel = np.array(
         [
             0.5 * (abs(aup - 1.0) + abs(1.0 - adn))
-            for (aup, adn) in zip(mu_dgp_aup, mu_dgp_adn)
+            for (aup, adn) in list(zip(mu_dgp_aup, mu_dgp_adn))
         ]
     )
 

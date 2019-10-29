@@ -194,7 +194,7 @@ def get_features_dict(process_list):
             features_dict[param] = parameters.get_parameter(param)
 
         # Ordered list since derived from ordered dict!
-        features = features_dict.values()
+        features = list(features_dict.values())
 
         # Add features to feature array
         all_features_dict.update({process: features})
