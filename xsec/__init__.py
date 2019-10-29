@@ -33,6 +33,7 @@ from xsec.parameters import (
     get_parameter,
     get_parameters,
     import_slha,
+    import_slha_string,
     write_slha,
 )
 from xsec.features import get_features, get_unique_features, get_features_dict
