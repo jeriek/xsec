@@ -4,6 +4,8 @@ Module containing a dictionary of parameters and input/output methods.
 
 from __future__ import print_function
 
+import sys
+
 import os
 
 import pyslha
@@ -378,6 +380,11 @@ def import_slha_string(slha_string):
     slha_string : string
         SLHA content to import
     """
+
+    # Fix to ensure that the pyslha parsing of slha_string 
+    # works with both Python 2 and 3
+    if sys.version_info < (3,0):
+        slha_string = slha_string.encode('ascii', 'xmlcharrefreplace')        
 
     # Parse the SLHA content with pyslha
     slha = pyslha.readSLHA(slha_string, ignoreblocks=["DCINFO"])
