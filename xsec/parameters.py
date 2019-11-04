@@ -487,7 +487,9 @@ def write_slha(filename, results):
         # Make process object
         proc = pyslha.Process(istate, fstate)
 
-        # Add cross sections to process object
+        # Add cross sections to process object.
+        # NOTE: All the *_rel relative uncertainties are signed.
+        #
         # proc.add_xsec(sqrts, scale_scheme, qcd_order, ew_order, kappa_f,
         # kappa_r, pdf_id, xs, code)
         def_args = (sqrts, scale_scheme, qcd_order, ew_order)
@@ -495,22 +497,22 @@ def write_slha(filename, results):
         central_xs = central / 1000.0  # Convert to pb
         proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id, central_xs, code)))
         # Half scale
-        scaledown_xs = central_xs * scaledown_rel
+        scaledown_xs = central_xs * (1.0 + scaledown_rel)
         proc.add_xsec(*(def_args + (0.5, 0.5, pdf_id, scaledown_xs, code)))
         # Double scale
-        scaleup_xs = central_xs * scaleup_rel
+        scaleup_xs = central_xs * (1.0 + scaleup_rel)
         proc.add_xsec(*(def_args + (2.0, 2.0, pdf_id, scaleup_xs, code)))
         # PDF down
-        pdfdown_xs = central_xs * pdfdown_rel
+        pdfdown_xs = central_xs * (1.0 + pdfdown_rel)
         proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 1, pdfdown_xs, code)))
         # PDF up
-        pdfup_xs = central_xs * pdfup_rel
+        pdfup_xs = central_xs * (1.0 + pdfup_rel)
         proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 2, pdfup_xs, code)))
         # \alpha_s
-        asdown_xs = central_xs * alphasdown_rel
+        asdown_xs = central_xs * (1.0 + alphasdown_rel)
         proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 31, asdown_xs, code)))
         # \alpha_s up
-        asup_xs = central_xs * alphasup_rel
+        asup_xs = central_xs * (1.0 + alphasup_rel)
         proc.add_xsec(*(def_args + (1.0, 1.0, pdf_id + 32, asup_xs, code)))
 
         # Construct dictionary for writing
