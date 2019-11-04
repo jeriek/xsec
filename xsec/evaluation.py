@@ -52,20 +52,17 @@ def eval_xsection(verbose=2, check_consistency=True):
         The returned quantities are defined as follows:
         - xsection_central :
             central-scale xsection in femtobarn (fb)
-        - regdown_rel, regup_rel:
-            xsection deviating one (lognormal) regression error down/up
-            from the central-scale xsection, relative to the latter
+        - regdown_rel, regup_rel :
+            signed regression errors divided by xsection_central
         - scaledown_rel, scaleup_rel :
-            lower/higher xsection from varying the scale (to 0.5x and 2x
-            the central scale), relative to the central-scale xsection
+            signed scale errors (from varying the scale to 0.5x and 2x
+            the central scale) divided by xsection_central
         - pdfdown_rel, pdfup_rel :
-            xsection deviating one PDF error down/up from the
-            central-scale xsection, relative to the latter
+            signed PDF errors divided by xsection_central
         - alphasdown_rel, alphasup_rel :
-            xsection deviating one (symmetrised) alpha_s error down/up
-            from the central-scale xsection, relative to the latter
+            signed (symmetrized) alpha_s errors divided by xsection_central
 
-        Note: All returned errors are defined to be deviations from 1.
+        Note: All the *down_rel uncertainties are given a negative sign
     """
 
     ##################################################
@@ -129,49 +126,57 @@ def eval_xsection(verbose=2, check_consistency=True):
     # NOTE: Result arrays are now ordered in the user-specified order
     # from the global PROCESSES variable!
 
-    # -- Xsection deviating one (lognormal) regression error away
-    #    from the central-scale xsection, relative to the latter.
-    regdown_rel = 1.0 - reg_err / xsection_central  # numpy array
-    regup_rel = 1.0 + reg_err / xsection_central  # numpy array
 
-    # -- Xsection at lower and higher scale (0.5x and 2x central scale),
-    #    relative to the central-scale xsection. To prevent that the
-    #    unusual case with xsection_scaleup > xsection_scaledown causes
-    #    errors, min/max ensures scaledown_rel always gives the lower
-    #    bound and scaleup_rel the higher one.
+    # -- Signed regression errors divided by xsection_central
+    #    from the central-scale xsection, relative to the latter.
+    regdown_rel = - reg_err / xsection_central  # numpy array
+    regup_rel = reg_err / xsection_central  # numpy array
+
+
+    # -- Signed scale errors (from varying the scale to 0.5x and 2x
+    #    the central scale) divided by xsection_central. To prevent 
+    #    that the unusual case with 
+    #    xsection_scaleup > xsection_scaledown causes errors, 
+    #    min/max ensures scaledown_rel always gives the lower bound
+    #    and scaleup_rel the higher one.
     #    NOTE: This means scaledown_rel generally doesn't correspond to
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_scldn, _ = np.array(list(zip(*dgp_results["scldn"])))
-    mu_dgp_sclup, _ = np.array(list(zip(*dgp_results["sclup"])))
+    mu_dgp_scldn_rel, _ = np.array(list(zip(*dgp_results["scldn"])))
+    mu_dgp_sclup_rel, _ = np.array(list(zip(*dgp_results["sclup"])))
 
-    scaledown_rel = np.array(list(map(np.min, list(zip(mu_dgp_scldn, mu_dgp_sclup)))))
-    scaleup_rel = np.array(list(map(np.max, list(zip(mu_dgp_scldn, mu_dgp_sclup)))))
+    scaledown_rel = np.array(list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
+    scaleup_rel = np.array(list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
 
-    # -- Xsection deviating one PDF error away from the
-    #    central-scale xsection, relative to the latter.
+
+    # -- Signed PDF errors divided by xsection_central
     # Get the DGP means, discard regression errors on the variations
     delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
 
-    pdfdown_rel = 1.0 - delta_pdf_rel
-    pdfup_rel = 1.0 + delta_pdf_rel
+    pdfdown_rel = - delta_pdf_rel
+    pdfup_rel = delta_pdf_rel
 
-    # -- Xsection deviating one symmetrised alpha_s error away from
-    #    the central-scale xsection, relative to the latter.
+
+    # -- Signed (symmetrized) alpha_s errors divided by xsection_central
+    #          
+    # TODO: Why are we symmetrizing this error? Why not use the min/max
+    #       approach that we use for scaledown_rel, scaleup_rel 
+    #
     # Get the DGP means, discard regression errors on the variations
-    mu_dgp_adn, _ = np.array(list(zip(*dgp_results["scldn"])))
-    mu_dgp_aup, _ = np.array(list(zip(*dgp_results["sclup"])))
+    mu_dgp_adn_rel, _ = np.array(list(zip(*dgp_results["adn"])))
+    mu_dgp_aup_rel, _ = np.array(list(zip(*dgp_results["aup"])))
 
     delta_alphas_rel = np.array(
         [
             0.5 * (abs(aup - 1.0) + abs(1.0 - adn))
-            for (aup, adn) in list(zip(mu_dgp_aup, mu_dgp_adn))
+            for (aup, adn) in list(zip(mu_dgp_aup_rel, mu_dgp_adn_rel))
         ]
     )
 
-    alphasdown_rel = 1.0 - delta_alphas_rel
-    alphasup_rel = 1.0 + delta_alphas_rel
+    alphasdown_rel = - delta_alphas_rel
+    alphasup_rel = delta_alphas_rel
+
 
     # Collect values for output in Numpy array
     return_array = np.array(

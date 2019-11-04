@@ -236,9 +236,13 @@ def print_result(return_array, verbose=2):
             alphasdown_rel = np.round(return_array[7][i], decimals=nr_dec)
             alphasup_rel = np.round(return_array[8][i], decimals=nr_dec)
 
-            print(pid1, pid2, xsection_central,
-                  regdown_rel, regup_rel, scaledown_rel, scaleup_rel,
-                  pdfdown_rel, pdfup_rel, alphasdown_rel, alphasup_rel)
+            result_str =  "  {: d} {: d}  {: .4e}".format(pid1, pid2, xsection_central)
+            result_str += "  {: .4e}  {: .4e}".format(regdown_rel, regup_rel)
+            result_str += "  {: .4e}  {: .4e}".format(scaledown_rel, scaleup_rel)
+            result_str += "  {: .4e}  {: .4e}".format(pdfdown_rel, pdfup_rel)
+            result_str += "  {: .4e}  {: .4e}".format(alphasdown_rel, alphasup_rel)
+
+            print(result_str)
             sys.stdout.flush()
 
     # Verbose level 2: print full description of the result
