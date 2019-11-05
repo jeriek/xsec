@@ -158,19 +158,20 @@ def eval_xsection(verbose=2, check_consistency=True):
     pdfup_rel = delta_pdf_rel
 
 
-    # -- Signed (symmetrized) alpha_s errors divided by xsection_central
-    #          
-    # TODO: Why are we symmetrizing this error? Why not use the min/max
-    #       approach that we use for scaledown_rel, scaleup_rel 
-    #
+    # -- Signed alpha_s errors divided by xsection_central.
+    #    Following the PDF4LHC recommendation in arxiv:1510.03865,
+    #    we take the cross-section uncertainty coming from alpha_s
+    #    variation to be half the range between the cross-sections
+    #    calculated with upper and lower (1 sigma) alpha_s values.
+    #    (Therefore this cross-section uncertainty is symmetric.)
     # Get the DGP means, discard regression errors on the variations
     mu_dgp_adn_rel, _ = np.array(list(zip(*dgp_results["adn"])))
     mu_dgp_aup_rel, _ = np.array(list(zip(*dgp_results["aup"])))
 
     delta_alphas_rel = np.array(
         [
-            0.5 * (abs(aup - 1.0) + abs(1.0 - adn))
-            for (aup, adn) in list(zip(mu_dgp_aup_rel, mu_dgp_adn_rel))
+            0.5 * (abs(aup_rel) - abs(adn_rel))
+            for (aup_rel, adn_rel) in list(zip(mu_dgp_aup_rel, mu_dgp_adn_rel))
         ]
     )
 
