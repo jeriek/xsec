@@ -247,15 +247,24 @@ def print_result(return_array, verbose=2):
 
     # Verbose level 2: print full description of the result
     elif verbose is 2:
-        print(
-            "\n"
-            "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
-            "\t     _/  _/    _/        _/        _/          \n"
-            "\t      _/        _/_/    _/_/_/    _/           \n"
-            "\t   _/  _/          _/  _/        _/            \n"
-            "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
-        )
-        sys.stdout.flush()
+
+        # 'Static' variable to ensure the xsec banner is only printed 
+        # the first time this function is run (with verbose=2).
+        if "print_banner" not in print_result.__dict__:
+            print_result.print_banner = True
+        # Print banner
+        if print_result.print_banner:
+            print(
+                "\n"
+                "\t    _/      _/    _/_/_/  _/_/_/_/    _/_/_/   \n"
+                "\t     _/  _/    _/        _/        _/          \n"
+                "\t      _/        _/_/    _/_/_/    _/           \n"
+                "\t   _/  _/          _/  _/        _/            \n"
+                "\t_/      _/  _/_/_/    _/_/_/_/    _/_/_/       \n"
+            )
+            sys.stdout.flush()
+            print_result.print_banner = False
+
         nr_dec = 4
         np.set_printoptions(precision=nr_dec)
         process_list = gploader.PROCESSES
