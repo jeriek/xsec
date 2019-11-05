@@ -170,7 +170,7 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     delta_alphas_rel = np.array(
         [
-            0.5 * (abs(aup_rel) - abs(adn_rel))
+            0.5 * (abs(aup_rel - adn_rel))
             for (aup_rel, adn_rel) in list(zip(mu_dgp_aup_rel, mu_dgp_adn_rel))
         ]
     )
