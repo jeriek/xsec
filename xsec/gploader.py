@@ -6,6 +6,8 @@ from __future__ import print_function
 
 import os
 import imp
+from collections import OrderedDict
+
 import joblib  # Needs v0.12.2 or later
 
 import xsec.utils as utils
@@ -32,11 +34,11 @@ PROCESSES = []  # e.g. [(1000021, 1000021), (1000021, 1000002)]
 
 # For each selected process, store trained GP model dictionaries here
 # (or a list of their cache locations), with process_xstype as key
-PROCESS_DICT = {}
+PROCESS_DICT = OrderedDict()
 
 # Dictionary of transform.py modules for the selected processes, with
 # (process, xstype) as key
-TRANSFORM_MODULES = {}
+TRANSFORM_MODULES = OrderedDict()
 
 # Default settings for using Joblib memory caching, can be
 # modified by user with init()
@@ -243,7 +245,8 @@ def load_single_process(process_xstype):
                 )
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
-
+    # !!! A surprisingly crucial line. Fix this!
+    model_files.sort()
     # Initialise list of GP model dicts
     model_list = []
 
