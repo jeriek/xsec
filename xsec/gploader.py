@@ -211,12 +211,14 @@ def load_single_process(process_xstype):
 
     Returns
     -------
-    model_list : list of dict
-        List containing one dictionary per expert trained on the
-        process and cross-section type specified in process_xstype.
-        Each dictionary has keys 'X_train', 'K_inv', 'alpha' and
-        'kernel'. These components are all the information needed to
-        make the predictions of the expert with GP_predict().
+    model_dict : dict of dict
+        Dictionary containing one dictionary per expert trained on the
+        process and cross-section type specified in process_xstype. The
+        keys of model_dict are the index of the GP expert, starting from
+        1 for the communications expert. Each GP dictionary has keys
+        'X_train', 'K_inv', 'alpha' and 'kernel'. These components are
+        all the information needed to make the predictions of the expert
+        with GP_predict().
     """
     assert len(process_xstype) == 3
 
@@ -245,13 +247,11 @@ def load_single_process(process_xstype):
                 )
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
-    # !!! A surprisingly crucial line. Fix this!
-    model_files.sort()
-    # Initialise list of GP model dicts
-    model_list = []
 
-    # Loop over experts and append one GP model dict per expert to
-    # model_list
+    # Initialise dict of GP model dicts
+    model_dict = OrderedDict()
+
+    # Loop over experts and add one GP model dict per expert to model_dict
     for model_file in model_files:
         # Open the stored GP model file of a single expert
         with open(model_file, "rb") as file_object:
@@ -266,8 +266,11 @@ def load_single_process(process_xstype):
             gp_reco["kernel"] = kernels.get_kernel(gp_model["kernel_string"])
             # Compute K_inv from L_inv and store it in the dict
             gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
+            # Read GP expert index from last part of file name
+            gp_reco["index"] = int(os.path.splitext(
+                os.path.basename(model_file))[0].split("_")[-1])
 
-            model_list.append(gp_reco)
+            model_dict[gp_reco["index"]] = gp_reco
 
     # Add transform.py file corresponding to the process_xstype to the
     # modules dictionary (keyword: process, xstype; value: corresponding
@@ -286,7 +289,7 @@ def load_single_process(process_xstype):
                 dir=process_dir
             )
         )
-    return model_list
+    return model_dict
 
 
 def load_processes(process_list):

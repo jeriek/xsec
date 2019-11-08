@@ -115,7 +115,8 @@ def eval_xsection(verbose=2, check_consistency=True):
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
     xsection_central, reg_err = map(
-        np.array, list(zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
+        np.array, list(
+            zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
     )
     # xsection_central, reg_err = map(
     #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
@@ -133,12 +134,11 @@ def eval_xsection(verbose=2, check_consistency=True):
     regup_rel = reg_err / xsection_central  # numpy array
 
 
-    # -- Signed scale errors (from varying the scale to 0.5x and 2x
-    #    the central scale) divided by xsection_central. To prevent 
-    #    that the unusual case with 
-    #    xsection_scaleup > xsection_scaledown causes errors, 
-    #    min/max ensures scaledown_rel always gives the lower bound
-    #    and scaleup_rel the higher one.
+    # -- Signed scale errors (from varying the scale to 0.5x and 2x the
+    #    central scale) divided by xsection_central. To prevent that the
+    #    unusual case with xsection_scaleup > xsection_scaledown causes
+    #    errors, min/max ensures scaledown_rel always gives the lower
+    #    bound and scaleup_rel the higher one.
     #    NOTE: This means scaledown_rel generally doesn't correspond to
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
@@ -146,8 +146,10 @@ def eval_xsection(verbose=2, check_consistency=True):
     mu_dgp_scldn_rel, _ = np.array(list(zip(*dgp_results["scldn"])))
     mu_dgp_sclup_rel, _ = np.array(list(zip(*dgp_results["sclup"])))
 
-    scaledown_rel = np.array(list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
-    scaleup_rel = np.array(list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
+    scaledown_rel = np.array(
+        list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
+    scaleup_rel = np.array(
+        list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
 
 
     # -- Signed PDF errors divided by xsection_central
@@ -175,7 +177,7 @@ def eval_xsection(verbose=2, check_consistency=True):
         ]
     )
 
-    alphasdown_rel = - delta_alphas_rel
+    alphasdown_rel = (-1.0)*delta_alphas_rel
     alphasup_rel = delta_alphas_rel
 
 
@@ -216,15 +218,16 @@ def dgp_predict(process, xstype, new_features):
     mus = np.zeros(n_experts)
     sigmas = np.zeros(n_experts)
 
-    # Loop over GP experts
+    # Loop over GP experts (the first is the communications expert)
     for i in range(n_experts):
         mu, sigma, _ = gp_predict(
-            process_xstype, new_features, index=i, return_std=True
+            process_xstype, new_features, index=i+1, return_std=True
         )
         mus[i] = mu
         sigmas[i] = sigma
-        # Regularize errors below the intrinsic Prospino numerical integration error
-        sigmas[i] = max(sigma,1.0E-3*mu)
+        # Regularize errors below the intrinsic Prospino numerical
+        # integration error
+        sigmas[i] = max(sigma, 1.0e-3*mu)
 
     # Shorthand variables for the 'communication expert' (i=0)
     mu_c = mus[0]
@@ -236,9 +239,9 @@ def dgp_predict(process, xstype, new_features):
         if i < 2:
             betas[i] = 1.0
         else:
-            betas[i] = 0.5 * (2 * np.log(sigma_c) - 2 * np.log(sigmas[i]))
+            betas[i] = 0.5 * (2.0 * np.log(sigma_c) - 2.0 * np.log(sigmas[i]))
 
-    # Final mean and variance:
+    # Final mean and variance
     if n_experts == 1:
         var_dgp_inv = sigma_c ** (-2)
         mu_dgp = mu_c
@@ -253,12 +256,11 @@ def dgp_predict(process, xstype, new_features):
 
     # Return mean and std (_not_ variance!)
     sigma_dgp = np.sqrt(var_dgp_inv ** (-1))
-
     return mu_dgp, sigma_dgp
 
 
 def gp_predict(
-    process_xstype, new_features, index=0, return_std=True, return_cov=False
+    process_xstype, new_features, index=1, return_std=True, return_cov=False
 ):
     """
     Gaussian process evaluation for the individual experts. Takes as
@@ -282,9 +284,10 @@ def gp_predict(
             "Cannot return both standard deviation and full covariance."
         )
 
+    # Get dict of loaded models for the specified process, and select
+    # the GP expert indicated by the index (i=1 is the communications expert)
     try:
         if gploader.USE_CACHE:
-            # Get list of loaded models for the specified process
             gp_model = gploader.PROCESS_DICT[process_xstype].get()[index]
         else:
             gp_model = gploader.PROCESS_DICT[process_xstype][index]
