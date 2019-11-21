@@ -115,12 +115,20 @@ FEATURES_LIST = {
     (-1000001, 1000001): ["m1000021", "m1000001", "mean"],
     # --- Sbottom--anti-sbottom
     # [Order: gluino, squark, mean 1st/2nd gen. squark mass, mixing]
-    (-1000005, 1000005): ["m1000021", "m1000005", "mean", "sbotmix11"],
-    (-2000005, 2000005): ["m1000021", "m2000005", "mean", "sbotmix11"],
+    (-1000005, 1000005): [
+        "m1000021", "m1000005", "m2000005", "mean", "sbotmix11",
+        ],
+    (-2000005, 2000005): [
+        "m1000021", "m1000005", "m2000005", "mean", "sbotmix11",
+        ],
     # --- Stop--anti-stop
     # [Order: gluino, squark, mean 1st/2nd gen. squark mass, mixing]
-    (-1000006, 1000006): ["m1000021", "m1000006", "mean", "stopmix11"],
-    (-2000006, 2000006): ["m1000021", "m2000006", "mean", "stopmix11"],
+    (-1000006, 1000006): [
+        "m1000021", "m1000006", "m2000006", "mean", "stopmix11",
+        ],
+    (-2000006, 2000006): [
+        "m1000021", "m1000006", "m2000006", "mean", "stopmix11",
+        ],
     # --- Neutralino and chargino production
     # [Order: neutralinos, gluino, squarks (ascending PID), mean
     # 1st/2nd gen. squark mass, mixings]
