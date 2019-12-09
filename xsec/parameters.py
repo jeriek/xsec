@@ -13,7 +13,7 @@ import pyslha
 import xsec.utils as utils
 
 
-# Dictionary of all parameters and their values
+# Dictionary of all parameters and their values (only float or int!)
 PARAMS = {
     "m1000001": None,  # squark mass [GeV]
     "m1000002": None,  # squark mass [GeV]
@@ -329,10 +329,10 @@ def check_parameters(parameters):
             )
 
     # Check energy
-    if PARAMS["energy"] != 13000:
+    if PARAMS["energy"] not in [7000, 8000, 13000]:
         raise ValueError(
-            "Currently the only available CoM energy is 13000 GeV. (The "
-            "requested CoM energy was {energy} GeV.)".format(
+            "Currently the only available CoM energies are 7000, 8000 and "
+            "13000 GeV. (The requested CoM energy was {energy} GeV.)".format(
                 energy=PARAMS["energy"]
             )
         )

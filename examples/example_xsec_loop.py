@@ -9,6 +9,9 @@ import xsec
 # *** Set directory and cache choices ***
 xsec.init(data_dir="gprocs")  # run with default settings (no caching)
 
+# *** Set center-of-mass energy (in GeV) ***
+xsec.set_energy(13000)
+
 # *** Load GP models for the specified process(es) ***
 processes = [(1000021, 1000021)]
 xsec.load_processes(processes)
@@ -32,7 +35,6 @@ xsec.set_parameters(
         "sbotmix11": 0,
         "stopmix11": 0,
         "mean": 500,
-        "energy": 13000,
     }
 )
 

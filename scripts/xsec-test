@@ -36,6 +36,13 @@ except IndexError:
 # *** Set directory and cache choices ***
 xsec.init(data_dir=input_dir)  # run with default settings (no caching)
 
+# *** Set center-of-mass energy (in GeV) ***
+xsec.set_energy(13000)
+
+# *** Load GP models for the specified process(es) ***
+processes = [(1000021, 1000021)]
+xsec.load_processes(processes)
+
 # *** Enter parameter values ***
 xsec.set_parameters(
     {
@@ -55,13 +62,8 @@ xsec.set_parameters(
         "sbotmix11": 0,
         "stopmix11": 0,
         "mean": 500,
-        "energy": 13000,
     }
 )
-
-# *** Load GP models for the specified process(es) ***
-processes = [(1000021, 1000021)]
-xsec.load_processes(processes)
 
 # *** Evaluate the cross section with the given input parameters ***
 xsec.eval_xsection()
