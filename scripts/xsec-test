@@ -36,10 +36,6 @@ except IndexError:
 # *** Set directory and cache choices ***
 xsec.init(data_dir=input_dir)  # run with default settings (no caching)
 
-# *** Load GP models for the specified process(es) ***
-processes = [(1000021, 1000021)]
-xsec.load_processes(processes)
-
 # *** Enter parameter values ***
 xsec.set_parameters(
     {
@@ -62,6 +58,10 @@ xsec.set_parameters(
         "energy": 13000,
     }
 )
+
+# *** Load GP models for the specified process(es) ***
+processes = [(1000021, 1000021)]
+xsec.load_processes(processes)
 
 # *** Evaluate the cross section with the given input parameters ***
 xsec.eval_xsection()
