@@ -148,8 +148,6 @@ def init(
         )
         print("Cache folder: " + str(cachedir))
 
-    return 0
-
 
 def set_processes(process_tuple_list):
     """
@@ -194,11 +192,12 @@ def get_processes():
 ###############################################
 
 
-def load_single_process(process_xstype):
+def load_single_process(process_xstype, energy):
     """
-    Given a single process and cross-section type (e.g. gluino-gluino at
-    the central scale), load the relevant trained GP models for all
-    experts and return them in a list of dictionaries, one per expert.
+    Given a single process, cross-section type (e.g. gluino-gluino at
+    the central scale) and COM energy, load the relevant trained GP
+    models for all experts and return them in a list of dictionaries,
+    one per expert.
 
     Parameters
     ----------
@@ -208,6 +207,9 @@ def load_single_process(process_xstype):
         are integers specifying the process and the last component is a
         string from XSTYPES.
         Example: (1000021, 1000021, 'centr')
+
+    energy : int
+        Integer value specifying the COM energy in GeV.
 
     Returns
     -------
@@ -225,7 +227,7 @@ def load_single_process(process_xstype):
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
     process_dir = os.path.join(
-        DATA_DIR, utils.get_processdir_name(process_xstype)
+        DATA_DIR, utils.get_processdir_name(process_xstype, energy)
     )
 
     # Collect the GP model data file locations (and avoid loading
@@ -318,6 +320,10 @@ def load_processes(process_list):
             )
     set_processes(process_list)
 
+    # Get the requested COM energy from the parameters
+    # This requires setting the parameters BEFORE loading processes!
+    energy = parameters.get_parameter("energy")
+
     if USE_CACHE:
         # Decorate load_single_process() such that its output can be
         # cached using the Joblib Memory object
@@ -337,11 +343,13 @@ def load_processes(process_list):
                 # to the data stored in a disk folder ('shelving')
                 PROCESS_DICT[
                     process_xstype
-                ] = load_single_process_cache.call_and_shelve(process_xstype)
+                ] = load_single_process_cache.call_and_shelve(
+                    process_xstype, energy
+                    )
             else:
                 # Loaded GP models are stored directly in PROCESS_DICT
                 PROCESS_DICT[process_xstype] = load_single_process(
-                    process_xstype
+                    process_xstype, energy
                 )
 
         # Add literature references for process to list
