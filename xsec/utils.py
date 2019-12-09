@@ -18,7 +18,7 @@ import numpy as np
 # Link internal cross-section type (xstype) identifiers to the
 # corresponding training file suffixes for each pre-trained xstype
 XSTYPE_FILESUFFIX = {
-    "centr": "",  # xsection @ central scale
+    "centr": "_1",  # xsection @ central scale
     "sclup": "_2",  # xsection @ higher scale (2 x central scale)
     "scldn": "_05",  # xsection @ lower scale (0.5 x central scale)
     "pdf": "_pdf",  # xsection error due to pdf variation
@@ -69,32 +69,34 @@ else:
 ###############################################
 
 
-def get_processdir_name(process_xstype):
+def get_processdir_name(process_xstype, energy):
     """
     Get the name of the directory where the GPs for a specific process
     and cross-section type are stored. The PIDs in the process tuple
     should already match those of the trained process, in the right
     order, as provided by features.get_trained_process().
+
+    Parameters
+    ----------
+    process_xstype : str
+        String containing parton1, parton2, xstype.
+
+    energy : int or float
+        Numerical value specifying the COM energy in GeV.
+
+    Returns
+    -------
+    processdir_name : str
+        The name of the relevant GP directory.
+
     """
 
     # Get the partons of the process
     parton1, parton2, xstype = get_process_id_split(process_xstype)
 
     # Decide process name
-    processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-
-    # TODO: remove
-    # Check if one of the partons is a gluino
-    # gluino_id = 1000021
-    # if parton1 == gluino_id:
-    #     processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-    # elif parton2 == gluino_id:
-    #     processdir_name = str(parton2) + "_" + str(parton1) + "_NLO"
-
-    # # Otherwise name starts with the largest parton PID
-    # elif abs(parton1) >= abs(parton2):
-    #     processdir_name = str(parton1) + "_" + str(parton2) + "_NLO"
-
+    processdir_name = str(parton1) + "_" + str(parton2) + \
+        "_" + str(int(energy)) + "_NLO"
 
     # Add training file suffixes depending on the xstype
     try:
@@ -181,9 +183,9 @@ def unknown_process_error(pid1, pid2):
     process requested.
     """
     return KeyError("Unknown process requested: ({pid1}, {pid2}) "
-                   "is not in the list of allowed processes!".format(
-                       pid1=pid1, pid2=pid2
-                   ))
+                    "is not in the list of allowed processes!".format(
+                        pid1=pid1, pid2=pid2
+                    ))
 
 
 ###############################################
@@ -248,7 +250,7 @@ def print_result(return_array, verbose=2):
     # Verbose level 2: print full description of the result
     elif verbose is 2:
 
-        # 'Static' variable to ensure the xsec banner is only printed 
+        # 'Static' variable to ensure the xsec banner is only printed
         # the first time this function is run (with verbose=2).
         if "print_banner" not in print_result.__dict__:
             print_result.print_banner = True
