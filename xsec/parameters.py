@@ -117,6 +117,7 @@ CHARGINO_IDS = [1000024, 1000037, -1000024, -1000037]
 EWINO_IDS = NEUTRALINO_IDS + CHARGINO_IDS
 SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID] + EWINO_IDS
 
+ALLOWED_ENERGIES = [7000, 8000, 13000, 14000]  # [GeV]
 
 ###############################################
 # Set functions                               #
@@ -277,12 +278,12 @@ def check_parameter(key):
     # Check that the value has been supplied
     if PARAMS[key] is None:
         raise ValueError(
-            "The feature '{feature}' used in this cross-section"
-            " evaluation has not been set!".format(feature=key)
+            "The feature '{feature}' used in this cross-section "
+            "evaluation has not been set!".format(feature=key)
         )
 
     # Check that the value is in the domain of validity of the GPs
-    elif (PARAMS[key] < PARAMS_DOM[key][0]) or (PARAMS[key] > PARAMS_DOM[key][1]):
+    elif not (PARAMS_DOM[key][0] <= PARAMS[key] <= PARAMS_DOM[key][1]):
         raise ValueError(
             "The mass feature '{feature}' has been set to "
             "a value ({value}) where the evaluation is an "
@@ -329,10 +330,10 @@ def check_parameters(parameters):
             )
 
     # Check energy
-    if PARAMS["energy"] not in [7000, 8000, 13000]:
+    if PARAMS["energy"] not in ALLOWED_ENERGIES:
         raise ValueError(
-            "Currently the only available CoM energies are 7000, 8000 and "
-            "13000 GeV. (The requested CoM energy was {energy} GeV.)".format(
+            "Currently the only available CoM energies are 7000/8000/13000/"
+            "14000 GeV. (The requested CoM energy was {energy} GeV.)".format(
                 energy=PARAMS["energy"]
             )
         )
@@ -381,10 +382,10 @@ def import_slha_string(slha_string):
         SLHA content to import
     """
 
-    # Fix to ensure that the pyslha parsing of slha_string 
+    # Fix to ensure that the pyslha parsing of slha_string
     # works with both Python 2 and 3
     if sys.version_info < (3,0):
-        slha_string = slha_string.encode('ascii', 'xmlcharrefreplace')        
+        slha_string = slha_string.encode('ascii', 'xmlcharrefreplace')
 
     # Parse the SLHA content with pyslha
     slha = pyslha.readSLHA(slha_string, ignoreblocks=["DCINFO"])

@@ -224,6 +224,16 @@ def load_single_process(process_xstype, energy):
     """
     assert len(process_xstype) == 3
 
+    if energy not in parameters.ALLOWED_ENERGIES:
+        raise ValueError(
+            "Please ensure the center-of-mass energy is set with set_energy(),"
+            " before loading the GP models.\n"
+            "Currently the only available CoM energies are 7000/8000/13000/"
+            "14000 GeV. (The requested CoM energy was [{energy}] GeV.)".format(
+                energy=PARAMS["energy"]
+            )
+        )
+
     # Construct location of GP models for the specified process and
     # cross-section type, using global data directory variable DATA_DIR
     process_dir = os.path.join(
