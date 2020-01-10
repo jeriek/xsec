@@ -25,6 +25,7 @@ from xsec.gploader import (
 from xsec.parameters import (
     set_parameter,
     set_parameters,
+    set_energy,
     set_gluino_mass,
     set_12gen_squark_masses,
     set_all_squark_masses,
