@@ -1,25 +1,47 @@
 #! /usr/bin/env python
 
 """
-Run a simple test instance of the evaluation module.
+Run a simple test instance of the xsec evaluation module.
 
-This script can be used as a basis for a more complete routine to
+These scripts can be used as a basis for a more complete routine to
 evaluate cross sections.
 """
 
+from __future__ import print_function
 import xsec
 
-# *** Set directory and cache choices ***
+# Set directory and cache choices
 xsec.init(data_dir="gprocs")  # run with default settings (no caching)
 
-# *** Set center-of-mass energy (in GeV) ***
+# Set center-of-mass energy (in GeV)
 xsec.set_energy(13000)
 
-# *** Load GP models for the specified process(es) ***
+# Load GP models for the specified process(es)
 processes = [(1000021, 1000021)]
 xsec.load_processes(processes)
 
-# *** Enter parameter values ***
+# ----------------------------------------------------------------------
+# * EXAMPLE 1: Setting parameter values with convenience functions
+print("Running Example 1 ...")
+
+# Set parameter values
+xsec.set_all_squark_masses(500)
+xsec.set_gluino_mass(1000)
+
+# Evaluate the cross section with the given input parameters
+xsec.eval_xsection()
+
+# Finalise the evaluation procedure
+xsec.finalise()
+
+# ----------------------------------------------------------------------
+# * EXAMPLE 2: Setting parameter values with a dictionary *
+print("Running Example 2 ...")
+
+# Clear all parameter values
+xsec.clear_parameters()
+
+# Enter dictionary with parameter values
 xsec.set_parameters(
     {
         "m1000021": 1000,
@@ -41,19 +63,27 @@ xsec.set_parameters(
     }
 )
 
-# *** Evaluate the cross section with the given input parameters ***
+# Evaluate the cross section with the given input parameters
 xsec.eval_xsection()
 
-# *** Clear all parameter values ***
+# Finalise the evaluation procedure
+xsec.finalise()
+
+# ----------------------------------------------------------------------
+# * EXAMPLE 3: Setting parameter values with a SLHA file *
+print("Running Example 3 ...")
+
+# Clear all parameter values
 xsec.clear_parameters()
 
-# *** Evaluate the cross section with input parameters from a SLHA file ***
+# Import input parameters from a SLHA file
 xsec.import_slha("sps1a.slha")
-xsec.set_energy(13000)
+
+# Evaluate the cross section with the given input parameters
 result = xsec.eval_xsection()
 
-# *** Write result back to SLHA file in XSECTION block ***
+# Write result back to SLHA file in XSECTION block
 xsec.write_slha('sps1a.slha', result)
 
-# *** Finalise the evaluation procedure ***
+# Finalise the evaluation procedure
 xsec.finalise()
