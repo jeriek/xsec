@@ -33,6 +33,7 @@ from xsec.parameters import (
     clear_parameters,
     get_parameter,
     get_parameters,
+    get_energy,
     import_slha,
     import_slha_string,
     write_slha,

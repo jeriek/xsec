@@ -230,7 +230,7 @@ def load_single_process(process_xstype, energy):
             " before loading the GP models.\n"
             "Currently the only available CoM energies are 7000/8000/13000/"
             "14000 GeV. (The requested CoM energy was [{energy}] GeV.)".format(
-                energy=PARAMS["energy"]
+                energy=parameters.COM_ENERGY
             )
         )
 
@@ -332,7 +332,7 @@ def load_processes(process_list):
 
     # Get the requested COM energy from the parameters
     # This requires setting the parameters BEFORE loading processes!
-    energy = parameters.get_parameter("energy")
+    energy = parameters.COM_ENERGY
 
     if USE_CACHE:
         # Decorate load_single_process() such that its output can be

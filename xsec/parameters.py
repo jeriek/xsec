@@ -31,53 +31,56 @@ PARAMS = {
     "m1000022": None,  # chi_1^0 mass [GeV]
     "m1000023": None,  # chi_2^0 mass [GeV]
     "mean": None,  # mean mass of 1st and 2nd gen. squarks [GeV]
-    "sbotmix11": None,
-    "stopmix11": None,
-    "nmix11": None,
-    "nmix12": None,
-    "nmix13": None,
-    "nmix14": None,
-    "nmix21": None,
-    "nmix22": None,
-    "nmix23": None,
-    "nmix24": None,
-    "energy": None,  # CoM energy sqrt(s) [GeV]
+    "sbotmix11": None,  # sbottom mixing matrix element SBOTMIX [1, 1]
+    "stopmix11": None,  # stop mixing matrix element STOPMIX [1, 1]
+    "nmix11": None,  # neutralino mixing matrix element NMIX [1, 1]
+    "nmix12": None,  # neutralino mixing matrix element NMIX [1, 2]
+    "nmix13": None,  # neutralino mixing matrix element NMIX [1, 3]
+    "nmix14": None,  # neutralino mixing matrix element NMIX [1, 4]
+    "nmix21": None,  # neutralino mixing matrix element NMIX [2, 1]
+    "nmix22": None,  # neutralino mixing matrix element NMIX [2, 2]
+    "nmix23": None,  # neutralino mixing matrix element NMIX [2, 3]
+    "nmix24": None,  # neutralino mixing matrix element NMIX [2, 4]
 }
+
+# CoM energy sqrt(s) [GeV]
+COM_ENERGY = None
 
 # List of all parameter names
 PARAM_NAMES = PARAMS.keys()
 
 # Dictionary of all parameter domains
 PARAMS_DOM = {
-    "m1000001": [200,3000],  # squark mass [GeV]
-    "m1000002": [200,3000],  # squark mass [GeV]
-    "m1000003": [200,3000],  # squark mass [GeV]
-    "m1000004": [200,3000],  # squark mass [GeV]
-    "m1000005": [100,3000],  # squark mass [GeV]
-    "m1000006": [100,3000],  # squark mass [GeV]
-    "m2000001": [200,3000],  # squark mass [GeV]
-    "m2000002": [200,3000],  # squark mass [GeV]
-    "m2000003": [200,3000],  # squark mass [GeV]
-    "m2000004": [200,3000],  # squark mass [GeV]
-    "m2000005": [100,3000],  # squark mass [GeV]
-    "m2000006": [100,3000],  # squark mass [GeV]
-    "m1000021": [200,3000],  # gluino mass [GeV]
-    "m1000022": [100,1500],  # chi_1^0  mass [GeV]
-    "m1000023": [100,1500],  # chi_2^0  mass [GeV]
-    "mean": [200,3000],  # mean mass of 1st and 2nd gen. squarks [GeV]
-    "sbotmix11": [-1,1],
-    "stopmix11": [-1,1],
-    "nmix11": [-1,1],
-    "nmix12": [-1,1],
-    "nmix13": [-1,1],
-    "nmix14": [-1,1],
-    "nmix21": [-1,1],
-    "nmix22": [-1,1],
-    "nmix23": [-1,1],
-    "nmix24": [-1,1],
-    "energy": None,  # CoM energy sqrt(s) [GeV]
+    "m1000001": [200, 3000],  # squark mass [GeV]
+    "m1000002": [200, 3000],  # squark mass [GeV]
+    "m1000003": [200, 3000],  # squark mass [GeV]
+    "m1000004": [200, 3000],  # squark mass [GeV]
+    "m1000005": [100, 3000],  # squark mass [GeV]
+    "m1000006": [100, 3000],  # squark mass [GeV]
+    "m2000001": [200, 3000],  # squark mass [GeV]
+    "m2000002": [200, 3000],  # squark mass [GeV]
+    "m2000003": [200, 3000],  # squark mass [GeV]
+    "m2000004": [200, 3000],  # squark mass [GeV]
+    "m2000005": [100, 3000],  # squark mass [GeV]
+    "m2000006": [100, 3000],  # squark mass [GeV]
+    "m1000021": [200, 3000],  # gluino mass [GeV]
+    "m1000022": [100, 1500],  # chi_1^0  mass [GeV]
+    "m1000023": [100, 1500],  # chi_2^0  mass [GeV]
+    "mean": [200, 3000],  # mean mass of 1st and 2nd gen. squarks [GeV]
+    "sbotmix11": [-1, 1],  # sbottom mixing matrix element SBOTMIX [1, 1]
+    "stopmix11": [-1, 1],  # stop mixing matrix element STOPMIX [1, 1]
+    "nmix11": [-1, 1],  # neutralino mixing matrix element NMIX [1, 1]
+    "nmix12": [-1, 1],  # neutralino mixing matrix element NMIX [1, 2]
+    "nmix13": [-1, 1],  # neutralino mixing matrix element NMIX [1, 3]
+    "nmix14": [-1, 1],  # neutralino mixing matrix element NMIX [1, 4]
+    "nmix21": [-1, 1],  # neutralino mixing matrix element NMIX [2, 1]
+    "nmix22": [-1, 1],  # neutralino mixing matrix element NMIX [2, 2]
+    "nmix23": [-1, 1],  # neutralino mixing matrix element NMIX [2, 3]
+    "nmix24": [-1, 1],  # neutralino mixing matrix element NMIX [2, 4]
 }
 
+# All allowed CoM energies
+ALLOWED_ENERGIES = [7000, 8000, 13000, 14000]  # [GeV]
 
 # List of mass parameters considered for the mean squark mass
 MEAN_INDEX = [
@@ -91,7 +94,7 @@ MEAN_INDEX = [
     "m2000004",
 ]
 
-# List of sparticle PDG ids
+# List of sparticle PDG IDs
 SQUARK_IDS = [
     1000001,
     1000002,
@@ -117,7 +120,6 @@ CHARGINO_IDS = [1000024, 1000037, -1000024, -1000037]
 EWINO_IDS = NEUTRALINO_IDS + CHARGINO_IDS
 SPARTICLE_IDS = SQUARK_IDS + ANTISQUARK_IDS + [GLUINO_ID] + EWINO_IDS
 
-ALLOWED_ENERGIES = [7000, 8000, 13000, 14000]  # [GeV]
 
 ###############################################
 # Set functions                               #
@@ -147,7 +149,7 @@ def set_parameters(params_in):
     Set multiple parameters from a dictionary.
     """
     for name, value in params_in.items():
-        set_parameter(name, float(value))
+        set_parameter(name, value)
 
 
 def calc_mean_squark_mass():
@@ -216,7 +218,18 @@ def set_energy(energy):
     """
     Set the CoM energy sqrt(s), in GeV.
     """
-    set_parameter("energy", energy)
+    energy = int(energy)
+    # Check energy
+    if energy not in ALLOWED_ENERGIES:
+        raise ValueError(
+            "Currently the only available CoM energies are 7000/8000/13000/"
+            "14000 GeV. (The requested CoM energy was {energy} GeV.)".format(
+                energy=energy
+            )
+        )
+    else:
+        global COM_ENERGY
+        COM_ENERGY = energy
 
 
 def clear_parameter(name):
@@ -265,6 +278,11 @@ def get_parameters(name_list=None):
     # Else, if a specific parameter list ist requested:
     return [PARAMS[name] for name in name_list]
 
+def get_energy():
+    """
+    Get the value set for the CoM energy.
+    """
+    return COM_ENERGY
 
 ###############################################
 # Check functions                             #
@@ -301,7 +319,7 @@ def check_parameters(parameters):
         check_parameter(par)
 
     # 2/ Check internal consistency of parameters
-    # (For now just that the mean mass and energy is set correctly. Only
+    # (For now just that the mean mass is set correctly. Only
     # check when all of the masses in MEAN_INDEX are specified,
     # otherwise the undefined mass(es) could be such that the
     # user-specified mean mass is correct.)
@@ -328,15 +346,6 @@ def check_parameters(parameters):
                     mean1=mean, mean2=PARAMS["mean"], params=PARAMS
                 )
             )
-
-    # Check energy
-    if PARAMS["energy"] not in ALLOWED_ENERGIES:
-        raise ValueError(
-            "Currently the only available CoM energies are 7000/8000/13000/"
-            "14000 GeV. (The requested CoM energy was {energy} GeV.)".format(
-                energy=PARAMS["energy"]
-            )
-        )
 
 
 ###############################################
@@ -384,7 +393,7 @@ def import_slha_string(slha_string):
 
     # Fix to ensure that the pyslha parsing of slha_string
     # works with both Python 2 and 3
-    if sys.version_info < (3,0):
+    if sys.version_info < (3, 0):
         slha_string = slha_string.encode('ascii', 'xmlcharrefreplace')
 
     # Parse the SLHA content with pyslha
@@ -457,7 +466,7 @@ def write_slha(filename, results):
 
     # Set fixed entries
     # Find CoM energy
-    sqrts = PARAMS["energy"]
+    sqrts = COM_ENERGY
     # For the time being we are only doing pp cross sections
     istate = [2212, 2212]
     # Calculation currently based on QCD NLO, Prospino uses average mass
