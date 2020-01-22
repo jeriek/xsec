@@ -33,17 +33,17 @@ except IndexError:
     cwd = os.getcwd()
     input_dir = os.path.join(cwd, 'gprocs')
 
-# *** Set directory and cache choices ***
+# Set directory and cache choices
 xsec.init(data_dir=input_dir)  # run with default settings (no caching)
 
-# *** Set center-of-mass energy (in GeV) ***
+# Set center-of-mass energy (in GeV)
 xsec.set_energy(13000)
 
-# *** Load GP models for the specified process(es) ***
+# Load GP models for the specified process(es)
 processes = [(1000021, 1000021)]
 xsec.load_processes(processes)
 
-# *** Enter parameter values ***
+# Enter parameter values
 xsec.set_parameters(
     {
         "m1000021": 1000,
@@ -65,8 +65,8 @@ xsec.set_parameters(
     }
 )
 
-# *** Evaluate the cross section with the given input parameters ***
+# Evaluate the cross section with the given input parameters
 xsec.eval_xsection()
 
-# *** Finalise the evaluation procedure ***
+# Finalise the evaluation procedure
 xsec.finalise()
