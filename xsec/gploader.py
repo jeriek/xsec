@@ -95,13 +95,13 @@ def init(
     global DATA_DIR
     # If the global variable was directly set by the user, search for that path
     if DATA_DIR:
-        DATA_DIR = os.path.expandvars(os.path.expanduser(DATA_DIR))
+        DATA_DIR = os.path.abspath(os.path.expandvars(os.path.expanduser(DATA_DIR)))
     # If set, use the given data_dir
     # (by default "gprocs", such that ./gprocs in the current working
     # directory is set as GP directory)
     # This will override the direct setting of DATA_DIR.
     if data_dir:
-        DATA_DIR = os.path.expandvars(os.path.expanduser(data_dir))
+        DATA_DIR = os.path.abspath(os.path.expandvars(os.path.expanduser(data_dir)))
     # Else, if the user set both DATA_DIR and data_dir to ""
     else:
         raise IOError(
@@ -128,7 +128,7 @@ def init(
         if CACHE_DIR:
             # Set cache directory to given name, expand any environment
             # variables in the name
-            cachedir = os.path.expandvars(os.path.expanduser(CACHE_DIR))
+            cachedir = os.path.abspath(os.path.expandvars(os.path.expanduser(CACHE_DIR)))
         else:
             # Create directory with random name
             from tempfile import mkdtemp

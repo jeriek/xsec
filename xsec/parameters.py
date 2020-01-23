@@ -365,7 +365,7 @@ def import_slha(filename):
     """
 
     # Try to open file (expand any environment variables and ~)
-    filename = os.path.expandvars(os.path.expanduser(filename))
+    filename = os.path.abspath(os.path.expandvars(os.path.expanduser(filename)))
     try:
         slha = pyslha.read(filename, ignoreblocks=["DCINFO"])
         # TODO: More checking of reasonable file?
