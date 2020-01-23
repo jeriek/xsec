@@ -38,7 +38,7 @@ xsec.finalise()
 # * EXAMPLE 2: Setting parameter values with a dictionary *
 print("Running Example 2 ...")
 
-# Clear all parameter values
+# Clear all parameter values from the previous example
 xsec.clear_parameters()
 
 # Enter dictionary with parameter values
@@ -73,17 +73,19 @@ xsec.finalise()
 # * EXAMPLE 3: Setting parameter values with a SLHA file *
 print("Running Example 3 ...")
 
-# Clear all parameter values
+# Clear all parameter values from the previous example
 xsec.clear_parameters()
 
-# Import input parameters from a SLHA file
-xsec.import_slha("sps1a.slha")
+# Import input parameters from a SLHA file (e.g. examples/sps1a.slha)
+import os.path
+slha_path = os.path.join(os.path.dirname(__file__), "sps1a.slha")
+xsec.import_slha(slha_path)
 
 # Evaluate the cross section with the given input parameters
 result = xsec.eval_xsection()
 
 # Write result back to SLHA file in XSECTION block
-xsec.write_slha('sps1a.slha', result)
+xsec.write_slha(slha_path, result)
 
 # Finalise the evaluation procedure
 xsec.finalise()
