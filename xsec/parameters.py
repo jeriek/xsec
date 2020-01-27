@@ -30,6 +30,10 @@ PARAMS = {
     "m1000021": None,  # gluino mass [GeV]
     "m1000022": None,  # chi_1^0 mass [GeV]
     "m1000023": None,  # chi_2^0 mass [GeV]
+    "m1000025": None,  # chi_3^0 mass [GeV]
+    "m1000035": None,  # chi_4^0 mass [GeV]
+    "m1000024": None,  # chi_1^+ mass [GeV]
+    "m1000037": None,  # chi_2^+ mass [GeV]
     "mean": None,  # mean mass of 1st and 2nd gen. squarks [GeV]
     "sbotmix11": None,  # sbottom mixing matrix element SBOTMIX [1, 1]
     "stopmix11": None,  # stop mixing matrix element STOPMIX [1, 1]
@@ -41,6 +45,22 @@ PARAMS = {
     "nmix22": None,  # neutralino mixing matrix element NMIX [2, 2]
     "nmix23": None,  # neutralino mixing matrix element NMIX [2, 3]
     "nmix24": None,  # neutralino mixing matrix element NMIX [2, 4]
+    "nmix31": None,  # neutralino mixing matrix element NMIX [3, 1]
+    "nmix32": None,  # neutralino mixing matrix element NMIX [3, 2]
+    "nmix33": None,  # neutralino mixing matrix element NMIX [3, 3]
+    "nmix34": None,  # neutralino mixing matrix element NMIX [3, 4]
+    "nmix41": None,  # neutralino mixing matrix element NMIX [4, 1]
+    "nmix42": None,  # neutralino mixing matrix element NMIX [4, 2]
+    "nmix43": None,  # neutralino mixing matrix element NMIX [4, 3]
+    "nmix44": None,  # neutralino mixing matrix element NMIX [4, 4]
+    "umix11": None,  # chargino mixing matrix element UMIX [1, 1]
+    "umix12": None,  # chargino mixing matrix element UMIX [1, 2]
+    "umix21": None,  # chargino mixing matrix element UMIX [2, 1]
+    "umix22": None,  # chargino mixing matrix element UMIX [2, 2]
+    "vmix11": None,  # chargino mixing matrix element VMIX [1, 1]
+    "vmix12": None,  # chargino mixing matrix element VMIX [1, 2]
+    "vmix21": None,  # chargino mixing matrix element VMIX [2, 1]
+    "vmix22": None,  # chargino mixing matrix element VMIX [2, 2]
 }
 
 # CoM energy sqrt(s) [GeV]
@@ -66,6 +86,10 @@ PARAMS_DOM = {
     "m1000021": [200, 3000],  # gluino mass [GeV]
     "m1000022": [100, 1500],  # chi_1^0  mass [GeV]
     "m1000023": [100, 1500],  # chi_2^0  mass [GeV]
+    "m1000025": [100, 1500],  # chi_3^0 mass [GeV]
+    "m1000035": [100, 1500],  # chi_4^0 mass [GeV]
+    "m1000024": [100, 1500],  # chi_1^+ mass [GeV]
+    "m1000037": [100, 1500],  # chi_2^+ mass [GeV]
     "mean": [200, 3000],  # mean mass of 1st and 2nd gen. squarks [GeV]
     "sbotmix11": [-1, 1],  # sbottom mixing matrix element SBOTMIX [1, 1]
     "stopmix11": [-1, 1],  # stop mixing matrix element STOPMIX [1, 1]
@@ -77,6 +101,22 @@ PARAMS_DOM = {
     "nmix22": [-1, 1],  # neutralino mixing matrix element NMIX [2, 2]
     "nmix23": [-1, 1],  # neutralino mixing matrix element NMIX [2, 3]
     "nmix24": [-1, 1],  # neutralino mixing matrix element NMIX [2, 4]
+    "nmix31": [-1, 1],  # neutralino mixing matrix element NMIX [3, 1]
+    "nmix32": [-1, 1],  # neutralino mixing matrix element NMIX [3, 2]
+    "nmix33": [-1, 1],  # neutralino mixing matrix element NMIX [3, 3]
+    "nmix34": [-1, 1],  # neutralino mixing matrix element NMIX [3, 4]
+    "nmix41": [-1, 1],  # neutralino mixing matrix element NMIX [4, 1]
+    "nmix42": [-1, 1],  # neutralino mixing matrix element NMIX [4, 2]
+    "nmix43": [-1, 1],  # neutralino mixing matrix element NMIX [4, 3]
+    "nmix44": [-1, 1],  # neutralino mixing matrix element NMIX [4, 4]
+    "umix11": [-1, 1],  # chargino mixing matrix element UMIX [1, 1]
+    "umix12": [-1, 1],  # chargino mixing matrix element UMIX [1, 2]
+    "umix21": [-1, 1],  # chargino mixing matrix element UMIX [2, 1]
+    "umix22": [-1, 1],  # chargino mixing matrix element UMIX [2, 2]
+    "vmix11": [-1, 1],  # chargino mixing matrix element VMIX [1, 1]
+    "vmix12": [-1, 1],  # chargino mixing matrix element VMIX [1, 2]
+    "vmix21": [-1, 1],  # chargino mixing matrix element VMIX [2, 1]
+    "vmix22": [-1, 1],  # chargino mixing matrix element VMIX [2, 2]
 }
 
 # All allowed CoM energies
@@ -222,12 +262,14 @@ def set_energy(energy):
     # Check energy
     if energy not in ALLOWED_ENERGIES:
         raise ValueError(
-            "Currently the only available CoM energies are 7000/8000/13000/"
-            "14000 GeV. (The requested CoM energy was {energy} GeV.)".format(
+            "Currently the only available CoM energy is 13000 "
+            "GeV. (The requested CoM energy was {energy} GeV.)".format(
                 energy=energy
             )
         )
     else:
+        if energy != 13000:
+            print("Warning: your selected CoM energy is not 13000 GeV.")
         global COM_ENERGY
         COM_ENERGY = energy
 
@@ -429,12 +471,45 @@ def import_slha_doc(slha):
     PARAMS["m2000006"] = slha.blocks["MASS"][2000006]
     PARAMS["m1000021"] = slha.blocks["MASS"][1000021]
 
+    PARAMS["m1000022"] = slha.blocks["MASS"][1000022]
+    PARAMS["m1000023"] = slha.blocks["MASS"][1000023]
+    PARAMS["m1000025"] = slha.blocks["MASS"][1000025]
+    PARAMS["m1000035"] = slha.blocks["MASS"][1000035]
+    PARAMS["m1000024"] = slha.blocks["MASS"][1000024]
+    PARAMS["m1000037"] = slha.blocks["MASS"][1000037]
+
     # Also calculate mean squark mass
     calc_mean_squark_mass()
 
     # Find mixing angles
     PARAMS["sbotmix11"] = slha.blocks["SBOTMIX"][1, 1]
     PARAMS["stopmix11"] = slha.blocks["STOPMIX"][1, 1]
+
+    PARAMS["nmix11"] = slha.blocks["NMIX"][1, 1]
+    PARAMS["nmix12"] = slha.blocks["NMIX"][1, 2]
+    PARAMS["nmix13"] = slha.blocks["NMIX"][1, 3]
+    PARAMS["nmix14"] = slha.blocks["NMIX"][1, 4]
+    PARAMS["nmix21"] = slha.blocks["NMIX"][2, 1]
+    PARAMS["nmix22"] = slha.blocks["NMIX"][2, 2]
+    PARAMS["nmix23"] = slha.blocks["NMIX"][2, 3]
+    PARAMS["nmix24"] = slha.blocks["NMIX"][2, 4]
+    PARAMS["nmix31"] = slha.blocks["NMIX"][3, 1]
+    PARAMS["nmix32"] = slha.blocks["NMIX"][3, 2]
+    PARAMS["nmix33"] = slha.blocks["NMIX"][3, 3]
+    PARAMS["nmix34"] = slha.blocks["NMIX"][3, 4]
+    PARAMS["nmix41"] = slha.blocks["NMIX"][4, 1]
+    PARAMS["nmix42"] = slha.blocks["NMIX"][4, 2]
+    PARAMS["nmix43"] = slha.blocks["NMIX"][4, 3]
+    PARAMS["nmix44"] = slha.blocks["NMIX"][4, 4]
+
+    PARAMS["umix11"] = slha.blocks["UMIX"][1, 1]
+    PARAMS["umix12"] = slha.blocks["UMIX"][1, 2]
+    PARAMS["umix21"] = slha.blocks["UMIX"][2, 1]
+    PARAMS["umix22"] = slha.blocks["UMIX"][2, 2]
+    PARAMS["vmix11"] = slha.blocks["VMIX"][1, 1]
+    PARAMS["vmix12"] = slha.blocks["VMIX"][1, 2]
+    PARAMS["vmix21"] = slha.blocks["VMIX"][2, 1]
+    PARAMS["vmix22"] = slha.blocks["VMIX"][2, 2]
 
     # References to SLHA and pySLHA
     slharef = ["Skands:2003cj", "Buckley:2013jua"]
