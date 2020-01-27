@@ -215,8 +215,8 @@ def dgp_predict(process, xstype, new_features):
     n_experts = len(gploader.PROCESS_DICT[process_xstype])
 
     # Empty arrays where all predicted numbers are stored
-    mus = np.zeros(n_experts)
-    sigmas = np.zeros(n_experts)
+    mus = np.empty(n_experts)
+    sigmas = np.empty(n_experts)
 
     # Loop over GP experts (the first is the communications expert)
     for i in range(n_experts):
