@@ -287,6 +287,9 @@ if input_mode is "params":
 # Set directory
 xsec.init(data_dir=args.gppath)  # run with default settings (no caching)
 
+# Set energy before loading processes
+xsec.set_energy(args.energy)
+
 # Load GP models for the specified process
 xsec.load_processes([(args.pid1, args.pid2)])
 
@@ -296,7 +299,6 @@ if input_mode is "params":
         xsec.set_parameter(feature, args.params_input[i])
 elif input_mode is "slha":
     xsec.import_slha(args.slha_input)
-xsec.set_parameter("energy", args.energy)
 
 # Calculate cross section
 result = xsec.eval_xsection()
