@@ -309,6 +309,16 @@ def get_parameter(name):
         print("Parameter name {name} not known!".format(name=name))
         raise
 
+def get_normalized_parameter(name):
+    """
+    Get the normalized value of a parameter.
+    """
+    try:
+        return (PARAMS[name]-PARAMS_DOM[name][0])/(PARAMS_DOM[name][1]-PARAMS_DOM[name][0])
+    except KeyError:
+        print("Parameter name {name} not known!".format(name=name))
+        raise
+
 
 def get_parameters(name_list=None):
     """

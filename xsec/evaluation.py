@@ -9,8 +9,8 @@ from __future__ import print_function
 import numpy as np
 
 import xsec.utils as utils
-import xsec.gploader as gploader
 import xsec.parameters as parameters
+import xsec.gploader as gploader
 import xsec.features as features
 
 

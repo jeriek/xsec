@@ -9,6 +9,8 @@ import collections
 
 import xsec.utils as utils
 import xsec.parameters as parameters
+import xsec.gploader as gploader
+
 
 ###############################################
 # Global variables                            #
@@ -195,11 +197,20 @@ def get_features_dict(process_list):
         # during training ... the X_train data are ordered!)
         features_index = get_features(*process)
 
+        # Check if features should be normalized
+        # This assumes features are normalized for all cross sections
+        NORMF = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
+
         # Make a feature dictionary
         # features_dict = {key : PARAMS[key] for key in features_index}
         features_dict = collections.OrderedDict()
         for param in features_index:
             features_dict[param] = parameters.get_parameter(param)
+            # Check if features were normalized before training
+            # TODO
+            if NORMF :
+                print('The feature normalization is not implemented yet')
+                features_dict[param] = parameters.get_normalized_parameter(param)
 
         # Ordered list since derived from ordered dict!
         features = list(features_dict.values())
