@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 """
-Command line interface to xsec
+Command-line interface to xsec
 
 usage:
   xsec [-h] {13000} pid1 pid2 (-i | -r FILE | -p PAR [PAR ...]) [-g PATH] [-w FILE]
@@ -25,9 +25,10 @@ optional arguments:
   -w FILE, --slha-output FILE
                         output SLHA file
   -p PAR [PAR ...], --parameters PAR [PAR ...]
-                        list of input parameters. Use the --show-input option
-                        to display the relevant input parameters for a process
-                        with sparticles pid1 and pid2
+                        list of input parameters. Dimensionful parameters are
+                        given in GeV. Use the --show-input option to display
+                        the relevant input parameters for a process with
+                        sparticles pid1 and pid2
 
 Example with parameter input:
   xsec 13000 1000021 1000001 --parameters 1000.0 1000.0 1000.0 --gppath ./gprocs
@@ -35,7 +36,10 @@ Example with parameter input:
 Example with SLHA file input:
   xsec 13000 1000021 1000001 --slha-input PATH-TO-SLHA-FILE --gppath ./gprocs
 
-Note that the command line interface can only be used for a single production
+Example to find the (order of) input parameters for a given process:
+  xsec 13000 1000021 1000001 --show-input
+
+Note that the command-line interface can only be used for a single production
 process at a time.
 """
 
@@ -68,7 +72,18 @@ prog_name = os.path.basename(sys.argv[0])
 
 # Set up the argument parser
 parser = argparse.ArgumentParser(
-    prog=prog_name, description="Command line interface to xsec."
+    prog=prog_name, description="Command-line interface to xsec.",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""
+    * Example with parameter input:
+    \t xsec 13000 1000021 1000001 -p 1000.0 1000.0 1000.0 -g ./gprocs
+    * Example with SLHA file input:
+    \t xsec 13000 1000021 1000001 -r PATH-TO-SLHA-FILE -g ./gprocs
+    * Example to find the (order of) input parameters for a given process:
+    \t xsec 13000 1000021 1000001 -i\n
+    Note that the command-line interface can only be used for a single
+    production process at a time.
+    """
 )
 
 parser.add_argument(
@@ -180,11 +195,11 @@ except KeyError as e:
     print(
         "The chosen process (", process_str, ") is unknown.", sep="", end=" "
     )
-    print("This is the list of known (pid1,pid2) pairs:")
+    print("This is the list of known (pid1, pid2) pairs:")
     pid_pairs = xsec.features.FEATURES_LIST.keys()
     pid_pairs.sort()
     for i, pid_pair in enumerate(pid_pairs):
-        if i % 4 == 0:
+        if i % 3 == 0:
             print()
         print("\t", pid_pair, sep="", end="")
     print("\n")
@@ -196,7 +211,15 @@ n_features = len(features)
 # If --show-input is passed, display input parameter list along with
 # and example command, then exit
 if args.show_input:
-    example_masses = [str(1000.0) for i in range(n_features)]
+    # All parameters are masses, unless stop/sbottom process:
+    # then last parameter should be a mixing angle
+    if any(
+        pid in xsec.parameters.ALL_GEN3_IDS for pid in (args.pid1, args.pid2)
+    ):
+        example_params = [str(1000.0) for i in range(n_features - 1)]
+        example_params.append(str(0.1))
+    else:
+        example_params = [str(1000.0) for i in range(n_features)]
 
     # Some formatting to show the required input in a neat way
     # features_list = xsec.features.get_features(args.pid1, args.pid2)
@@ -214,7 +237,7 @@ if args.show_input:
         args.pid1,
         args.pid2,
         "--parameters",
-        " ".join(example_masses),
+        " ".join(example_params),
         "--gppath",
         args.gppath,
     )
@@ -249,7 +272,7 @@ else:
 
 # If parameter input is used, check that the number of given parameters
 # equals the number of features
-if input_mode is "params":
+if input_mode == "params":
     if n_features != len(args.params_input):
         parser.print_usage()
         print(
@@ -293,11 +316,11 @@ xsec.set_energy(args.energy)
 # Load GP models for the specified process
 xsec.load_processes([(args.pid1, args.pid2)])
 
-# Set parameters, either from command line input or from SLHA file
-if input_mode is "params":
+# Set parameters, either from command-line input or from SLHA file
+if input_mode == "params":
     for i, feature in enumerate(features):
         xsec.set_parameter(feature, args.params_input[i])
-elif input_mode is "slha":
+elif input_mode == "slha":
     xsec.import_slha(args.slha_input)
 
 # Calculate cross section
