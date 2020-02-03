@@ -9,7 +9,6 @@ import collections
 
 import xsec.utils as utils
 import xsec.parameters as parameters
-import xsec.gploader as gploader
 
 
 ###############################################
@@ -186,6 +185,8 @@ def get_features_dict(process_list):
     Produce a dictionary of processes and values for their features, for
     each process in process_list.
     """
+    import xsec.gploader as gploader
+
     # Dictionary {process : [ordered feature values list]}
     all_features_dict = {}
 
@@ -208,8 +209,7 @@ def get_features_dict(process_list):
             features_dict[param] = parameters.get_parameter(param)
             # Check if features were normalized before training
             # TODO
-            if NORMF :
-                print('The feature normalization is not implemented yet')
+            if NORMF:
                 features_dict[param] = parameters.get_normalized_parameter(param)
 
         # Ordered list since derived from ordered dict!
