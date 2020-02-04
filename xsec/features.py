@@ -200,7 +200,10 @@ def get_features_dict(process_list):
 
         # Check if features should be normalized
         # This assumes features are normalized for all cross sections
-        NORMF = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
+        try:
+            NORMF = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
+        except:
+            NORMF = False
 
         # Make a feature dictionary
         # features_dict = {key : PARAMS[key] for key in features_index}
