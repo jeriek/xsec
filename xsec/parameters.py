@@ -309,12 +309,15 @@ def get_parameter(name):
         print("Parameter name {name} not known!".format(name=name))
         raise
 
+
 def get_normalized_parameter(name):
     """
     Get the normalized value of a parameter.
     """
     try:
-        return (PARAMS[name]-PARAMS_DOM[name][0])/(PARAMS_DOM[name][1]-PARAMS_DOM[name][0])
+        return (PARAMS[name] - PARAMS_DOM[name][0]) / (
+            PARAMS_DOM[name][1] - PARAMS_DOM[name][0]
+        )
     except KeyError:
         print("Parameter name {name} not known!".format(name=name))
         raise
@@ -327,14 +330,16 @@ def get_parameters(name_list=None):
     """
     if name_list is None:
         return PARAMS
-    # Else, if a specific parameter list ist requested:
+    # Else, if a specific parameter list is requested:
     return [PARAMS[name] for name in name_list]
+
 
 def get_energy():
     """
     Get the value set for the CoM energy.
     """
     return COM_ENERGY
+
 
 ###############################################
 # Check functions                             #
