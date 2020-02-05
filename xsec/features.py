@@ -9,6 +9,7 @@ import collections
 
 import xsec.utils as utils
 import xsec.parameters as parameters
+import xsec.gploader as gploader
 
 
 ###############################################
@@ -185,8 +186,6 @@ def get_features_dict(process_list):
     Produce a dictionary of processes and values for their features, for
     each process in process_list.
     """
-    import xsec.gploader as gploader
-
     # Dictionary {process : [ordered feature values list]}
     all_features_dict = {}
 
@@ -198,22 +197,30 @@ def get_features_dict(process_list):
         # during training ... the X_train data are ordered!)
         features_index = get_features(*process)
 
-        # Check if features should be normalized
-        # This assumes features are normalized for all cross sections
+        # Check if features were normalized before training
+        # This assumes features are normalized for all xstypes
         try:
-            NORMF = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
+            feature_norm_flag = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
         except:
-            NORMF = False
+            feature_norm_flag = False
 
         # Make a feature dictionary
         # features_dict = {key : PARAMS[key] for key in features_index}
         features_dict = collections.OrderedDict()
         for param in features_index:
-            features_dict[param] = parameters.get_parameter(param)
-            # Check if features were normalized before training
-            # TODO
-            if NORMF:
+            # Check if features should be normalized
+            # TODO: to speed things up, normalizing parameters could be
+            # done when they are set and then kept in a separate
+            # NORMALIZED_PARAM dict, rather than repeatedly calculating
+            # same values for each process
+            # (i) Make NORMALIZED_PARAMS dict copying PARAMs
+            # (ii) Rename get_normalized_parameter into calc_normalized_parameter
+            # (iii) Let set_parameter also add normalized value to the new dict
+            # (iv) Let get_normalized_parameter return the value from the new dict
+            if feature_norm_flag:
                 features_dict[param] = parameters.get_normalized_parameter(param)
+            else:
+                features_dict[param] = parameters.get_parameter(param)
 
         # Ordered list since derived from ordered dict!
         features = list(features_dict.values())

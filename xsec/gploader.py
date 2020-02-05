@@ -13,7 +13,6 @@ import joblib  # Needs v0.12.2 or later
 import xsec.utils as utils
 import xsec.kernels as kernels
 import xsec.parameters as parameters
-import xsec.features as features
 
 
 ###############################################
@@ -154,6 +153,8 @@ def set_processes(process_tuple_list):
     Set the global list of processes to be evaluated. Called in
     load_processes().
     """
+    import xsec.features as features
+
     trained_process_list = []
     # Check if process exists (right format, known sparticles)
     for process in process_tuple_list:
@@ -323,6 +324,8 @@ def load_processes(process_list):
         specifying the process. For example, gluino-gluino production
         corresponds to the tuple (1000021, 1000021).
     """
+    import xsec.features as features
+
     # Set the global list of processes (fails in case of input errors)
     if not process_list:
         raise ValueError(
