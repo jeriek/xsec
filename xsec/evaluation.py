@@ -296,9 +296,10 @@ def gp_predict(
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
-#        print(
-#            process_xstype, " -- log10(condition nr.): ", np.log10(np.linalg.cond(K_inv))
-#            )
+        # print(
+        #     process_xstype, " -- log10(condition nr.): ",
+        #     np.log10(np.linalg.cond(K_inv))
+        # )
         y_train_mean = gp_model["y_train_mean"]
         kernel = gp_model["kernel"]
 
@@ -331,8 +332,10 @@ def gp_predict(
         # the rough order of magnitude right.
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
-            warnings.warn("Predicted some variance(s) smaller than 0."
-              " Approximating these with their absolute value.")
+            warnings.warn(
+                "Predicted some variance(s) smaller than 0."
+                " Approximating these with their absolute value."
+            )
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
 
         # # Add uncertainty due to fitting the hyperparameters (Waagberg et al., 2017)
