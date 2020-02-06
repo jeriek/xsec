@@ -12,7 +12,7 @@ import xsec.utils as utils
 import xsec.parameters as parameters
 import xsec.gploader as gploader
 import xsec.features as features
-
+import warnings
 
 ###############################################
 # Evaluation functions                        #
@@ -296,6 +296,10 @@ def gp_predict(
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
+#        print(
+#            process_xstype, " -- log10(condition nr.): ", np.log10(np.linalg.cond(K_inv))
+#            )
+        y_train_mean = gp_model["y_train_mean"]
         kernel = gp_model["kernel"]
 
     except KeyError:
@@ -307,8 +311,9 @@ def gp_predict(
 
     K_trans = kernel(X, X_train)  # transpose of K*
     y_mean = K_trans.dot(alpha)  # Line 4 (y_mean = f_star)
+    y_mean = y_train_mean + y_mean  # undo normalisation
 
-    prior_variance = kernel(X)  # Note: 1x1 if just 1 new test point!]
+    prior_variance = kernel(X)  # Note: 1x1 if just 1 new test point!
 
     if return_std:
         # Compute variance of predictive distribution. Note: equal to
@@ -325,8 +330,8 @@ def gp_predict(
         # the rough order of magnitude right.
         y_var_negative = y_var < 0
         if np.any(y_var_negative):
-            # warnings.warn("Predicted some variance(s) smaller than 0."
-            #  " Approximating these with their absolute value.")
+            warnings.warn("Predicted some variance(s) smaller than 0."
+              " Approximating these with their absolute value.")
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
         y_std = np.sqrt(y_var)
         prior_std = np.sqrt(prior_variance.flatten())

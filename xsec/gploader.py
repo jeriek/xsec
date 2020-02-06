@@ -9,6 +9,7 @@ import imp
 from collections import OrderedDict
 
 import joblib  # Needs v0.12.2 or later
+import numpy as np
 
 import xsec.utils as utils
 import xsec.kernels as kernels
@@ -282,6 +283,10 @@ def load_single_process(process_xstype, energy):
             # Read GP expert index from last part of file name
             gp_reco["index"] = int(os.path.splitext(
                 os.path.basename(model_file))[0].split("_")[-1])
+            try:
+                gp_reco["y_train_mean"] = gp_model["y_train_mean"].astype("float64")
+            except KeyError:
+                gp_reco["y_train_mean"] = np.zeros(1)
 
             model_dict[gp_reco["index"]] = gp_reco
 
