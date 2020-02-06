@@ -181,10 +181,12 @@ def get_features(pid1, pid2):
         )
 
 
-def get_features_dict(process_list):
+def get_features_dict(process_list, auto_normf=True):
     """
     Produce a dictionary of processes and values for their features, for
-    each process in process_list.
+    each process in process_list. If the auto_normf flag is set to True,
+    the NORMF flag in the transform modules decides whether normalised
+    features should be returned. If False, no normalisation occurs.
     """
     # Dictionary {process : [ordered feature values list]}
     all_features_dict = {}
@@ -197,28 +199,33 @@ def get_features_dict(process_list):
         # during training ... the X_train data are ordered!)
         features_index = get_features(*process)
 
-        # Check if features were normalized before training
-        # This assumes features are normalized for all xstypes
-        try:
-            feature_norm_flag = gploader.TRANSFORM_MODULES[(process, "centr")].NORMF
-        except:
+        # Check if features were normalised before training
+        # This assumes features are normalised for all xstypes
+        if auto_normf:
+            try:
+                feature_norm_flag = gploader.TRANSFORM_MODULES[
+                    (process, "centr")
+                ].NORMF
+            except AttributeError:  # Kept for backward compatibility
+                feature_norm_flag = False
+        else:
             feature_norm_flag = False
 
         # Make a feature dictionary
         # features_dict = {key : PARAMS[key] for key in features_index}
         features_dict = collections.OrderedDict()
         for param in features_index:
-            # Check if features should be normalized
-            # TODO: to speed things up, normalizing parameters could be
+            # Check if features should be normalised
+            # TODO: to speed things up, normalising parameters could be
             # done when they are set and then kept in a separate
-            # NORMALIZED_PARAM dict, rather than repeatedly calculating
+            # NORMALISED_PARAM dict, rather than repeatedly calculating
             # same values for each process
-            # (i) Make NORMALIZED_PARAMS dict copying PARAMs
-            # (ii) Rename get_normalized_parameter into calc_normalized_parameter
-            # (iii) Let set_parameter also add normalized value to the new dict
-            # (iv) Let get_normalized_parameter return the value from the new dict
+            # (i) Make NORMALISED_PARAMS dict copying PARAMs
+            # (ii) Rename get_normalised_parameter into calc_normalised_parameter
+            # (iii) Let set_parameter also add normalised value to the new dict
+            # (iv) Let get_normalised_parameter return the value from the new dict
             if feature_norm_flag:
-                features_dict[param] = parameters.get_normalized_parameter(param)
+                features_dict[param] = parameters.get_normalised_parameter(param)
             else:
                 features_dict[param] = parameters.get_parameter(param)
 
