@@ -316,8 +316,9 @@ def gp_predict(
         # alias.
         y_var = np.diag(prior_variance.copy())
         y_var.setflags(write=True)  # else this array is read-only
+        K_trans_dot_K_inv = np.dot(K_trans, K_inv)
         y_var -= np.einsum(
-            "ij,ij->i", np.dot(K_trans, K_inv), K_trans, optimize=True
+            "ij,ij->i", K_trans_dot_K_inv, K_trans, optimize=True
         )
 
         # Check if any of the variances is negative because of numerical
@@ -328,6 +329,14 @@ def gp_predict(
             # warnings.warn("Predicted some variance(s) smaller than 0."
             #  " Approximating these with their absolute value.")
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
+
+        # # Add uncertainty due to fitting the hyperparameters (Waagberg et al., 2017)
+        # g = 1.0 - np.sum(K_trans_dot_K_inv)
+        # M_inv = np.sum(K_inv)**(-1)
+        # print("before: ", y_var)
+        # y_var += M_inv * g**2
+        # print("after: ", y_var)
+
         y_std = np.sqrt(y_var)
         prior_std = np.sqrt(prior_variance.flatten())
         return y_mean, y_std, prior_std
