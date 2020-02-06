@@ -310,9 +310,9 @@ def get_parameter(name):
         raise
 
 
-def get_normalized_parameter(name):
+def get_normalised_parameter(name):
     """
-    Get the normalized value of a parameter.
+    Get the normalised value of a parameter.
     """
     try:
         return (PARAMS[name] - PARAMS_DOM[name][0]) / (
