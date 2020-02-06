@@ -238,7 +238,7 @@ def print_result(return_array, verbose=2):
             alphasdown_rel = np.round(return_array[7][i], decimals=nr_dec)
             alphasup_rel = np.round(return_array[8][i], decimals=nr_dec)
 
-            result_str =  "  {: d} {: d}  {: .4e}".format(pid1, pid2, xsection_central)
+            result_str = "  {: d} {: d}  {: .4e}".format(pid1, pid2, xsection_central)
             result_str += "  {: .4e}  {: .4e}".format(regdown_rel, regup_rel)
             result_str += "  {: .4e}  {: .4e}".format(scaledown_rel, scaleup_rel)
             result_str += "  {: .4e}  {: .4e}".format(pdfdown_rel, pdfup_rel)
@@ -277,7 +277,7 @@ def print_result(return_array, verbose=2):
         print("* Input features:")
         for process in process_list:
             feature_names = features.get_features(*process)
-            feature_values = features.get_features_dict(process_list)[process]
+            feature_values = features.get_features_dict(process_list, auto_normf=False)[process]
             print("  ", process, ": \n      [", end="")
             for i, feature in enumerate(feature_names):
                 print(
