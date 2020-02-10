@@ -118,10 +118,8 @@ def eval_xsection(verbose=2, check_consistency=True):
         np.array, list(
             zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
     )
-    # xsection_central, reg_err = map(
-    #     np.array, zip(*(moments_lognormal(*mu_sigma_dgp)
-    #                     for mu_sigma_dgp in dgp_results['centr']))
-    #     )
+    # reg_err = np.maximum(reg_err, 1.0e-3*xsection_central)
+
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
     # mu and one for sigma values -- then convert to arrays by mapping)
     # NOTE: Result arrays are now ordered in the user-specified order
@@ -225,9 +223,6 @@ def dgp_predict(process, xstype, new_features):
         )
         mus[i] = mu
         sigmas[i] = sigma
-        # Regularize errors below the intrinsic Prospino numerical
-        # integration error
-        sigmas[i] = max(sigma, 1.0e-3*mu)
 
     # Shorthand variables for the 'communication expert' (i=0)
     mu_c = mus[0]
@@ -256,6 +251,7 @@ def dgp_predict(process, xstype, new_features):
 
     # Return mean and std (_not_ variance!)
     sigma_dgp = np.sqrt(var_dgp_inv ** (-1))
+
     return mu_dgp, sigma_dgp
 
 
@@ -296,10 +292,7 @@ def gp_predict(
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
-        # print(
-        #     process_xstype, " -- log10(condition nr.): ",
-        #     np.log10(np.linalg.cond(K_inv))
-        # )
+
         y_train_mean = gp_model["y_train_mean"]
         kernel = gp_model["kernel"]
 
@@ -336,6 +329,7 @@ def gp_predict(
                 "Predicted some variance(s) smaller than 0."
                 " Approximating these with their absolute value."
             )
+            print("Numerical precision error: negative variance computed!")
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
 
         # # Add uncertainty due to fitting the hyperparameters (Waagberg et al., 2017)
