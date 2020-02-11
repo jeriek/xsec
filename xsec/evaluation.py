@@ -292,8 +292,6 @@ def gp_predict(
         alpha = gp_model["alpha"]
         L_inv = gp_model["L_inv"]
         K_inv = gp_model["K_inv"]
-
-        y_train_mean = gp_model["y_train_mean"]
         kernel = gp_model["kernel"]
 
     except KeyError:
@@ -305,7 +303,6 @@ def gp_predict(
 
     K_trans = kernel(X, X_train)  # transpose of K*
     y_mean = K_trans.dot(alpha)  # Line 4 (y_mean = f_star)
-    y_mean = y_train_mean + y_mean  # undo normalisation
 
     prior_variance = kernel(X)  # Note: 1x1 if just 1 new test point!
 
