@@ -218,7 +218,7 @@ def dgp_predict(process, xstype, new_features):
 
     # Loop over GP experts (the first is the communications expert)
     for i in range(n_experts):
-        mu, sigma, _ = gp_predict(
+        mu, sigma = gp_predict(
             process_xstype, new_features, index=i+1, return_std=True
         )
         mus[i] = mu
@@ -329,16 +329,18 @@ def gp_predict(
             print("Numerical precision error: negative variance computed!")
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
 
-        # # Add uncertainty due to fitting the hyperparameters (Waagberg et al., 2017)
-        # g = 1.0 - np.sum(K_trans_dot_K_inv)
-        # M_inv = np.sum(K_inv)**(-1)
-        # print("before: ", y_var)
-        # y_var += M_inv * g**2
-        # print("after: ", y_var)
+        # Add uncertainty due to fitting the hyperparameters, here the case
+        # with constant mean (estimated as sample mean) (Waagberg et al., 2017)
+        # Effects become large when far* from training points (* in length
+        # scale units)
+        g = 1.0 - np.sum(K_trans_dot_K_inv)
+        M_inv = np.sum(K_inv)**(-1)
+        y_var += M_inv * g**2
 
+        # Return the standard deviation
         y_std = np.sqrt(y_var)
-        prior_std = np.sqrt(prior_variance.flatten())
-        return y_mean, y_std, prior_std
+        # prior_std = np.sqrt(prior_variance.flatten())
+        return y_mean, y_std  #, prior_std
 
     elif return_cov:
         v = L_inv.dot(K_trans.T)  # Line 5
