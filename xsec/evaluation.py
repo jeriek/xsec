@@ -5,6 +5,7 @@ Processes.
 """
 
 from __future__ import print_function
+import warnings
 
 import numpy as np
 
@@ -12,7 +13,6 @@ import xsec.utils as utils
 import xsec.parameters as parameters
 import xsec.gploader as gploader
 import xsec.features as features
-import warnings
 
 ###############################################
 # Evaluation functions                        #
