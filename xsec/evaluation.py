@@ -236,6 +236,15 @@ def dgp_predict(process, xstype, new_features):
         else:
             betas[i] = 0.5 * (2.0 * np.log(sigma_c) - 2.0 * np.log(sigmas[i]))
 
+    # If any of the betas is negative (sigma_c < sigma_i), due to worse
+    # fit despite more points, set weight of that expert to zero
+    if any(betas < 0):
+        betas = np.maximum(betas, 0.0)
+        print(
+            "Warning: one or more weights beta_i were negative and set to 0.",
+            "\n -- weights: ", betas, " for ", process, xstype
+            )
+
     # Final mean and variance
     if n_experts == 1:
         var_dgp_inv = sigma_c ** (-2)
