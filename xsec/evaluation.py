@@ -110,7 +110,9 @@ def eval_xsection(verbose=2, check_consistency=True):
     # Constructing the right output                   #
     ###################################################
 
-    # All returned errors are defined to be deviations from 1
+    # All returned errors are signed RELATIVE errors (dimensionless).
+    # The absolute errors are obtained by multiplying with the central-
+    # scale cross section.
 
     # -- Central-scale xsection and regression error (= standard
     #    deviation) in fb.
@@ -154,8 +156,8 @@ def eval_xsection(verbose=2, check_consistency=True):
     # Get the DGP means, discard regression errors on the variations
     delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
 
-    pdfdown_rel = - delta_pdf_rel
-    pdfup_rel = delta_pdf_rel
+    pdfdown_rel = (-1.0)*np.abs(delta_pdf_rel)
+    pdfup_rel = np.abs(delta_pdf_rel)
 
 
     # -- Signed alpha_s errors divided by xsection_central.
