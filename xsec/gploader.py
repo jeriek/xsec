@@ -36,6 +36,10 @@ PROCESSES = []  # e.g. [(1000021, 1000021), (1000021, 1000002)]
 # (or a list of their cache locations), with process_xstype as key
 PROCESS_DICT = OrderedDict()
 
+# For each selected process and GP expert, store the reconstructed
+# kernel functions
+KERNEL_DICT = OrderedDict()
+
 # Dictionary of transform.py modules for the selected processes, with
 # (process, xstype) as key
 TRANSFORM_MODULES = OrderedDict()
@@ -132,11 +136,11 @@ def init(
         else:
             # Create directory with random name
             from tempfile import mkdtemp
-
             cachedir = mkdtemp(prefix="xsec_")
+
         if USE_MEMMAP:
-            # Set memmap mode 'copy on write'
-            memmap_mode = "c"
+            # Set memmap mode 'read-only'
+            memmap_mode = "r"
         else:
             # Disable memmapping
             memmap_mode = None
@@ -193,6 +197,40 @@ def get_processes():
 # Loading functions                           #
 ###############################################
 
+def reconstruct_gp(model_file):
+    """
+    Decompress and reconstruct an individual GP model stored in a
+    .gproc file.
+
+    Parameters
+    ----------
+    model_file : str
+        Path to the .gproc file.
+
+    Returns
+    -------
+    gp_reco
+        Dictionary containing all information about an individual GP.
+    """
+    # Open the stored GP model file of a single expert
+    with open(model_file, "rb") as file_object:
+        # Unzip the binary file with Joblib, yielding dict
+        gp_model = joblib.load(file_object)
+        # If necessary, reconvert float32 arrays to float64 for
+        # higher-precision computations, filling a new dict gp_reco
+        gp_reco = {}
+        gp_reco["X_train"] = gp_model["X_train"].astype("float64")
+        gp_reco["alpha"] = gp_model["alpha"].astype("float64")
+        L_inv = gp_model["L_inv"].astype("float64")
+        # Compute K_inv from L_inv and store it in the dict
+        gp_reco["K_inv"] = L_inv.dot(L_inv.T)
+        # Read GP expert index from last part of file name
+        gp_reco["index"] = int(os.path.splitext(
+            os.path.basename(model_file))[0].split("_")[-1])
+        # Kernel lambda function reconstructed later since not picklable
+        gp_reco["kernel_string"] = gp_model["kernel_string"]
+    return gp_reco
+
 
 def load_single_process(process_xstype, energy):
     """
@@ -222,7 +260,9 @@ def load_single_process(process_xstype, energy):
         1 for the communications expert. Each GP dictionary has keys
         'X_train', 'K_inv', 'alpha' and 'kernel'. These components are
         all the information needed to make the predictions of the expert
-        with GP_predict().
+        with GP_predict(). If using cache, a reference to the location
+        of the cached data is stored in model_dict, indexed by GP
+        expert.
     """
     assert len(process_xstype) == 3
 
@@ -266,24 +306,28 @@ def load_single_process(process_xstype, energy):
     model_dict = OrderedDict()
 
     # Loop over experts and add one GP model dict per expert to model_dict
+    if USE_CACHE:
+        # Decorate reconstruct_gp() such that its output can be
+        # cached using the Joblib Memory object and will only be computed
+        # for new input arguments; otherwise the cached value is used
+        reconstruct_gp_cache = CACHE_MEMORY.cache(reconstruct_gp, verbose=0)
     for model_file in model_files:
-        # Open the stored GP model file of a single expert
-        with open(model_file, "rb") as file_object:
-            # Unzip the binary file with Joblib, yielding dict
-            gp_model = joblib.load(file_object)
-            # Reconvert float32 arrays to float64 for higher-precision
-            # computations, filling a new dict gp_reco
-            gp_reco = {}
-            gp_reco["X_train"] = gp_model["X_train"].astype("float64")
-            gp_reco["L_inv"] = gp_model["L_inv"].astype("float64")
-            gp_reco["alpha"] = gp_model["alpha"].astype("float64")
-            gp_reco["kernel"] = kernels.get_kernel(gp_model["kernel_string"])
-            # Compute K_inv from L_inv and store it in the dict
-            gp_reco["K_inv"] = gp_reco["L_inv"].dot(gp_reco["L_inv"].T)
-            # Read GP expert index from last part of file name
-            gp_reco["index"] = int(os.path.splitext(
-                os.path.basename(model_file))[0].split("_")[-1])
-
+        if USE_CACHE:
+            gp_reco = reconstruct_gp_cache.call_and_shelve(model_file)
+            # Reconstruct kernel function (as a lambda function)
+            KERNEL_DICT[
+                (process_xstype, gp_reco.get()["index"])
+            ] = kernels.get_kernel(gp_reco.get()["kernel_string"])
+            # Add the cache reference to the model dictionary, with the
+            # GP expert index as key
+            model_dict[gp_reco.get()["index"]] = gp_reco
+        else:
+            gp_reco = reconstruct_gp(model_file)
+            # Reconstruct kernel function (as a lambda function)
+            KERNEL_DICT[
+                (process_xstype, gp_reco["index"])
+            ] = kernels.get_kernel(gp_reco["kernel_string"])
+            # Key the model dictionary by the GP expert index
             model_dict[gp_reco["index"]] = gp_reco
 
     # Add transform.py file corresponding to the process_xstype to the
@@ -313,9 +357,7 @@ def load_processes(process_list):
     using cache. The function calls load_single_process() for each
     process in process_list, looping over all cross-section types in
     XSTYPES. It stores each returned list of models in the global
-    dictionary PROCESS_DICT, indexed with key 'process_xstype'. If
-    using cache, a reference to the location of the cached data is
-    stored in PROCESS_DICT, indexed in the same way.
+    dictionary PROCESS_DICT, indexed with key 'process_xstype'.
 
     Parameters
     ----------
@@ -338,11 +380,6 @@ def load_processes(process_list):
     # This requires setting the parameters BEFORE loading processes!
     energy = parameters.COM_ENERGY
 
-    if USE_CACHE:
-        # Decorate load_single_process() such that its output can be
-        # cached using the Joblib Memory object
-        load_single_process_cache = CACHE_MEMORY.cache(load_single_process)
-
     # Loop over specified processes
     for process in process_list:
         assert len(process) == 2
@@ -352,19 +389,10 @@ def load_processes(process_list):
         # different cross-section types
         for xstype in utils.XSTYPES:
             process_xstype = utils.get_process_id(process, xstype)
-            if USE_CACHE:
-                # If using cache, PROCESS_DICT only keeps a reference
-                # to the data stored in a disk folder ('shelving')
-                PROCESS_DICT[
-                    process_xstype
-                ] = load_single_process_cache.call_and_shelve(
-                    process_xstype, energy
-                    )
-            else:
-                # Loaded GP models are stored directly in PROCESS_DICT
-                PROCESS_DICT[process_xstype] = load_single_process(
-                    process_xstype, energy
-                )
+            # Loaded GP models (or their cache reference) are stored in PROCESS_DICT
+            PROCESS_DICT[process_xstype] = load_single_process(
+                process_xstype, energy
+            )
 
         # Add literature references for process to list
         utils.get_references(*process)
@@ -390,6 +418,7 @@ def finalise():
         "A list of references that form the basis of the results in this run "
         "has been written to {file}.".format(file=ref_file)
     )
+
 
 def clear_cache():
     """

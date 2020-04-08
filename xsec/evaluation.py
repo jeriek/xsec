@@ -294,16 +294,15 @@ def gp_predict(
     # Get dict of loaded models for the specified process, and select
     # the GP expert indicated by the index (i=1 is the communications expert)
     try:
+        gp_model = gploader.PROCESS_DICT[process_xstype][index]
         if gploader.USE_CACHE:
-            gp_model = gploader.PROCESS_DICT[process_xstype].get()[index]
-        else:
-            gp_model = gploader.PROCESS_DICT[process_xstype][index]
+            gp_model = gp_model.get()
 
         X_train = gp_model["X_train"]
         alpha = gp_model["alpha"]
-        L_inv = gp_model["L_inv"]
+        # L_inv = gp_model["L_inv"]  # Only required for return_cov
         K_inv = gp_model["K_inv"]
-        kernel = gp_model["kernel"]
+        kernel = gploader.KERNEL_DICT[(process_xstype, index)]
 
     except KeyError:
         raise KeyError(
@@ -354,9 +353,14 @@ def gp_predict(
         return y_mean, y_std  #, prior_std
 
     elif return_cov:
-        v = L_inv.dot(K_trans.T)  # Line 5
-        y_cov = prior_variance - K_trans.dot(v)  # Line 6
-        return y_mean, y_cov, prior_variance
+        warnings.warn(
+            "The return_cov option in gp_predict has been disabled "
+            "to decrease memory usage."
+        )
+        # v = L_inv.dot(K_trans.T)  # Line 5
+        # y_cov = prior_variance - K_trans.dot(v)  # Line 6
+        # return y_mean, y_cov, prior_variance
+        return y_mean
 
     else:
         return y_mean
