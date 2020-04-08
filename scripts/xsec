@@ -16,8 +16,8 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -g PATH, --gppath PATH
-                        path to the Gaussian process files. The default path
-                        is ./gprocs.
+                        path to the Gaussian process files. The default search
+                        path is ./gprocs.
   -i, --show-input      show input parameters and usage examples for the
                         process specified by pid1 and pid2
   -r FILE, --slha-input FILE
@@ -31,10 +31,10 @@ optional arguments:
                         sparticles pid1 and pid2
 
 Example with parameter input:
-  xsec 13000 1000021 1000001 --parameters 1000.0 1000.0 1000.0 --gppath ./gprocs
+  xsec 13000 1000021 1000001 --parameters 1000.0 1000.0 1000.0 --gppath /path/to/GPs
 
 Example with SLHA file input:
-  xsec 13000 1000021 1000001 --slha-input PATH-TO-SLHA-FILE --gppath ./gprocs
+  xsec 13000 1000021 1000001 --slha-input /path/to/SLHAfile --gppath /path/to/GPs
 
 Example to find the (order of) input parameters for a given process:
   xsec 13000 1000021 1000001 --show-input
@@ -76,9 +76,9 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog="""
     * Example with parameter input:
-    \t xsec 13000 1000021 1000001 -p 1000.0 1000.0 1000.0 -g ./gprocs
+    \t xsec 13000 1000021 1000001 -p 1000.0 1000.0 1000.0 -g /path/to/GPs
     * Example with SLHA file input:
-    \t xsec 13000 1000021 1000001 -r PATH-TO-SLHA-FILE -g ./gprocs
+    \t xsec 13000 1000021 1000001 -r /path/to/SLHAfile -g /path/to/GPs
     * Example to find the (order of) input parameters for a given process:
     \t xsec 13000 1000021 1000001 -i\n
     Note that the command-line interface can only be used for a single
