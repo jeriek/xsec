@@ -410,26 +410,26 @@ def check_parameters(parameters):
 ###############################################
 
 
-def import_slha(filename):
+def import_slha(filepath):
     """
     Import parameters from SLHA file.
     This also calculates a mean squark mass for the first two generations.
 
     Parameters
     ----------
-    filename : string
-        Filename of SLHA file to import
+    filepath : string
+        Path of SLHA file to import
     """
 
     # Try to open file (expand any environment variables and ~)
-    filename = os.path.abspath(os.path.expandvars(os.path.expanduser(filename)))
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
     try:
-        slha = pyslha.read(filename, ignoreblocks=["DCINFO"])
+        slha = pyslha.read(filepath, ignoreblocks=["DCINFO"])
         # TODO: More checking of reasonable file?
     except IOError:
         raise IOError(
             "Unable to find SLHA file {file}. Parameters not set.".format(
-                file=filename
+                file=filepath
             )
         )
 
