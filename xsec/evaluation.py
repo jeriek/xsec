@@ -116,7 +116,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     # scale cross section.
 
     # -- Central-scale xsection and regression error (= standard
-    #    deviation) in fb.
+    #    deviation or asymmetric error) in fb.
     xsection_central, reg_err = map(
         np.array, list(
             zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
@@ -129,9 +129,13 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     # -- Signed regression errors on the central cross section, divided
     #    by xsection_central
-    regdown_rel = - reg_err / xsection_central  # numpy array
-    regup_rel = reg_err / xsection_central  # numpy array
-
+    # Deal with a potentially asymmetric regression error
+    if len(reg_err[0]) == 1:
+        regdown_rel = - reg_err / xsection_central  # numpy array
+        regup_rel = reg_err / xsection_central
+    else:
+        regdown_rel = - reg_err[:, 0] / xsection_central
+        regup_rel = reg_err[:, 1] / xsection_central
 
     # -- Signed scale errors (from varying the scale to 0.5x and 2x the
     #    central scale) divided by xsection_central. To prevent that the
