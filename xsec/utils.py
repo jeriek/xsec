@@ -266,8 +266,7 @@ def print_result(return_array, process_list, verbose=2):
             sys.stdout.flush()
             print_result.print_banner = False
 
-        nr_dec = 4
-        np.set_printoptions(precision=nr_dec)
+        np.set_printoptions(precision=4, formatter={'float': '{: .4e}'.format})
         print("* Requested processes, in order:\n   ", end="")
         for process in process_list:
             print(process, " ", end="")
@@ -280,10 +279,13 @@ def print_result(return_array, process_list, verbose=2):
             for i, feature in enumerate(feature_names):
                 print(
                     feature, "=",
-                    str(np.round(feature_values[i], decimals=nr_dec)),
+                    str(np.round(feature_values[i], decimals=4)),
                     "\b, ", end=""
                     )
             print("\b\b]")
+
+        # Switch from np.object array to make np.set_printoptions work
+        return_array = return_array.astype(np.double)
 
         print("* xsection_central (fb):", return_array[0])
         print("* regdown_rel:   ", return_array[1])
