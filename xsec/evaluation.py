@@ -21,8 +21,9 @@ import xsec.features as features
 
 def eval_xsection(verbose=2, check_consistency=True):
     """
-    Evaluates cross sections for processes in global list PROCESSES
-    using parameter values stored in global dictionary PARAMS.
+    Evaluates cross sections for processes in global list
+    gploader.PROCESSES using parameter values stored in global
+    dictionary parameters.PARAMS.
 
     Parameters
     ----------
@@ -120,16 +121,14 @@ def eval_xsection(verbose=2, check_consistency=True):
         np.array, list(
             zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
     )
-    # reg_err = np.maximum(reg_err, 1.0e-3*xsection_central)
 
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
     # mu and one for sigma values -- then convert to arrays by mapping)
     # NOTE: Result arrays are now ordered in the user-specified order
     # from the global PROCESSES variable!
 
-
-    # -- Signed regression errors divided by xsection_central
-    #    from the central-scale xsection, relative to the latter.
+    # -- Signed regression errors on the central cross section, divided
+    #    by xsection_central
     regdown_rel = - reg_err / xsection_central  # numpy array
     regup_rel = reg_err / xsection_central  # numpy array
 
@@ -197,7 +196,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     )
 
     # Print result to screen, depending on verbosity level
-    utils.print_result(return_array, verbose)
+    utils.print_result(return_array, processes, verbose)
 
     return return_array
 

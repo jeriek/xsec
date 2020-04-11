@@ -193,7 +193,7 @@ def unknown_process_error(pid1, pid2):
 ###############################################
 
 # Print result of run
-def print_result(return_array, verbose=2):
+def print_result(return_array, process_list, verbose=2):
     """
     Output an evaluation result to screen. The given amount of detail
     can be adjusted.
@@ -202,6 +202,9 @@ def print_result(return_array, verbose=2):
     ----------
     return_array : array
         Evaluation result as returned by evaluation.eval_xsection().
+
+    process_list : list
+        List of processes as stored in gploader.PROCESSES.
 
     verbose : int, optional
         Degree of verbosity when printing results to screen:
@@ -213,31 +216,28 @@ def print_result(return_array, verbose=2):
         - verbose=2 : prints full description of the results (default)
 
     """
-
-    import xsec.gploader as gploader
     import xsec.features as features
 
     # Verbose level 0: print no description at all
-    if verbose is 0:
+    if verbose == 0:
         pass
     # Verbose level 1: print single-line description of each process
-    elif verbose is 1:
-        nr_dec = 4
-        process_list = gploader.PROCESSES
+    elif verbose == 1:
         for i, process in enumerate(process_list):
             pid1 = process[0]
             pid2 = process[1]
 
-            xsection_central = np.round(return_array[0][i], decimals=nr_dec)
-            regdown_rel = np.round(return_array[1][i], decimals=nr_dec)
-            regup_rel = np.round(return_array[2][i], decimals=nr_dec)
-            scaledown_rel = np.round(return_array[3][i], decimals=nr_dec)
-            scaleup_rel = np.round(return_array[4][i], decimals=nr_dec)
-            pdfdown_rel = np.round(return_array[5][i], decimals=nr_dec)
-            pdfup_rel = np.round(return_array[6][i], decimals=nr_dec)
-            alphasdown_rel = np.round(return_array[7][i], decimals=nr_dec)
-            alphasup_rel = np.round(return_array[8][i], decimals=nr_dec)
+            xsection_central = return_array[0][i]
+            regdown_rel = return_array[1][i]
+            regup_rel = return_array[2][i]
+            scaledown_rel = return_array[3][i]
+            scaleup_rel = return_array[4][i]
+            pdfdown_rel = return_array[5][i]
+            pdfup_rel = return_array[6][i]
+            alphasdown_rel = return_array[7][i]
+            alphasup_rel = return_array[8][i]
 
+            # Print one line, using scientific notation with 4 decimals
             result_str = "  {: d} {: d}  {: .4e}".format(pid1, pid2, xsection_central)
             result_str += "  {: .4e}  {: .4e}".format(regdown_rel, regup_rel)
             result_str += "  {: .4e}  {: .4e}".format(scaledown_rel, scaleup_rel)
@@ -248,8 +248,7 @@ def print_result(return_array, verbose=2):
             sys.stdout.flush()
 
     # Verbose level 2: print full description of the result
-    elif verbose is 2:
-
+    elif verbose == 2:
         # 'Static' variable to ensure the xsec banner is only printed
         # the first time this function is run (with verbose=2).
         if "print_banner" not in print_result.__dict__:
@@ -269,7 +268,6 @@ def print_result(return_array, verbose=2):
 
         nr_dec = 4
         np.set_printoptions(precision=nr_dec)
-        process_list = gploader.PROCESSES
         print("* Requested processes, in order:\n   ", end="")
         for process in process_list:
             print(process, " ", end="")
