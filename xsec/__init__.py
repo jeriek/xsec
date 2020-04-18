@@ -14,7 +14,7 @@ imports that specify the relevant module name, for example:
     from xsec.features import FEATURES_LIST
 """
 
-from xsec.utils import __version__
+from xsec.utils import __version__, list_all_processes
 from xsec.gploader import (
     init,
     set_processes,

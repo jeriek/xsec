@@ -193,16 +193,9 @@ try:
     features = xsec.features.get_features(args.pid1, args.pid2)
 except KeyError as e:
     print(
-        "The chosen process (", process_str, ") is unknown.", sep="", end=" "
+        "The chosen process (", process_str, ") is unknown.", sep="", end="\n"
     )
-    print("This is the list of known (pid1, pid2) pairs:")
-    pid_pairs = xsec.features.FEATURES_LIST.keys()
-    pid_pairs.sort()
-    for i, pid_pair in enumerate(pid_pairs):
-        if i % 3 == 0:
-            print()
-        print("\t", pid_pair, sep="", end="")
-    print("\n")
+    xsec.list_all_processes()
     sys.exit()
 
 # Get the number of features
