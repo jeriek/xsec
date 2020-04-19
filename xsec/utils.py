@@ -27,7 +27,7 @@ XSTYPE_FILESUFFIX = {
 }
 
 # List of the internal xstype identifiers
-XSTYPES = XSTYPE_FILESUFFIX.keys()
+XSTYPES = list(XSTYPE_FILESUFFIX.keys())
 
 # List keeping track of original physics references
 REF = []

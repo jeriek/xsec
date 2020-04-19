@@ -67,7 +67,7 @@ PARAMS = {
 COM_ENERGY = None
 
 # List of all parameter names
-PARAM_NAMES = PARAMS.keys()
+PARAM_NAMES = list(PARAMS.keys())
 
 # Dictionary of all parameter domains
 PARAMS_DOM = {

@@ -165,7 +165,7 @@ UNVALIDATED_PROCESSES = [
 ]
 
 # fmt: on
-TRAINED_PROCESSES = FEATURES_LIST.keys()
+TRAINED_PROCESSES = list(FEATURES_LIST.keys())
 
 ###############################################
 # Get functions                               #
