@@ -371,17 +371,20 @@ def fetch_bibtex(ref):
     return bibtex
 
 
-def list_all_processes():
+def list_all_xsec_processes():
     """
-    Print a list of PID pairs of all trained processes.
+    Print a list of PID pairs of all the processes currently available in xsec.
     """
-    from xsec.features import FEATURES_LIST
+    from xsec.features import FEATURES_LIST, UNVALIDATED_PROCESSES
     # Retrieve and sort the list of PID pairs
-    pid_pairs = FEATURES_LIST.keys()
+    pid_pairs = list(FEATURES_LIST.keys())
     pid_pairs.sort()
     # Print the list with appropriate spacing
     print("List of PID pairs (pid1, pid2) of all trained processes in xsec:")
     for i, pid_pair in enumerate(pid_pairs):
+        # Skip unvalidated processes
+        if pid_pair in UNVALIDATED_PROCESSES:
+            continue
         if i % 3 == 0:
             print()
         print("\t", pid_pair, sep="", end="")

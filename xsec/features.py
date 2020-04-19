@@ -154,6 +154,16 @@ FEATURES_LIST = {
                          "mean",
                          "nmix11", "nmix12", "nmix13", "nmix14"],
 }
+
+# Keep track of which processes have not yet been validated.
+# These will not be returned by the utils.list_all_xsec_processes() function
+UNVALIDATED_PROCESSES = [
+    # --- Neutralino and chargino production
+    (1000023, 1000023),
+    (1000022, 1000023),
+    (1000022, 1000022),
+]
+
 # fmt: on
 TRAINED_PROCESSES = FEATURES_LIST.keys()
 

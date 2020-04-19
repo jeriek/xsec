@@ -195,7 +195,7 @@ except KeyError as e:
     print(
         "The chosen process (", process_str, ") is unknown.", sep="", end="\n"
     )
-    xsec.list_all_processes()
+    xsec.list_all_xsec_processes()
     sys.exit()
 
 # Get the number of features
