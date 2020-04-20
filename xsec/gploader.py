@@ -5,11 +5,12 @@ Initialisation and GP loading functions.
 from __future__ import print_function
 
 import os
+import gc
 import imp
+import warnings
 from collections import OrderedDict
 
 import joblib  # Needs v0.12.2 or later
-import numpy as np
 
 import xsec.utils as utils
 import xsec.kernels as kernels
@@ -182,8 +183,8 @@ def set_processes(process_tuple_list):
                 )
             )
     # Only set PROCESSES and load the GPs if all checks were passed
-    global PROCESSES
-    PROCESSES = trained_process_list
+    # global PROCESSES
+    PROCESSES.append(trained_process_list)
 
 
 def get_processes():
@@ -396,6 +397,63 @@ def load_processes(process_list):
 
         # Add literature references for process to list
         utils.get_references(*process)
+
+
+def unload_processes(process_list=None):
+    """
+    Given a list of sparticle production processes, unload all relevant
+    trained GP models from memory, or remove them from a cache folder on
+    disk if using cache. This is particularly useful to minimise the
+    memory load when making predictions for many different processes.
+    If called without argument, all loaded processes are removed.
+
+    Parameters
+    ----------
+    process_list : list of tuple, optional
+        The input argument is a list of 2-tuples
+        (process[0], process[1]), where the components are integers
+        specifying the process. For example, gluino-gluino production
+        corresponds to the tuple (1000021, 1000021).
+        If None (default), all loaded processes are removed.
+    """
+    import xsec.features as features
+
+    if not process_list:
+        del PROCESSES[:]
+        PROCESS_DICT.clear()
+    else:
+        for process in process_list:
+            # Check if process tuple has right length
+            if len(process) != 2:
+                warnings.warn(
+                    "The entered process tuple ({input}) does not consist of "
+                    "exactly _two_ particle IDs and will be ignored.".format(
+                        input=process
+                    )
+                )
+                continue
+            else:
+                # Retrieve trained process and attempt removal
+                trained_process = features.get_trained_process(*process)
+                try:
+                    PROCESSES.remove(trained_process)
+                    # Remove each of the xstypes in PROCESS_DICT
+                    for xstype in utils.XSTYPES:
+                        process_xstype = utils.get_process_id(
+                            trained_process, xstype
+                        )
+                        del PROCESS_DICT[process_xstype]
+                except (KeyError, ValueError):
+                    warnings.warn(
+                        "An entered process ({input}) was ignored as it is "
+                        "not present in the list of loaded processes: {loaded}"
+                        "".format(
+                            input=process, loaded=PROCESSES
+                        )
+                    )
+                    continue
+        # Force Python to collect garbage
+        gc.collect()
 
 
 ###############################################
