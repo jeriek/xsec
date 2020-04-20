@@ -154,37 +154,28 @@ def init(
         print("Cache folder: " + str(cachedir))
 
 
-def set_processes(process_tuple_list):
+def check_process_input(process):
     """
-    Set the global list of processes to be evaluated. Called in
-    load_processes().
+    Check the input format of a process tuple. Returns True if valid,
+    raises an error if invalid.
     """
-    import xsec.features as features
-
-    trained_process_list = []
     # Check if process exists (right format, known sparticles)
-    for process in process_tuple_list:
-        if len(process) == 2:
-            if all((pid in parameters.SPARTICLE_IDS) for pid in process):
-                trained_process_list.append(features.get_trained_process(*process))
-            else:
-                raise ValueError(
-                    "One or more particle IDs entered ({input}) are not in the"
-                    " allowed set of IDs: \n {ids}".format(
-                        input=process_tuple_list, ids=parameters.SPARTICLE_IDS
-                    )
-                )
-        else:
-            raise ValueError(
-                "The entered process tuple ({input}) does not consist of "
-                "exactly _two_ particle IDs from the following list: "
-                "\n {ids}".format(
-                    input=process_tuple_list, ids=parameters.SPARTICLE_IDS
-                )
+    if len(process) != 2:
+        raise ValueError(
+            "The entered process tuple ({input}) does not consist of "
+            "exactly _two_ particle IDs from the following list: "
+            "\n {ids}".format(
+                input=process, ids=parameters.SPARTICLE_IDS
             )
-    # Only set PROCESSES and load the GPs if all checks were passed
-    # global PROCESSES
-    PROCESSES.append(trained_process_list)
+        )
+    if not all((pid in parameters.SPARTICLE_IDS) for pid in process):
+        raise ValueError(
+            "One or more particle IDs entered ({input}) are not in the"
+            " allowed set of IDs: \n {ids}".format(
+                input=process, ids=parameters.SPARTICLE_IDS
+            )
+        )
+    return True
 
 
 def get_processes():
@@ -370,12 +361,10 @@ def load_processes(process_list):
     """
     import xsec.features as features
 
-    # Set the global list of processes (fails in case of input errors)
     if not process_list:
         raise ValueError(
             "List of processes to be evaluated cannot be empty."
             )
-    set_processes(process_list)
 
     # Get the requested COM energy from the parameters
     # This requires setting the parameters BEFORE loading processes!
@@ -383,17 +372,22 @@ def load_processes(process_list):
 
     # Loop over specified processes
     for process in process_list:
-        assert len(process) == 2
+        # Check validity of input
+        check_process_input(process)
         # Convert to trained process code!
-        process = features.get_trained_process(*process)
+        trained_process = features.get_trained_process(*process)
         # Search for all directories with same process, accounting for
         # different cross-section types
         for xstype in utils.XSTYPES:
-            process_xstype = utils.get_process_id(process, xstype)
+            process_xstype = utils.get_process_id(trained_process, xstype)
             # Loaded GP models (or their cache reference) are stored in PROCESS_DICT
             PROCESS_DICT[process_xstype] = load_single_process(
                 process_xstype, energy
             )
+
+        # Add the process to the global list of processes if all went well
+        if trained_process not in PROCESSES:
+            PROCESSES.append(trained_process)
 
         # Add literature references for process to list
         utils.get_references(*process)
@@ -445,7 +439,7 @@ def unload_processes(process_list=None):
                         del PROCESS_DICT[process_xstype]
                 except (KeyError, ValueError):
                     warnings.warn(
-                        "An entered process ({input}) was ignored as it is "
+                        "An entered process {input} was ignored as it is "
                         "not present in the list of loaded processes: {loaded}"
                         "".format(
                             input=process, loaded=PROCESSES

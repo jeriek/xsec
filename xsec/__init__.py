@@ -17,8 +17,8 @@ imports that specify the relevant module name, for example:
 from xsec.utils import __version__, list_all_xsec_processes
 from xsec.gploader import (
     init,
-    set_processes,
     load_processes,
+    unload_processes,
     get_processes,
     finalise,
 )
