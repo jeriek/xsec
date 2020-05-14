@@ -314,10 +314,13 @@ def gp_predict(
 
     X = np.atleast_2d(new_features)
 
-    K_trans = kernel(X, X_train)  # transpose of K*
-    y_mean = K_trans.dot(alpha)  # Line 4 (y_mean = f_star)
+    # Transpose of K*
+    K_trans = kernel(X, X_train)
+    # Line 4 (y_mean = f_star)
+    y_mean = K_trans.dot(alpha)
 
-    prior_variance = kernel(X)  # Note: 1x1 if just 1 new test point!
+    # Prior variance: 1x1 if just 1 new test point!
+    prior_variance = kernel(X)
 
     if return_std:
         # Compute variance of predictive distribution. Note: equal to
