@@ -69,7 +69,7 @@ def WhiteKernel(X, Y=None, noise_level=1.0):
     return np.zeros((X.shape[0], Y.shape[0]))
 
 
-def LinearKernel(X, Y, c=1.0):
+def LinearKernel(X, Y=None, c=1.0):
     """
     Implementation of a linear kernel.
 
