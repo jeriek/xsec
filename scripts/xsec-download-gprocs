@@ -84,7 +84,7 @@ def main():
 
     # Take the download directory as an optional argument
     parser.add_argument(
-        "--gp_dir",
+        "-g", "--gp_dir",
         nargs="?",
         metavar="PATH",
         type=str,
@@ -94,7 +94,7 @@ def main():
              "The default path is %(default)s",
     )
     parser.add_argument(
-        "--process",
+        "-t", "--process_type",
         nargs="?",
         metavar="TYPE",
         type=str,
@@ -104,11 +104,11 @@ def main():
         help="choose the final-state type for which GP data will be "
              "downloaded. The default choice is \'%(default)s\'. Other "
              "options: "
-             "  \'gg\' (gluino--gluino), "
-             "  \'sg\' (squark--gluino and c.c.), "
-             "  \'ss\' (squark--squark and c.c.), "
-             "  \'sb\' (squark--anti-squark), "
-             "  \'tb\' (stop--anti-stop and sbottom--anti-sbottom)",
+             "  \'gg\' (gluino pair production), "
+             "  \'sg\' (1st/2nd gen. squark--gluino pair production), "
+             "  \'ss\' (1st/2nd gen. squark pair production), "
+             "  \'sb\' (1st/2nd gen. squark--anti-squark pair production), "
+             "  \'tb\' (3rd gen. squark--anti-squark pair production)."
     )
 
     # Parse the arguments
@@ -148,10 +148,10 @@ def main():
     # Print a new line
     print()
 
-    if args.process == "all":
+    if args.process_type == "all":
         loop_list = PROCESS_TYPES
     else:
-        loop_list = [args.process]
+        loop_list = [args.process_type]
 
     for process in loop_list:
         url = DOWNLOAD_DICT[process]

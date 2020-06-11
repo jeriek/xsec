@@ -226,14 +226,6 @@ def get_features_dict(process_list, auto_normf=True):
         features_dict = collections.OrderedDict()
         for param in features_index:
             # Check if features should be normalised
-            # TODO: to speed things up, normalising parameters could be
-            # done when they are set and then kept in a separate
-            # NORMALISED_PARAM dict, rather than repeatedly calculating
-            # same values for each process
-            # (i) Make NORMALISED_PARAMS dict copying PARAMs
-            # (ii) Rename get_normalised_parameter into calc_normalised_parameter
-            # (iii) Let set_parameter also add normalised value to the new dict
-            # (iv) Let get_normalised_parameter return the value from the new dict
             if feature_norm_flag:
                 features_dict[param] = parameters.get_normalised_parameter(param)
             else:
