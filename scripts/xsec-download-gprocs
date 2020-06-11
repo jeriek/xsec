@@ -6,9 +6,12 @@ for use with the cross-section evaluation code.
 Compatible with Python 2 and 3.
 
 Usage:
-    xsec-download-gprocs <directory-for-xsec-data>
-    If no argument <directory-for-xsec-data> is given, the current
-    working directory is used.
+    xsec-download-gprocs --gp_dir PATH --process TYPE
+
+If no argument PATH is given, the current working directory is used.
+If no argument TYPES is given, data will be downloaded for all
+supported final-state types.
+Use 'xsec-download-gprocs --help' for more details.
 """
 
 
@@ -43,19 +46,31 @@ except ImportError:
 # Find current version number for correct download
 VERSION = xsec.__version__
 
-# Each download is specified as a (url, file_name) tuple in this list.
-DOWNLOAD_LIST = [
-    (
-        "https://github.com/jeriek/xstest/releases/download/" + VERSION + "/"
-        "xsec-gprocs-" + VERSION + ".tar.gz",
-        "xsec-gprocs-" + VERSION + ".tar.gz",
+BASE_URL = "https://github.com/jeriek/xsec/releases/download/{v}/".format(
+    v=VERSION
     )
-]
+PROCESS_TYPES = ["gg", "sg", "ss", "sb", "tb"]
+ALL_PROCESS_TYPES = PROCESS_TYPES + ["all"]
+
+
+# Example URL:
+# https://github.com/jeriek/xsec/releases/download/1.0.0/xsec_1.0.0_gprocs_gg.tar.gz
+
+# Each file is specified as a {key: filename} pair in this dictionary
+FILE_DICT = {
+    process_type: "xsec_{version}_gprocs_{process_type}.tar.gz".format(
+        version=VERSION, process_type=process_type
+        )
+    for process_type in PROCESS_TYPES
+}
+# Each url is specified as a {key: url} pair in this dictionary
+DOWNLOAD_DICT = {process_type: BASE_URL +
+                 FILE_DICT[process_type] for process_type in FILE_DICT.keys()}
 
 
 def main():
     """
-    Download all files in DOWNLOAD_LIST.
+    Download the requested files in DOWNLOAD_LIST.
     """
 
     # Get the script name
@@ -64,31 +79,48 @@ def main():
     # Set up the argument parser
     parser = argparse.ArgumentParser(
         prog=prog_name,
-        description="Tool for downloading Gaussian process files for xsec"
+        description="Tool for downloading Gaussian process files for xsec."
     )
 
     # Take the download directory as an optional argument
     parser.add_argument(
-        "xsec_data_dir",
+        "--gp_dir",
         nargs="?",
         metavar="PATH",
         type=str,
         action="store",
         default=os.path.join(os.getcwd(), "gprocs"),
         help="set the path where the downloaded files are stored. "
-             "The default path is %(default)s.",
+             "The default path is %(default)s",
+    )
+    parser.add_argument(
+        "--process",
+        nargs="?",
+        metavar="TYPE",
+        type=str,
+        choices=ALL_PROCESS_TYPES,
+        action="store",
+        default="all",
+        help="choose the final-state type for which GP data will be "
+             "downloaded. The default choice is \'%(default)s\'. Other "
+             "options: "
+             "  \'gg\' (gluino--gluino), "
+             "  \'sg\' (squark--gluino and c.c.), "
+             "  \'ss\' (squark--squark and c.c.), "
+             "  \'sb\' (squark--anti-squark), "
+             "  \'tb\' (stop--anti-stop and sbottom--anti-sbottom)",
     )
 
     # Parse the arguments
     args = parser.parse_args()
 
-    data_init_filepath = os.path.join(args.xsec_data_dir, "__init__.py")
+    data_init_filepath = os.path.join(args.gp_dir, "__init__.py")
 
     # Create data dir and/or init file if not existing
-    if not os.path.exists(args.xsec_data_dir):
+    if not os.path.exists(args.gp_dir):
         try:
             # Create gprocs directory and empty init file
-            mkdir_p(args.xsec_data_dir)
+            mkdir_p(args.gp_dir)
             open(data_init_filepath, "a").close()
         except OSError:
             raise
@@ -105,7 +137,7 @@ def main():
                     "file {f}. Do you have write permission for the "
                     "directory {dir}?".format(
                         f=data_init_filepath,
-                        dir=args.xsec_data_dir
+                        dir=args.gp_dir
                     )
                 )
                 print()
@@ -116,8 +148,14 @@ def main():
     # Print a new line
     print()
 
-    for url, file_name in DOWNLOAD_LIST:
-        print("-- Downloading file", file_name, "from\n", url, ":\n")
+    if args.process == "all":
+        loop_list = PROCESS_TYPES
+    else:
+        loop_list = [args.process]
+
+    for process in loop_list:
+        url = DOWNLOAD_DICT[process]
+        print("-- Downloading file", FILE_DICT[process], "from\n", url, ":\n")
         # Force writing to terminal; otherwise stdout is buffered first
         sys.stdout.flush()
 
@@ -139,14 +177,14 @@ def main():
         print("  ... starting file extraction (", tmp_filename, ")")
         sys.stdout.flush()
         tar = tarfile.open(tmp_filename, "r:gz")
-        tar.extractall(args.xsec_data_dir)
+        tar.extractall(args.gp_dir)
         tar.close()
         print("  ... file extraction completed.")
         sys.stdout.flush()
 
     print()
     print(
-        "All downloads completed. Data files stored in", args.xsec_data_dir,
+        "All downloads completed. Data files stored in", args.gp_dir,
         "\b."
     )
     print()
@@ -170,7 +208,6 @@ def download_progress_hook(count, block_size, total_size):
     Visualise download progress.
     Used with the urllib.urlretrieve reporthook.
     """
-
     # Compute time since start of download
     global start_time
     if count == 0:
@@ -180,7 +217,7 @@ def download_progress_hook(count, block_size, total_size):
     # Compute combined size of downloaded chunks, given in MB
     progress_size = float(count * block_size)
     # Compute download speed in KB/s
-    speed = int(progress_size / (1024.0 * duration))
+    speed = int(progress_size / (1024.0 ** 2 * duration))
 
     # When the HTTP response has 'Content-Length' in the header, display
     # progress bar and percentage of download completion. Else, when
@@ -188,7 +225,7 @@ def download_progress_hook(count, block_size, total_size):
     # about total size is available, so only display accumulated
     # download size.
     if total_size > 0:
-        percent = min(int(count * block_size * 100 / total_size), 100)
+        percent = min(int(count * block_size * 100.0 / total_size), 100)
         # Setup toolbar
         toolbar_width = 18
         progress_symbol = "/"
@@ -198,23 +235,23 @@ def download_progress_hook(count, block_size, total_size):
         # (\r returns cursor to start of line to overwrite old info,
         # \b backspace, \t tab)
         sys.stdout.write(
-            "\r[%s] \t\b\b %s%%  --  %.1f MB, %.1f s, %d KB/s"
+            "\r[%s] \t\b\b %s%%  --  %.1f MB of %.1f MB, %.1f s, %d MB/s"
             % (
                 progress_symbol * n_progress_lines
                 + " " * (toolbar_width - n_progress_lines),
                 percent,
-                progress_size / (1024.0 * 1024.0),
+                progress_size / (1024.0 ** 2),
+                total_size / (1024.0 ** 2),
                 duration,
                 speed,
             )
         )
-        # Force writing to terminal; otherwise stdout is buffered first
         sys.stdout.flush()
 
     else:
         sys.stdout.write(
-            "\r  ... downloaded %.1f MB in %.1f s, avg speed: %d KB/s"
-            % (progress_size / (1024.0 * 1024.0), duration, speed)
+            "\r  ... downloaded %.1f MB in %.1f s, avg speed: %d MB/s"
+            % (progress_size / (1024.0 ** 2), duration, speed)
         )
         sys.stdout.flush()
 
