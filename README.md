@@ -9,8 +9,7 @@
 
 ## Installation
 
-The following python libraries are required to run xsec:
-- python 2.7.x
+xsec is compatible with both Python 2 and 3. The following Python libraries are required to run xsec:
 - setuptools v20.7.0 or later
 - numpy v1.14 or later
 - scipy v1.0.0 or later
