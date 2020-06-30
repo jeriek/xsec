@@ -265,16 +265,15 @@ def dgp_predict(process, xstype, new_features):
 
     # If any of the betas is negative (sigma_c < sigma_i), due to worse
     # fit despite more points, set weight of that expert to zero.
-    # In principle, this cannot occur when the experts share hyperparameters.
+    # In principle this cannot occur when the experts share hyperparameters,
+    # but roundoff errors can still cause it.
     if any(betas < 0):
-        warnings.warn(
-            "Warning: one or more weights beta_i were negative and set to 0.",
-            "\n -- weights: ",
-            betas,
-            " for ",
-            process,
-            xstype,
-        )
+        # warnings.warn(
+        #     "Warning: one or more weights beta_i were negative and set to 0."
+        #     "\n -- weights: {w} for {p} - {t}".format(
+        #         w=betas, p=process, t=xstype
+        #     )
+        # )
         betas = np.maximum(betas, 0.0)
 
     # Final mean and variance
