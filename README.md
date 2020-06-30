@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/jeriek/xstest.svg)](./LICENSE)
 
 `xsec` is a tool for fast evaluation of cross-sections, taking advantage
-of the power and flexibility of Gaussian processes.
+of the power and flexibility of Gaussian process regression.
 
 ## Installation
 
