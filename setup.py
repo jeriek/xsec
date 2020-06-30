@@ -21,8 +21,8 @@ def readme():
     # with open("README.md") as readme_file:
     #     return readme_file.read()
     readme = """
-    xsec is a tool for fast evaluation of cross-sections, making use of
-    the power and flexibility of Gaussian processes.
+    xsec is a tool for fast evaluation of cross-sections, taking advantage
+    of the power and flexibility of Gaussian process regression.
 
     For more information, please visit the GitHub repository
     at [https://github.com/jeriek/xsec](https://github.com/jeriek/xsec).
