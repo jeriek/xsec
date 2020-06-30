@@ -421,7 +421,9 @@ def import_slha(filepath):
     """
 
     # Try to open file (expand any environment variables and ~)
-    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
+    filepath = os.path.abspath(
+        os.path.expandvars(os.path.expanduser(filepath))
+    )
     try:
         slha = pyslha.read(filepath, ignoreblocks=["DCINFO"])
         # TODO: More checking of reasonable file?
@@ -450,7 +452,7 @@ def import_slha_string(slha_string):
     # Fix to ensure that the pyslha parsing of slha_string
     # works with both Python 2 and 3
     if sys.version_info < (3, 0):
-        slha_string = slha_string.encode('ascii', 'xmlcharrefreplace')
+        slha_string = slha_string.encode("ascii", "xmlcharrefreplace")
 
     # Parse the SLHA content with pyslha
     slha = pyslha.readSLHA(slha_string, ignoreblocks=["DCINFO"])

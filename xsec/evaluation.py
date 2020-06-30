@@ -118,8 +118,8 @@ def eval_xsection(verbose=2, check_consistency=True):
     # -- Central-scale xsection and regression error (= standard
     #    deviation or asymmetric error) in fb.
     xsection_central, reg_err = map(
-        np.array, list(
-            zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"])))
+        np.array,
+        list(zip(*(mu_sigma_dgp for mu_sigma_dgp in dgp_results["centr"]))),
     )
 
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
@@ -130,7 +130,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     # -- Signed regression errors on the central cross section, divided
     #    by xsection_central
     # --- Each element of reg_err is a [lower, upper] error array
-    regdown_rel = - reg_err[:, 0] / xsection_central
+    regdown_rel = -reg_err[:, 0] / xsection_central
     regup_rel = reg_err[:, 1] / xsection_central
 
     # -- Signed scale errors (from varying the scale to 0.5x and 2x the
@@ -145,19 +145,25 @@ def eval_xsection(verbose=2, check_consistency=True):
     mu_dgp_scldn_rel, _ = np.array(list(zip(*dgp_results["scldn"])))
     mu_dgp_sclup_rel, _ = np.array(list(zip(*dgp_results["sclup"])))
 
-    scaledown_rel = np.array(
-        list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
-    scaleup_rel = np.array(
-        list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))) - 1.0
-
+    scaledown_rel = (
+        np.array(
+            list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))
+        )
+        - 1.0
+    )
+    scaleup_rel = (
+        np.array(
+            list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))
+        )
+        - 1.0
+    )
 
     # -- Signed PDF errors divided by xsection_central
     # --- Get the DGP medians, discard regression errors on the variations
     delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
 
-    pdfdown_rel = (-1.0)*np.abs(delta_pdf_rel)
+    pdfdown_rel = (-1.0) * np.abs(delta_pdf_rel)
     pdfup_rel = np.abs(delta_pdf_rel)
-
 
     # -- Signed alpha_s errors divided by xsection_central.
     #    Following the PDF4LHC recommendation in arxiv:1510.03865,
@@ -176,7 +182,7 @@ def eval_xsection(verbose=2, check_consistency=True):
         ]
     )
 
-    alphasdown_rel = (-1.0)*delta_alphas_rel
+    alphasdown_rel = (-1.0) * delta_alphas_rel
     alphasup_rel = delta_alphas_rel
 
     # Collect values for output in Numpy array
@@ -240,7 +246,7 @@ def dgp_predict(process, xstype, new_features):
     # Loop over GP experts (the first is the communications expert)
     for i in range(n_experts):
         mu, sigma = gp_predict(
-            process_xstype, new_features, index=i+1, return_std=True
+            process_xstype, new_features, index=i + 1, return_std=True
         )
         mus[i] = mu
         sigmas[i] = sigma
@@ -263,8 +269,12 @@ def dgp_predict(process, xstype, new_features):
     if any(betas < 0):
         warnings.warn(
             "Warning: one or more weights beta_i were negative and set to 0.",
-            "\n -- weights: ", betas, " for ", process, xstype
-            )
+            "\n -- weights: ",
+            betas,
+            " for ",
+            process,
+            xstype,
+        )
         betas = np.maximum(betas, 0.0)
 
     # Final mean and variance
@@ -395,7 +405,7 @@ def gp_predict(
         # scale units)
         g = 1.0 - np.sum(K_trans_dot_K_inv)
         M_inv = np.sum(K_inv) ** (-1)
-        y_var += M_inv * g**2
+        y_var += M_inv * g ** 2
 
         # Return the standard deviation
         y_std = np.sqrt(y_var)

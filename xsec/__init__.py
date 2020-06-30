@@ -6,7 +6,7 @@ for usage in codes that import xsec.
 
 Example:
     import xsec
-    print xsec.__version__
+    print(xsec.__version__)
     xsec.init()
 
 Other functions and global variables can still be accessed by absolute

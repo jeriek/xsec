@@ -100,20 +100,24 @@ def init(
     global DATA_DIR
     # If the global variable was directly set by the user, search for that path
     if DATA_DIR:
-        DATA_DIR = os.path.abspath(os.path.expandvars(os.path.expanduser(DATA_DIR)))
+        DATA_DIR = os.path.abspath(
+            os.path.expandvars(os.path.expanduser(DATA_DIR))
+        )
     # If set, use the given data_dir
     # (by default "gprocs", such that ./gprocs in the current working
     # directory is set as GP directory)
     # This will override the direct setting of DATA_DIR.
     if data_dir:
-        DATA_DIR = os.path.abspath(os.path.expandvars(os.path.expanduser(data_dir)))
+        DATA_DIR = os.path.abspath(
+            os.path.expandvars(os.path.expanduser(data_dir))
+        )
     # Else, if the user set both DATA_DIR and data_dir to ""
     else:
         raise IOError(
             "The path to the Gaussian process data directories cannot "
             "be empty. Please ensure that the right path is entered with the "
             "data_dir keyword in init()."
-            )
+        )
     # Check whether the given path is an existing directory
     if not os.path.isdir(DATA_DIR):
         raise IOError(
@@ -133,10 +137,13 @@ def init(
         if CACHE_DIR:
             # Set cache directory to given name, expand any environment
             # variables in the name
-            cachedir = os.path.abspath(os.path.expandvars(os.path.expanduser(CACHE_DIR)))
+            cachedir = os.path.abspath(
+                os.path.expandvars(os.path.expanduser(CACHE_DIR))
+            )
         else:
             # Create directory with random name
             from tempfile import mkdtemp
+
             cachedir = mkdtemp(prefix="xsec_")
 
         if USE_MEMMAP:
@@ -164,9 +171,7 @@ def check_process_input(process):
         raise ValueError(
             "The entered process tuple ({input}) does not consist of "
             "exactly _two_ particle IDs from the following list: "
-            "\n {ids}".format(
-                input=process, ids=parameters.SPARTICLE_IDS
-            )
+            "\n {ids}".format(input=process, ids=parameters.SPARTICLE_IDS)
         )
     if not all((pid in parameters.SPARTICLE_IDS) for pid in process):
         raise ValueError(
@@ -188,6 +193,7 @@ def get_processes():
 ###############################################
 # Loading functions                           #
 ###############################################
+
 
 def reconstruct_gp(model_file):
     """
@@ -217,8 +223,9 @@ def reconstruct_gp(model_file):
         # Compute K_inv from L_inv and store it in the dict
         gp_reco["K_inv"] = L_inv.dot(L_inv.T)
         # Read GP expert index from last part of file name
-        gp_reco["index"] = int(os.path.splitext(
-            os.path.basename(model_file))[0].split("_")[-1])
+        gp_reco["index"] = int(
+            os.path.splitext(os.path.basename(model_file))[0].split("_")[-1]
+        )
         # Kernel lambda function reconstructed later since not picklable
         gp_reco["kernel_string"] = gp_model["kernel_string"]
     return gp_reco
@@ -290,7 +297,7 @@ def load_single_process(process_xstype, energy):
         if not model_files:
             raise IOError(
                 "No GP data files (*.gproc) found at {}.".format(process_dir)
-                )
+            )
     else:
         raise IOError("No valid directory found at {}.".format(process_dir))
 
@@ -362,9 +369,7 @@ def load_processes(process_list):
     import xsec.features as features
 
     if not process_list:
-        raise ValueError(
-            "List of processes to be evaluated cannot be empty."
-            )
+        raise ValueError("List of processes to be evaluated cannot be empty.")
 
     # Get the requested COM energy from the parameters
     # This requires setting the parameters BEFORE loading processes!
@@ -380,7 +385,8 @@ def load_processes(process_list):
         # different cross-section types
         for xstype in utils.XSTYPES:
             process_xstype = utils.get_process_id(trained_process, xstype)
-            # Loaded GP models (or their cache reference) are stored in PROCESS_DICT
+            # Loaded GP models (or their cache reference) are stored in
+            # PROCESS_DICT
             PROCESS_DICT[process_xstype] = load_single_process(
                 process_xstype, energy
             )
@@ -441,9 +447,7 @@ def unload_processes(process_list=None):
                     warnings.warn(
                         "An entered process {input} was ignored as it is "
                         "not present in the list of loaded processes: {loaded}"
-                        "".format(
-                            input=process, loaded=PROCESSES
-                        )
+                        "".format(input=process, loaded=PROCESSES)
                     )
                     continue
         # Force Python to collect garbage

@@ -72,7 +72,8 @@ prog_name = os.path.basename(sys.argv[0])
 
 # Set up the argument parser
 parser = argparse.ArgumentParser(
-    prog=prog_name, description="Command-line interface to xsec.",
+    prog=prog_name,
+    description="Command-line interface to xsec.",
     formatter_class=argparse.RawDescriptionHelpFormatter,
     epilog="""
     * Example with parameter input:
@@ -83,7 +84,7 @@ parser = argparse.ArgumentParser(
     \t xsec 13000 1000021 1000001 -i\n
     Note that the command-line interface can only be used for a single
     production process at a time.
-    """
+    """,
 )
 
 parser.add_argument(
@@ -323,5 +324,5 @@ result = xsec.eval_xsection()
 if args.slha_output is not None:
     xsec.write_slha(args.slha_output, result)
 
-# Finalise (clears cache if necessary)
+# Finalise
 xsec.finalise()

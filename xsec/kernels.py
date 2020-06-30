@@ -108,7 +108,7 @@ def Matern(X, Y=None, length_scale=1.0, nu=1.5):
         K = dists * math.sqrt(3)
         K = (1.0 + K) * np.exp(-K)
     elif nu == 0.5:
-        K = np.exp((-1.0)*dists)
+        K = np.exp((-1.0) * dists)
     elif nu == 2.5:
         K = dists * math.sqrt(5)
         K = (1.0 + K + K ** 2 / 3.0) * np.exp(-K)

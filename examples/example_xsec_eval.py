@@ -4,7 +4,7 @@
 Run a simple test instance of the xsec evaluation module.
 
 These scripts can be used as a basis for a more complete routine to
-evaluate cross sections.
+evaluate cross-sections.
 """
 
 from __future__ import print_function
@@ -78,6 +78,7 @@ xsec.clear_parameters()
 
 # Import input parameters from a SLHA file (e.g. examples/sps1a.slha)
 import os.path
+
 slha_path = os.path.join(os.path.dirname(__file__), "sps1a.slha")
 xsec.import_slha(slha_path)
 

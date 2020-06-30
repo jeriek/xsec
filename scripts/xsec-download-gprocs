@@ -48,7 +48,7 @@ VERSION = xsec.__version__
 
 BASE_URL = "https://github.com/jeriek/xsec/releases/download/{v}/".format(
     v=VERSION
-    )
+)
 PROCESS_TYPES = ["gg", "sg", "ss", "sb", "tb"]
 ALL_PROCESS_TYPES = PROCESS_TYPES + ["all"]
 
@@ -60,12 +60,14 @@ ALL_PROCESS_TYPES = PROCESS_TYPES + ["all"]
 FILE_DICT = {
     process_type: "xsec_{version}_gprocs_{process_type}.tar.gz".format(
         version=VERSION, process_type=process_type
-        )
+    )
     for process_type in PROCESS_TYPES
 }
 # Each url is specified as a {key: url} pair in this dictionary
-DOWNLOAD_DICT = {process_type: BASE_URL +
-                 FILE_DICT[process_type] for process_type in FILE_DICT.keys()}
+DOWNLOAD_DICT = {
+    process_type: BASE_URL + FILE_DICT[process_type]
+    for process_type in FILE_DICT.keys()
+}
 
 
 def main():
@@ -79,22 +81,24 @@ def main():
     # Set up the argument parser
     parser = argparse.ArgumentParser(
         prog=prog_name,
-        description="Tool for downloading Gaussian process files for xsec."
+        description="Tool for downloading Gaussian process files for xsec.",
     )
 
     # Take the download directory as an optional argument
     parser.add_argument(
-        "-g", "--gp_dir",
+        "-g",
+        "--gp_dir",
         nargs="?",
         metavar="PATH",
         type=str,
         action="store",
         default=os.path.join(os.getcwd(), "gprocs"),
         help="set the path where the downloaded files are stored. "
-             "The default path is %(default)s",
+        "The default path is %(default)s",
     )
     parser.add_argument(
-        "-t", "--process_type",
+        "-t",
+        "--process_type",
         nargs="?",
         metavar="TYPE",
         type=str,
@@ -102,13 +106,13 @@ def main():
         action="store",
         default="all",
         help="choose the final-state type for which GP data will be "
-             "downloaded. The default choice is \'%(default)s\'. Other "
-             "options: "
-             "  \'gg\' (gluino pair production), "
-             "  \'sg\' (1st/2nd gen. squark--gluino pair production), "
-             "  \'ss\' (1st/2nd gen. squark pair production), "
-             "  \'sb\' (1st/2nd gen. squark--anti-squark pair production), "
-             "  \'tb\' (3rd gen. squark--anti-squark pair production)."
+        "downloaded. The default choice is '%(default)s'. Other "
+        "options: "
+        "  'gg' (gluino pair production), "
+        "  'sg' (1st/2nd gen. squark--gluino pair production), "
+        "  'ss' (1st/2nd gen. squark pair production), "
+        "  'sb' (1st/2nd gen. squark--anti-squark pair production), "
+        "  'tb' (3rd gen. squark--anti-squark pair production).",
     )
 
     # Parse the arguments
@@ -136,8 +140,7 @@ def main():
                     "Permission denied when trying to write the "
                     "file {f}. Do you have write permission for the "
                     "directory {dir}?".format(
-                        f=data_init_filepath,
-                        dir=args.gp_dir
+                        f=data_init_filepath, dir=args.gp_dir
                     )
                 )
                 print()
@@ -183,10 +186,7 @@ def main():
         sys.stdout.flush()
 
     print()
-    print(
-        "All downloads completed. Data files stored in", args.gp_dir,
-        "\b."
-    )
+    print("All downloads completed. Data files stored in", args.gp_dir, "\b.")
     print()
 
 

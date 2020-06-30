@@ -31,7 +31,7 @@ try:
 except IndexError:
     # By default, look for './gprocs'
     cwd = os.getcwd()
-    input_dir = os.path.join(cwd, 'gprocs')
+    input_dir = os.path.join(cwd, "gprocs")
 
 # Set directory and cache choices
 xsec.init(data_dir=input_dir)  # run with default settings (no caching)

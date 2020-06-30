@@ -95,8 +95,9 @@ def get_processdir_name(process_xstype, energy):
     parton1, parton2, xstype = get_process_id_split(process_xstype)
 
     # Decide process name
-    processdir_name = str(parton1) + "_" + str(parton2) + \
-        "_" + str(int(energy)) + "_NLO"
+    processdir_name = (
+        str(parton1) + "_" + str(parton2) + "_" + str(int(energy)) + "_NLO"
+    )
 
     # Add training file suffixes depending on the xstype
     try:
@@ -182,10 +183,10 @@ def unknown_process_error(pid1, pid2):
     Raise an error noting that there is no training data for the
     process requested.
     """
-    return KeyError("Unknown process requested: ({pid1}, {pid2}) "
-                    "is not in the list of allowed processes!".format(
-                        pid1=pid1, pid2=pid2
-                    ))
+    return KeyError(
+        "Unknown process requested: ({pid1}, {pid2}) "
+        "is not in the list of allowed processes!".format(pid1=pid1, pid2=pid2)
+    )
 
 
 ###############################################
@@ -238,11 +239,17 @@ def print_result(return_array, process_list, verbose=2):
             alphasup_rel = return_array[8][i]
 
             # Print one line, using scientific notation with 4 decimals
-            result_str = "  {: d} {: d}  {: .4e}".format(pid1, pid2, xsection_central)
+            result_str = "  {: d} {: d}  {: .4e}".format(
+                pid1, pid2, xsection_central
+            )
             result_str += "  {: .4e}  {: .4e}".format(regdown_rel, regup_rel)
-            result_str += "  {: .4e}  {: .4e}".format(scaledown_rel, scaleup_rel)
+            result_str += "  {: .4e}  {: .4e}".format(
+                scaledown_rel, scaleup_rel
+            )
             result_str += "  {: .4e}  {: .4e}".format(pdfdown_rel, pdfup_rel)
-            result_str += "  {: .4e}  {: .4e}".format(alphasdown_rel, alphasup_rel)
+            result_str += "  {: .4e}  {: .4e}".format(
+                alphasdown_rel, alphasup_rel
+            )
 
             print(result_str)
             sys.stdout.flush()
@@ -266,7 +273,7 @@ def print_result(return_array, process_list, verbose=2):
             sys.stdout.flush()
             print_result.print_banner = False
 
-        np.set_printoptions(precision=4, formatter={'float': '{: .4e}'.format})
+        np.set_printoptions(precision=4, formatter={"float": "{: .4e}".format})
         print("* Requested processes, in order:\n   ", end="")
         for process in process_list:
             print(process, " ", end="")
@@ -274,14 +281,18 @@ def print_result(return_array, process_list, verbose=2):
         print("* Input features:")
         for process in process_list:
             feature_names = features.get_features(*process)
-            feature_values = features.get_features_dict(process_list, auto_normf=False)[process]
+            feature_values = features.get_features_dict(
+                process_list, auto_normf=False
+            )[process]
             print("  ", process, ": \n      [", end="")
             for i, feature in enumerate(feature_names):
                 print(
-                    feature, "=",
+                    feature,
+                    "=",
                     str(np.round(feature_values[i], decimals=4)),
-                    "\b, ", end=""
-                    )
+                    "\b, ",
+                    end="",
+                )
             print("\b\b]")
 
         # Switch from np.object array to make np.set_printoptions work
@@ -304,7 +315,7 @@ def print_result(return_array, process_list, verbose=2):
             "\t - verbose=0 (print nothing to screen)\n"
             "\t - verbose=1 (print single line per process)\n"
             "\t - verbose=2 (default, print full description of results)\n"
-            )
+        )
 
 
 def print_references(file_handle=None):
@@ -335,7 +346,7 @@ def get_references(pid1, pid2):
     # Add process specific papers to reference list
     if pid1 in ALL_GEN3_IDS and pid2 == -pid1:
         newref.append("Beenakker:1997ut")
-    elif (pid1 in EWINO_IDS and pid2 in EWINO_IDS):
+    elif pid1 in EWINO_IDS and pid2 in EWINO_IDS:
         newref.append("Beenakker:1999xh")
     else:
         newref.append("Beenakker:1996ch")
@@ -376,6 +387,7 @@ def list_all_xsec_processes():
     Print a list of PID pairs of all the processes currently available in xsec.
     """
     from xsec.features import FEATURES_LIST, UNVALIDATED_PROCESSES
+
     # Retrieve and sort the list of PID pairs
     pid_pairs = list(FEATURES_LIST.keys())
     pid_pairs.sort()

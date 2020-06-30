@@ -171,6 +171,7 @@ TRAINED_PROCESSES = list(FEATURES_LIST.keys())
 # Get functions                               #
 ###############################################
 
+
 def get_features(pid1, pid2):
     """
     Function that provides features for a PID pair. The order of the
@@ -185,9 +186,7 @@ def get_features(pid1, pid2):
     except KeyError:
         raise KeyError(
             "The entered process ({pid1}, {pid2}) is not in the "
-            "list of allowed processes!".format(
-                pid1=pid1, pid2=pid2
-                )
+            "list of allowed processes!".format(pid1=pid1, pid2=pid2)
         )
 
 
@@ -227,7 +226,9 @@ def get_features_dict(process_list, auto_normf=True):
         for param in features_index:
             # Check if features should be normalised
             if feature_norm_flag:
-                features_dict[param] = parameters.get_normalised_parameter(param)
+                features_dict[param] = parameters.get_normalised_parameter(
+                    param
+                )
             else:
                 features_dict[param] = parameters.get_parameter(param)
 
