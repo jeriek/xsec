@@ -47,7 +47,6 @@ setup(
     long_description=readme(),
     long_description_content_type="text/markdown",
     classifiers=[
-        "Development Status:: 5 - Production/Stable",
         "License :: OSI Approved :: "
         "GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 2.7",
