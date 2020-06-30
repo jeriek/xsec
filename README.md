@@ -1,4 +1,4 @@
-# `xsec`: the cross-section evaluation code
+# xsec: the cross-section evaluation code
 
 [![Release](https://img.shields.io/github/v/release/jeriek/xsec)](https://github.com/jeriek/xsec/releases)
 <!-- [![Downloads](https://img.shields.io/github/downloads-pre/jeriek/xsec/latest/total.svg)]() -->
