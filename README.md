@@ -1,11 +1,11 @@
 # xsec: the cross-section evaluation code
 
 [![Release](https://img.shields.io/github/v/release/jeriek/xsec)](https://github.com/jeriek/xsec/releases)
-<!-- [![Downloads](https://img.shields.io/github/downloads-pre/jeriek/xsec/latest/total.svg)]() -->
 [![Python version](https://img.shields.io/pypi/pyversions/xsec.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/xsec.svg)](https://pypi.org/project/xsec/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/github/license/jeriek/xstest.svg)](./LICENSE)
+<!-- [![Downloads](https://img.shields.io/github/downloads-pre/jeriek/xsec/latest/total.svg)]() -->
 
 `xsec` is a tool for fast evaluation of cross-sections, taking advantage
 of the power and flexibility of Gaussian process regression.
