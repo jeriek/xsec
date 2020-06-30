@@ -7,11 +7,15 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/github/license/jeriek/xstest.svg)](./LICENSE)
 
+`xsec` is a tool for fast evaluation of cross-sections, making use of the power
+and flexibility of Gaussian processes.
+
 ## Installation
 
 ### Requirements
 `xsec` is compatible with both Python 2.7 and 3.
 The following external Python libraries are required to run `xsec`:
+
 - Setuptools 20.7.0 or later
 - NumPy 1.14 or later
 - SciPy 1.0.0 or later
