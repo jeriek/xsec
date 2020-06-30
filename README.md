@@ -9,8 +9,7 @@
 
 ## Installation
 
-The following python libraries are required to run xsec:
-- python 2.7.x
+xsec is compatible with both Python 2 and 3. The following Python libraries are required to run xsec:
 - setuptools v20.7.0 or later
 - numpy v1.14 or later
 - scipy v1.0.0 or later
@@ -56,7 +55,7 @@ An example main programme showing how to use the module can be found in the [`ex
 
 xsec: the cross section evaluation code
 
-Copyright (C) 2018  Andy Buckley, Ingrid Angélica Vazquez Holm, Anders Kvellestad, Are Raklev, Pat Scott, Jon Vegard Sparre, Jeriek Van den Abeele
+Copyright (C) 2020  Andy Buckley, Ingrid Angélica Vazquez Holm, Anders Kvellestad, Are Raklev, Pat Scott, Jon Vegard Sparre, Jeriek Van den Abeele
   
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
