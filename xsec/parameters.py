@@ -5,7 +5,6 @@ Module containing a dictionary of parameters and input/output methods.
 from __future__ import print_function
 
 import sys
-
 import os
 
 import pyslha

@@ -1,5 +1,5 @@
 """
-Initialisation and GP loading functions.
+Initialisation, GP loading functions and cache management.
 """
 
 from __future__ import print_function
@@ -201,7 +201,7 @@ def reconstruct_gp(model_file):
 
     Returns
     -------
-    gp_reco
+    gp_reco : dict
         Dictionary containing all information about an individual GP.
     """
     # Open the stored GP model file of a single expert
@@ -237,7 +237,7 @@ def load_single_process(process_xstype, energy):
         The input argument process_xstype is a 3-tuple
         (process[0], process[1], var) where the first two components
         are integers specifying the process and the last component is a
-        string from XSTYPES.
+        string from utils.XSTYPES.
         Example: (1000021, 1000021, 'centr')
 
     energy : int
@@ -348,7 +348,7 @@ def load_processes(process_list):
     trained GP models into memory, or into a cache folder on disk if
     using cache. The function calls load_single_process() for each
     process in process_list, looping over all cross-section types in
-    XSTYPES. It stores each returned list of models in the global
+    utils.XSTYPES. It stores each returned list of models in the global
     dictionary PROCESS_DICT, indexed with key 'process_xstype'.
 
     Parameters

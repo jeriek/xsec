@@ -21,7 +21,7 @@ import xsec.features as features
 
 def eval_xsection(verbose=2, check_consistency=True):
     """
-    Evaluates cross sections for processes in global list
+    Evaluate cross-sections for processes in global list
     gploader.PROCESSES using parameter values stored in global
     dictionary parameters.PARAMS.
 
@@ -124,18 +124,14 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     # (zip() splits list of (mu,sigma) tuples into two tuples, one for
     # mu and one for sigma values -- then convert to arrays by mapping)
-    # NOTE: Result arrays are now ordered in the user-specified order
-    # from the global PROCESSES variable!
+    # NOTE: Result arrays are ordered in the user-specified order from
+    # the global PROCESSES variable!
 
     # -- Signed regression errors on the central cross section, divided
     #    by xsection_central
-    # Deal with a potentially asymmetric regression error
-    if isinstance(reg_err[0], np.ndarray):
-        regdown_rel = - reg_err[:, 0] / xsection_central
-        regup_rel = reg_err[:, 1] / xsection_central
-    else:  # Symmetric error
-        regdown_rel = - reg_err / xsection_central  # numpy array
-        regup_rel = reg_err / xsection_central
+    # --- Each element of reg_err is a [lower, upper] error array
+    regdown_rel = - reg_err[:, 0] / xsection_central
+    regup_rel = reg_err[:, 1] / xsection_central
 
     # -- Signed scale errors (from varying the scale to 0.5x and 2x the
     #    central scale) divided by xsection_central. To prevent that the
@@ -145,7 +141,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    NOTE: This means scaledown_rel generally doesn't correspond to
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
-    # Get the DGP means, discard regression errors on the variations
+    # --- Get the DGP medians, discard regression errors on the variations
     mu_dgp_scldn_rel, _ = np.array(list(zip(*dgp_results["scldn"])))
     mu_dgp_sclup_rel, _ = np.array(list(zip(*dgp_results["sclup"])))
 
@@ -156,7 +152,7 @@ def eval_xsection(verbose=2, check_consistency=True):
 
 
     # -- Signed PDF errors divided by xsection_central
-    # Get the DGP means, discard regression errors on the variations
+    # --- Get the DGP medians, discard regression errors on the variations
     delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
 
     pdfdown_rel = (-1.0)*np.abs(delta_pdf_rel)
@@ -169,7 +165,7 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    variation to be half the range between the cross-sections
     #    calculated with upper and lower (1 sigma) alpha_s values.
     #    (Therefore this cross-section uncertainty is symmetric.)
-    # Get the DGP means, discard regression errors on the variations
+    # --- Get the DGP medians, discard regression errors on the variations
     mu_dgp_adn_rel, _ = np.array(list(zip(*dgp_results["adn"])))
     mu_dgp_aup_rel, _ = np.array(list(zip(*dgp_results["aup"])))
 
@@ -182,7 +178,6 @@ def eval_xsection(verbose=2, check_consistency=True):
 
     alphasdown_rel = (-1.0)*delta_alphas_rel
     alphasup_rel = delta_alphas_rel
-
 
     # Collect values for output in Numpy array
     return_array = np.array(
@@ -207,9 +202,30 @@ def eval_xsection(verbose=2, check_consistency=True):
 
 def dgp_predict(process, xstype, new_features):
     """
-        Evaluate a set of distributed Gaussian processes (DGPs). The DGP
-        'experts' are combined according to the Generalized Robust
-        Bayesian Committee Machine algoritm, arxiv:1806.00720.
+    Evaluate a set of distributed Gaussian processes (DGPs). The DGP
+    'experts' are combined according to the Generalized Robust
+    Bayesian Committee Machine (GRBCM) algorithm, arXiv:1806.00720.
+
+    Parameters
+    ----------
+    process : tuple
+        Two-component tuple of integers specifying the final state.
+        For example, gluino-gluino production corresponds to the tuple
+        (1000021, 1000021).
+    xstype : str
+        Cross-section type to be computed, chosen from the list in
+        utils.XSTYPES.
+    new_features : list of float
+        List with values for the required features of the chosen
+        process (for the new test point), as constructed by the function
+        features.get_features_dict().
+
+    Returns
+    -------
+    mu_dgp : float
+        Central value following the GRBCM prescription.
+    sigma_dgp : float
+        Uncertainty estimate following the GRBCM prescription.
     """
     assert len(process) == 2
     process_xstype = utils.get_process_id(process, xstype)
@@ -242,12 +258,13 @@ def dgp_predict(process, xstype, new_features):
             betas[i] = 0.5 * (2.0 * np.log(sigma_c) - 2.0 * np.log(sigmas[i]))
 
     # If any of the betas is negative (sigma_c < sigma_i), due to worse
-    # fit despite more points, set weight of that expert to zero
+    # fit despite more points, set weight of that expert to zero.
+    # In principle, this cannot occur when the experts share hyperparameters.
     if any(betas < 0):
-        # print(
-        #     "Warning: one or more weights beta_i were negative and set to 0.",
-        #     "\n -- weights: ", betas, " for ", process, xstype
-        #     )
+        warnings.warn(
+            "Warning: one or more weights beta_i were negative and set to 0.",
+            "\n -- weights: ", betas, " for ", process, xstype
+            )
         betas = np.maximum(betas, 0.0)
 
     # Final mean and variance
@@ -278,15 +295,42 @@ def gp_predict(
     and the index number of the expert. Requires running
     load_processes() first.
 
-    Returns a list of numpy arrays containing the mean value (the
-    predicted cross-section), the GP standard deviation (or full
-    covariance matrix), and the square root of the prior variance on the
-    test features.
+    Returns a list of Numpy arrays containing the central value and the
+    GP uncertainty.
 
     Based on Algorithm 2.1 of Gaussian Processes for Machine Learning by
     Rasmussen and Williams (MIT Press, 2006). The structure of this
     function is inspired by GaussianProcessRegressor.predict() from
     scikit-learn v0.19.2.
+
+    Parameters
+    ----------
+    process_xstype : tuple
+        The input argument process_xstype is a 3-tuple
+        (process[0], process[1], var) where the first two components
+        are integers specifying the process and the last component is a
+        string from utils.XSTYPES.
+        Example: (1000021, 1000021, 'centr')
+    new_features : list of float
+        List with values for the required features of the chosen
+        process (for the new test point), as constructed by the function
+        features.get_features_dict().
+    index : int, optional
+        Index of the GP expert, starting from index 1 (default) for the
+        communications expert.
+    return_std : bool, optional
+        Whether to return the standard deviation of the GP posterior
+        predictive distribution (default: True).
+    return_cov : bool, optional
+        Whether to return the  of the full covariance matrix of the GP
+        (default: False). This option is currently unavailable.
+    Returns
+    -------
+    y_mean : float
+        Mean value of the Gaussian GP posterior predictive distribution.
+    y_std : float
+        Standard deviation of the Gaussian GP posterior predictive
+        distribution.
     """
 
     if return_std and return_cov:
@@ -346,17 +390,17 @@ def gp_predict(
             y_var[y_var_negative] = np.abs(y_var[y_var_negative])
 
         # Add uncertainty due to fitting the hyperparameters, here the case
-        # with constant mean (estimated as sample mean) (Waagberg et al., 2017)
+        # with constant mean (estimated as sample mean), arXiv:1606.03865
         # Effects become large when far* from training points (* in length
         # scale units)
         g = 1.0 - np.sum(K_trans_dot_K_inv)
-        M_inv = np.sum(K_inv)**(-1)
+        M_inv = np.sum(K_inv) ** (-1)
         y_var += M_inv * g**2
 
         # Return the standard deviation
         y_std = np.sqrt(y_var)
         # prior_std = np.sqrt(prior_variance.flatten())
-        return y_mean, y_std  #, prior_std
+        return y_mean, y_std
 
     elif return_cov:
         warnings.warn(
