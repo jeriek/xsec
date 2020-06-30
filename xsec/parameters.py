@@ -12,6 +12,10 @@ import pyslha
 import xsec.utils as utils
 
 
+###############################################
+# Global variables                            #
+###############################################
+
 # Dictionary of all parameters and their values (only float or int!)
 PARAMS = {
     "m1000001": None,  # squark mass [GeV]

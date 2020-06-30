@@ -480,7 +480,6 @@ def clear_cache():
     """
     Clear cache memory if it was used.
     """
-
     if USE_CACHE and FLUSH_CACHE:
         # Flush the cache completely
         CACHE_MEMORY.clear(warn=False)
