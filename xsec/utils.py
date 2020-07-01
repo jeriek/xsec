@@ -346,7 +346,7 @@ def get_references(pid1, pid2):
     # xsec, Prospino, PDF4LHC and LHAPDF references currently common to
     # all processes
     newref = [
-        "xsec:2020",
+        "Buckley:2020bxg",
         "Beenakker:1996ed",
         "Buckley:2014ana",
         "Butterworth:2015oua",
@@ -369,19 +369,22 @@ def fetch_bibtex(ref):
     """
     Fetch bibtex content for references.
     """
-    if ref == "xsec:2020":
+    if ref == "Buckley:2020bxg":
         bibtex = (
-            "@misc{xsec:2020,\n"
-            + "\t title          = {{Xsec: the cross-section evaluation code}},\n"
-            + "\t author         = {Andy Buckley and Anders Kvellestad and Are Raklev and\n"
-            + "\t                   Pat Scott and Jon Vegard Sparre and Jeriek Van den\n"
-            + "\t                   Abeele and Ingrid A. Vazquez-Holm},\n"
-            + "\t year           = {2020},\n"
+            "@article{Buckley:2020bxg,\n"
+            + "\t author         = {Buckley, Andy and Kvellestad, Anders and Raklev, Are and\n"
+            + "\t                   Scott, Pat and Sparre, Jon Vegard and \n"
+            + "\t                   Abeele, Jeriek Van den and Vazquez-Holm, Ingrid A.},\n"
+            + "\t title          = {$\\textsf{Xsec}$: the cross-section evaluation code}},\n"
             + "\t eprint         = {2006.16273},\n"
             + "\t archivePrefix  = {arXiv},\n"
-            + "\t primaryClass   = {hep-ph}\n"
+            + "\t primaryClass   = {hep-ph},\n"
+            + "\t reportNumber   = {SAGEX-20-17-E},\n"
+            + "\t month          = {6},\n"
+            + "\t year           = {2020}\n"
             + "}"
         )
+
     elif ref == "Beenakker:1996ch":
         bibtex = (
             "@article{Beenakker:1996ch,\n"
