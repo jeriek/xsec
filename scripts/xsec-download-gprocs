@@ -24,6 +24,8 @@ import errno
 import tarfile
 import argparse
 
+# Detect Python version (2 or 3)
+PYTHON_VERSION = sys.version_info[0]
 
 try:  # if python3
     from urllib.request import urlretrieve
@@ -54,12 +56,12 @@ ALL_PROCESS_TYPES = PROCESS_TYPES + ["all"]
 
 
 # Example URL:
-# https://github.com/jeriek/xsec/releases/download/1.0.0/xsec_1.0.0_gprocs_gg.tar.gz
+# https://github.com/jeriek/xsec/releases/download/1.0.1/xsec_1.0.1_py2_gprocs_gg.tar.gz
 
 # Each file is specified as a {key: filename} pair in this dictionary
 FILE_DICT = {
-    process_type: "xsec_{version}_gprocs_{process_type}.tar.gz".format(
-        version=VERSION, process_type=process_type
+    process_type: "xsec_{xsec_v}_py{py_v}_gprocs_{process_type}.tar.gz".format(
+        xsec_v=VERSION, py_v=PYTHON_VERSION, process_type=process_type
     )
     for process_type in PROCESS_TYPES
 }
