@@ -471,8 +471,8 @@ def finalise():
     with open(ref_file, "w") as file_object:
         utils.print_references(file_object)
     print(
-        "A list of references that form the basis of the results in this run "
-        "has been written to {file}.".format(file=ref_file)
+        "A list of references that form the basis of the results in\n"
+        "this run has been written to {file}.".format(file=ref_file)
     )
 
 
