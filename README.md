@@ -1,14 +1,18 @@
 # xsec: the cross-section evaluation code
 
+[![arXiv](https://img.shields.io/badge/arxiv-2006.16273-red)](https://arxiv.org/abs/2006.16273)
 [![Release](https://img.shields.io/github/v/release/jeriek/xsec)](https://github.com/jeriek/xsec/releases)
-[![Python version](https://img.shields.io/pypi/pyversions/xsec.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/xsec.svg)](https://pypi.org/project/xsec/)
+[![Python version](https://img.shields.io/pypi/pyversions/xsec.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/github/license/jeriek/xsec.svg)](./LICENSE)
-<!-- [![Downloads](https://img.shields.io/github/downloads-pre/jeriek/xsec/latest/total.svg)]() -->
+
 
 `xsec` is a tool for fast evaluation of cross-sections, taking advantage
 of the power and flexibility of Gaussian process regression.
+
+For a detailed description of the methodology, validation and instructions for usage,
+see [https://arxiv.org/abs/2006.16273](https://arxiv.org/abs/2006.16273).
 
 ## Installation
 
@@ -52,7 +56,7 @@ If this argument is not specified, a new directory `gprocs` is created in the cu
 - `gg` (gluino pair production, 220 MB)
 - `sg` (1st/2nd gen. squark--gluino pair production, 148 MB)
 - `ss` (1st/2nd gen. squark pair production, 1.6 GB)
-- `sb` (1st/2nd gen. squark--anti-squark pair production, 767 MB)
+- `sb` (1st/2nd gen. squark--anti-squark pair production, 766 MB)
 - `tb` (3rd gen. squark--anti-squark pair production, 210 MB)
 - `all` (everything, 3 GB)
 
