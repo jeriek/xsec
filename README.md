@@ -20,11 +20,12 @@ see [https://arxiv.org/abs/2006.16273](https://arxiv.org/abs/2006.16273).
 `xsec` is compatible with both Python 2.7 and 3.
 The following external Python libraries are required to run `xsec`:
 
-- Setuptools 20.7.0 or later
-- NumPy 1.14 or later
-- SciPy 1.0.0 or later
-- Joblib 0.12.2 or later
-- PySLHA 3.2.3 or later
+- setuptools 20.7.0 or later
+- numpy 1.14 or later
+- scipy 1.0.0 or later
+- joblib 0.12.2 or later
+- dill 0.3.2 or later
+- pyslha 3.2.3 or later
 
 ### `pip` installation
 `xsec` can be installed from [PyPI](https://pypi.org/project/xsec/) using
@@ -67,9 +68,10 @@ The default option is `all`.
 ### Testing the installation
 To check whether the `xsec` installation works properly, download the gluino pair production data (`gg`) and try a test cross-section evaluation:
 ```
-xsec-test [GP_DIR]
+xsec-download-gprocs -t gg [-g GP_DIR]
+xsec-test [-g GP_DIR]
 ```
-If no argument is given, the data is assumed to be in a directory called `gprocs` in the current working directory, otherwise the user-specified path `GP_DIR` is used.
+If no argument is given to `xsec-test`, the data files are assumed to be in a subdirectory called `gprocs` in the current working directory, otherwise the user-specified path `GP_DIR` is used.
 
 ### Removing the package
 Uninstalling `xsec` is as simple as running
@@ -78,7 +80,7 @@ pip uninstall xsec
 ```
 
 ## Code examples
-An example main program showing how to use `xsec` can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing an SLHA file. An example showing a simple loop over parameters is available in [`example_xsec_loop.py`](examples/example_xsec_loop.py)
+An example main program showing how to use `xsec` can be found in the [`example_xsec_eval.py`](examples/example_xsec_eval.py) file. This shows evaluation both by specifying the model parameters by hand and by importing an SLHA file. An example showing a simple loop over parameters is available in [`example_xsec_loop.py`](examples/example_xsec_loop.py).
 
 ## Licence
 

@@ -6,67 +6,97 @@ Run a simple test instance of the evaluation module.
 This script can be used as a basis for a more complete routine to
 evaluate cross sections.
 
-Use: xsec-test <directory-for-xsec-data>
-    If no argument <directory-for-xsec-data> is given, the code looks
-    for a folder called 'gprocs' in the current working directory.
+Use: xsec-test [-g GP_DIR]
+    If no argument is given, the code looks for a folder called 'gprocs'
+    in the current working directory.
 """
 
 import os
 import sys
+import argparse
 
-# Import xsec, first assume we have pip installed it
-try:
-    import xsec
-# Someone is using our fine programme without pip installing
-except ImportError:
-    # Our current absolute directory
-    abs_dir = os.path.dirname(os.path.abspath(__file__))
-    # Parent directory containing xsec
-    parent_dir = os.path.dirname(abs_dir)
-    sys.path.append(parent_dir)
-    import xsec
 
-try:
-    input_dir = sys.argv[1]
-except IndexError:
-    # By default, look for './gprocs'
-    cwd = os.getcwd()
-    input_dir = os.path.join(cwd, "gprocs")
+def main():
+    """
+    Run a test cross-section evaluation for gluino pair production.
+    """
 
-# Set directory and cache choices
-xsec.init(data_dir=input_dir)  # run with default settings (no caching)
+    # Get the script name
+    prog_name = "xsec-test"
 
-# Set center-of-mass energy (in GeV)
-xsec.set_energy(13000)
+    # Set up the argument parser
+    parser = argparse.ArgumentParser(
+        prog=prog_name,
+        description="Tool for checking the xsec setup with a test evaluation.",
+    )
 
-# Load GP models for the specified process(es)
-processes = [(1000021, 1000021)]
-xsec.load_processes(processes)
+    # Take the download directory as an optional argument
+    parser.add_argument(
+        "-g",
+        "--gp_dir",
+        nargs="?",
+        metavar="PATH",
+        type=str,
+        action="store",
+        default=os.path.join(os.getcwd(), "gprocs"),
+        help="set the path where the downloaded files are stored. "
+        "The default path is %(default)s",
+    )
 
-# Enter parameter values
-xsec.set_parameters(
-    {
-        "m1000021": 1000,
-        "m1000001": 500,
-        "m1000002": 500,
-        "m1000003": 500,
-        "m1000004": 500,
-        "m1000005": 500,
-        "m1000006": 500,
-        "m2000001": 500,
-        "m2000002": 500,
-        "m2000003": 500,
-        "m2000004": 500,
-        "m2000005": 500,
-        "m2000006": 500,
-        "sbotmix11": 0,
-        "stopmix11": 0,
-        "mean": 500,
-    }
-)
+    # Parse the arguments
+    args = parser.parse_args()
 
-# Evaluate the cross section with the given input parameters
-xsec.eval_xsection()
+    # Import xsec, first assume we have pip installed it
+    try:
+        import xsec
+    # Someone is using our fine programme without pip installing
+    except ImportError:
+        # Our current absolute directory
+        abs_dir = os.path.dirname(os.path.abspath(__file__))
+        # Parent directory containing xsec
+        parent_dir = os.path.dirname(abs_dir)
+        sys.path.append(parent_dir)
+        import xsec
 
-# Finalise the evaluation procedure
-xsec.finalise()
+    # Set directory and cache choices
+    xsec.init(data_dir=args.gp_dir)  # run with default settings (no caching)
+
+    # Set center-of-mass energy (in GeV)
+    xsec.set_energy(13000)
+
+    # Load GP models for the specified process(es)
+    processes = [(1000021, 1000021)]
+    xsec.load_processes(processes)
+
+    # Enter parameter values
+    xsec.set_parameters(
+        {
+            "m1000021": 1000,
+            "m1000001": 500,
+            "m1000002": 500,
+            "m1000003": 500,
+            "m1000004": 500,
+            "m1000005": 500,
+            "m1000006": 500,
+            "m2000001": 500,
+            "m2000002": 500,
+            "m2000003": 500,
+            "m2000004": 500,
+            "m2000005": 500,
+            "m2000006": 500,
+            "sbotmix11": 0,
+            "stopmix11": 0,
+            "mean": 500,
+        }
+    )
+
+    # Evaluate the cross section with the given input parameters
+    xsec.eval_xsection()
+
+    # Finalise the evaluation procedure
+    xsec.finalise()
+
+
+# When the code is executed as a script, run the following.
+if __name__ == "__main__":
+    main()
