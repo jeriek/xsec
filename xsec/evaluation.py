@@ -142,25 +142,31 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    the xsection value at the lower scale, but at the higher one,
     #    and vice versa for scaleup_rel.
     # --- Get the DGP medians, discard regression errors on the variations
-    mu_dgp_scldn_rel, _ = np.array(list(zip(*dgp_results["scldn"])))
-    mu_dgp_sclup_rel, _ = np.array(list(zip(*dgp_results["sclup"])))
+    mu_dgp_scldn_rel, _ = np.array(
+        list(zip(*dgp_results["scldn"])), dtype=object
+    )
+    mu_dgp_sclup_rel, _ = np.array(
+        list(zip(*dgp_results["sclup"])), dtype=object
+    )
 
     scaledown_rel = (
         np.array(
-            list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))
+            list(map(np.min, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel)))),
+            dtype=object,
         )
         - 1.0
     )
     scaleup_rel = (
         np.array(
-            list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel))))
+            list(map(np.max, list(zip(mu_dgp_scldn_rel, mu_dgp_sclup_rel)))),
+            dtype=object,
         )
         - 1.0
     )
 
     # -- Signed PDF errors divided by xsection_central
     # --- Get the DGP medians, discard regression errors on the variations
-    delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])))
+    delta_pdf_rel, _ = np.array(list(zip(*dgp_results["pdf"])), dtype=object)
 
     pdfdown_rel = (-1.0) * np.abs(delta_pdf_rel)
     pdfup_rel = np.abs(delta_pdf_rel)
@@ -172,8 +178,8 @@ def eval_xsection(verbose=2, check_consistency=True):
     #    calculated with upper and lower (1 sigma) alpha_s values.
     #    (Therefore this cross-section uncertainty is symmetric.)
     # --- Get the DGP medians, discard regression errors on the variations
-    mu_dgp_adn_rel, _ = np.array(list(zip(*dgp_results["adn"])))
-    mu_dgp_aup_rel, _ = np.array(list(zip(*dgp_results["aup"])))
+    mu_dgp_adn_rel, _ = np.array(list(zip(*dgp_results["adn"])), dtype=object)
+    mu_dgp_aup_rel, _ = np.array(list(zip(*dgp_results["aup"])), dtype=object)
 
     delta_alphas_rel = np.array(
         [
