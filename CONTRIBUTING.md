@@ -1,5 +1,10 @@
 # Contributing to xsec
 
+
+## Code style
+
+We run black when ahye is not looking.
+
 ## Repo structure
 
 - The master branch is intepreted as the "latest, stable development version".
