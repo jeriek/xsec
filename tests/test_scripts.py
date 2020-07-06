@@ -2,6 +2,9 @@
 
 """
 Tests for the xsec command-line scripts.
+
+Run by executing:
+    pytest tests/
 """
 
 import re
