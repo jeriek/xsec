@@ -87,6 +87,7 @@ def test_evaluation_gg(test_download_gg):
     """
     # Collect terminal output
     output = subprocess.check_output(["scripts/xsec-test"])
+    print(output.decode())
 
     # Check whether output is in reasonable range
     assert check_within_reasonable_range(
