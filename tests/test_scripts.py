@@ -86,6 +86,7 @@ def test_evaluation_gg(test_download_gg):
     Run a test evaluation of the gluino pair production xsection.
     """
     # Collect terminal output
+    print("Calling xsec-test ...")
     output = subprocess.check_output(["scripts/xsec-test"])
     print(output.decode())
 
