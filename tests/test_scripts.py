@@ -13,7 +13,9 @@ import pytest
 
 
 def float_after(search_string, text):
-    """[summary]
+    """
+    Find a float value in terminal output, preceded by a specific search
+    string.
 
     Parameters
     ----------
@@ -29,11 +31,11 @@ def float_after(search_string, text):
     """
     # Search for search_string, possibly followed by : or =, and/or brackets
     matches = re.findall(
-        "(?<={0})[:,=]?\s*\[?\s*[+-]?\d+\.\d*[Ee]?[+-]?\d*\]?".format(
+        r"(?<={0})[:,=]?\s*\[?\s*[+-]?\d+\.\d*[Ee]?[+-]?\d*\]?".format(
             # r"(?<={0})[:,=]?\s*[+-]?\d+\.\d*[Ee]?[+-]?\d*".format(
-            re.escape(search_string).encode("utf-8")
+            re.escape(search_string)
         ),
-        text,
+        text.decode(),
     )
     assert len(matches) == 1, "Multiple search string matches"
     match = matches[0]
@@ -63,7 +65,7 @@ def check_within_reasonable_range(output, xstype_string, min_value, max_value):
         True if the specified value is within the specified bounds
         (including the boundary values), False otherwise.
     """
-    assert xstype_string.encode("utf-8") in output
+    assert xstype_string in output.decode()
     numerical_value = float_after(xstype_string, output)
     is_within_range = min_value <= numerical_value <= max_value
     return is_within_range
