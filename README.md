@@ -21,7 +21,7 @@ see [https://arxiv.org/abs/2006.16273](https://arxiv.org/abs/2006.16273).
 The following external Python libraries are required to run `xsec`:
 
 - setuptools 20.7.0 or later
-- numpy 1.14 or later
+- numpy 1.16 or later
 - scipy 1.0.0 or later
 - joblib 0.12.2 or later
 - dill 0.3.2 or later
