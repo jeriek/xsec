@@ -51,7 +51,6 @@ def main():
         import xsec
     # Someone is using our fine programme without pip installing
     except ImportError:
-        print("Failed xsec import ...")
         # Our current absolute directory
         abs_dir = os.path.dirname(os.path.abspath(__file__))
         # Parent directory containing xsec
@@ -60,7 +59,6 @@ def main():
         import xsec
 
     # Set directory and cache choices
-    print("xsec init ...")
     xsec.init(data_dir=args.gp_dir)  # run with default settings (no caching)
 
     # Set center-of-mass energy (in GeV)
@@ -93,7 +91,6 @@ def main():
     )
 
     # Evaluate the cross section with the given input parameters
-    print("xsec eval ...")
     xsec.eval_xsection()
 
     # Finalise the evaluation procedure
