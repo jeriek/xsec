@@ -63,7 +63,7 @@ def check_within_reasonable_range(output, xstype_string, min_value, max_value):
         True if the specified value is within the specified bounds
         (including the boundary values), False otherwise.
     """
-    assert xstype_string in output
+    assert xstype_string.encode("utf-8") in output
     numerical_value = float_after(xstype_string, output)
     is_within_range = min_value <= numerical_value <= max_value
     return is_within_range
