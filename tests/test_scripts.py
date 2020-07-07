@@ -31,7 +31,7 @@ def float_after(search_string, text):
     matches = re.findall(
         r"(?<={0})[:,=]?\s*\[?\s*[+-]?\d+\.\d*[Ee]?[+-]?\d*\]?".format(
             # r"(?<={0})[:,=]?\s*[+-]?\d+\.\d*[Ee]?[+-]?\d*".format(
-            re.escape(search_string)
+            re.escape(search_string).encode("utf-8")
         ),
         text,
     )
