@@ -74,7 +74,7 @@ def test_download_gg():
     """
     Test the GP data file download for gluino pair production.
     """
-    subprocess.check_call(["xsec-download-gprocs", "-t", "gg"])
+    subprocess.check_call(["scripts/xsec-download-gprocs", "-t", "gg"])
 
 
 def test_evaluation_gg(test_download_gg):
@@ -82,7 +82,7 @@ def test_evaluation_gg(test_download_gg):
     Run a test evaluation of the gluino pair production xsection.
     """
     # Collect terminal output
-    output = subprocess.check_output(["xsec-test"])
+    output = subprocess.check_output(["scripts/xsec-test"])
 
     # Check whether output is in reasonable range
     assert check_within_reasonable_range(
