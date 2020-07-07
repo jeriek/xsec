@@ -3,8 +3,9 @@
 """
 Tests for the xsec command-line scripts.
 
-Run by executing:
-    pytest tests/
+Run by executing, in the main repo directory:
+    pytest
+    pytest --no_download    (requires "gprocs" directory with gg data)
 """
 
 import re
@@ -72,11 +73,12 @@ def check_within_reasonable_range(output, xstype_string, min_value, max_value):
 
 
 @pytest.fixture(scope="module")
-def test_download_gg():
+def test_download_gg(pytestconfig):
     """
     Test the GP data file download for gluino pair production.
     """
-    subprocess.check_call(["scripts/xsec-download-gprocs", "-t", "gg"])
+    if not pytestconfig.getoption("no_download"):
+        subprocess.check_call(["scripts/xsec-download-gprocs", "-t", "gg"])
 
 
 def test_evaluation_gg(test_download_gg):
