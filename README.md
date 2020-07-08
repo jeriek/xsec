@@ -3,6 +3,7 @@
 [![arXiv](https://img.shields.io/badge/arxiv-2006.16273-red)](https://arxiv.org/abs/2006.16273)
 [![Release](https://img.shields.io/github/v/release/jeriek/xsec)](https://github.com/jeriek/xsec/releases)
 [![PyPI](https://img.shields.io/pypi/v/xsec.svg)](https://pypi.org/project/xsec/)
+[![Build](https://img.shields.io/travis/jeriek/xsec/master)](https://travis-ci.com/github/jeriek/xsec)
 [![Python version](https://img.shields.io/pypi/pyversions/xsec.svg)](https://www.python.org/downloads/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/github/license/jeriek/xsec.svg)](./LICENSE)
