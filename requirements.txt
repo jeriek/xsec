@@ -1,5 +1,5 @@
 setuptools>=20.7.0
-numpy>=1.14
+numpy>=1.16
 scipy>=1.0.0
 joblib>=0.13.2
 dill>=0.3.2
