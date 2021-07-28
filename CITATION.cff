@@ -22,7 +22,21 @@ license: GPL-3.0-only
 references:
   - type: article
   - title: "Xsec: the cross-section evaluation code"
-  - authors: NN
+  - authors:
+      - family-names: Buckley
+        given-names: Andy
+      - family-names: Kvellestad
+        given-names: Anders
+      - family-names: Raklev
+        given-names: Are
+      - family-names: Scott
+        given-names: Pat
+      - family-names: Sparre
+        given-names: Jon Vegard
+      - family-names: Van den Abeele
+        given-names: Jeriek
+      - family-names: Vazquez-Holm
+        given-names: Ingrid A.
   - doi: 10.1140/epjc/s10052-020-08635-y
   - journal: EPJC
   - volume: 80
