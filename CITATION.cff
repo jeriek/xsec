@@ -1,15 +1,27 @@
 cff-version: 1.1.0
 message: "If you use this software, please cite it as below."
 authors:
+  - family-names: Buckley
+    given-names: Andy
   - family-names: Kvellestad
     given-names: Anders
   - family-names: Raklev
     given-names: Are
+  - family-names: Scott
+    given-names: Pat
+  - family-names: Sparre
+    given-names: Jon Vegard
+  - family-names: Van den Abeele
+    given-names: Jeriek
+  - family-names: Vazquez-Holm
+    given-names: Ingrid A.
 title: "Xsec"
 version: 1.0.2
-date-released: 2017-12-18
+date-released: 2020-07-01
 license: GPL-3.0-only  
-
 references:
   - type: article
   - title: "Xsec: the cross-section evaluation code"
+  - authors:
+  - doi: 10.1140/epjc/s10052-020-08635-y
+  - journal: EPJC
